@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# cuotas-frontend
 
-## Getting Started
+Frontend Next.js 16 del sistema de conciliación de pagos y mora.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router) + React 19 + TypeScript
+- **Tailwind CSS 4** + shadcn/ui (Base UI)
+- **Recharts** para gráficas
+- **API:** Django DRF (repo `cuotas-django`) vía JWT
+
+## Desarrollo local
 
 ```bash
+npm install
+cp .env.example .env.local  # apunta a tu backend Django
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+http://localhost:3000 → te redirige a `/login`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Credenciales dev (tras correr `seed_demo` en Django): `laura` / `PaquitoPueblos123`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Páginas
 
-## Learn More
+- `/` Dashboard · `/board2` KPIs · `/datos` · `/riesgos` · `/operaciones`
+- `/clientes` · `/cobros` · `/conciliacion`
+- `/mora` · `/mora-stats` · `/recobros` · `/registro-acciones`
+- `/empleados` · `/usuarios` · `/catalogo` · `/integraciones`
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy en Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. https://vercel.com/new → Import repo `cuotas-frontend`
+2. Environment variable:
+   - `NEXT_PUBLIC_API_URL` → URL del backend Render
+3. Deploy → te da `cuotas-frontend-xxx.vercel.app`
+4. **Importante:** añade esa URL a `CORS_ALLOWED_ORIGINS` del backend
