@@ -28,6 +28,8 @@ import {
   Bell,
   ScrollText,
   Settings,
+  GitMerge as MergeIcon,
+  AlertOctagon,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -58,6 +60,9 @@ export const navigation: NavItem[] = [
   { label: 'Calendly Logs', href: '/crm/calendly-logs', icon: History, section: 'CRM' },
   { label: 'Activity Log', href: '/crm/activity-log', icon: ScrollText, section: 'CRM' },
   { label: 'Admin CRM', href: '/crm/admin', icon: Settings, section: 'CRM' },
+
+  { label: 'Duplicados', href: '/admin/duplicados', icon: MergeIcon, section: 'Admin Datos' },
+  { label: 'Discrepancias', href: '/admin/discrepancias', icon: AlertOctagon, section: 'Admin Datos' },
 
   { label: 'Mora', href: '/mora', icon: AlertTriangle, section: 'Mora' },
   { label: 'Mora stats', href: '/mora-stats', icon: BarChart3, section: 'Mora' },
