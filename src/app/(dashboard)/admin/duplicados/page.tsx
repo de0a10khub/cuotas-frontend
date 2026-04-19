@@ -28,6 +28,7 @@ import {
   type DuplicatePending,
   type DuplicatesSummary,
 } from '@/lib/admin-data-api';
+import { CustomerActivityDrawer } from '@/components/admin/customer-activity-drawer';
 
 const PLATFORM_COLORS: Record<string, string> = {
   stripe: 'bg-indigo-100 text-indigo-800 border-indigo-200',
@@ -46,6 +47,8 @@ export default function DuplicadosPage() {
   const [page, setPage] = useState(1);
   const limit = 50;
   const [busy, setBusy] = useState<string | null>(null);
+  const [activeEmail, setActiveEmail] = useState<string | null>(null);
+  const [activeDupId, setActiveDupId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -191,7 +194,17 @@ export default function DuplicadosPage() {
                 ).join(' · ');
                 return (
                   <TableRow key={d.id}>
-                    <TableCell className="font-medium">{d.email}</TableCell>
+                    <TableCell>
+                      <button
+                        onClick={() => {
+                          setActiveEmail(d.email);
+                          setActiveDupId(d.id);
+                        }}
+                        className="font-medium hover:underline"
+                      >
+                        {d.email}
+                      </button>
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {d.platforms_found.map((p) => (
@@ -260,6 +273,53 @@ export default function DuplicadosPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <CustomerActivityDrawer
+        email={activeEmail}
+        open={!!activeEmail}
+        onOpenChange={(o) => {
+          if (!o) {
+            setActiveEmail(null);
+            setActiveDupId(null);
+          }
+        }}
+        renderFooter={() =>
+          activeDupId && (
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  doAction(activeDupId, 'merge');
+                  setActiveEmail(null);
+                }}
+              >
+                <Merge className="mr-1 h-3.5 w-3.5" /> Fusionar como 1 cliente
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  doAction(activeDupId, 'split');
+                  setActiveEmail(null);
+                }}
+              >
+                <Split className="mr-1 h-3.5 w-3.5" /> Separar
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  doAction(activeDupId, 'ignore');
+                  setActiveEmail(null);
+                }}
+              >
+                Ignorar
+              </Button>
+            </div>
+          )
+        }
+      />
 
       {!loading && totalPages > 1 && (
         <div className="flex items-center justify-between text-xs">

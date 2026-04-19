@@ -74,6 +74,52 @@ function qs(params: Record<string, string | number | undefined>): string {
   return s.toString() ? `?${s.toString()}` : '';
 }
 
+export interface PlatformAccountSummary {
+  platform: string;
+  external_id: string;
+  name: string | null;
+  phone: string | null;
+  first_activity: string | null;
+  last_activity: string | null;
+  total_paid_cents: number;
+  total_debt_cents: number;
+  charges_succeeded: number;
+  charges_failed: number;
+  installments_pending?: number;
+  installments_total?: number;
+}
+
+export interface TimelineEvent {
+  date: string;
+  platform: string;
+  type: string;
+  external_id: string;
+  amount_cents: number;
+  currency: string | null;
+  status: string;
+  description: string;
+  related_id: string | null;
+  payment_intent_id: string | null;
+}
+
+export interface CustomerActivity {
+  email: string;
+  candidate_name: string | null;
+  accounts: PlatformAccountSummary[];
+  timeline: TimelineEvent[];
+  summary: {
+    total_paid_cents: number;
+    total_debt_cents: number;
+    n_platforms: number;
+    n_accounts: number;
+    first_seen: string | null;
+    last_activity: string | null;
+    total_events: number;
+  };
+  mora_tracking: Array<Record<string, unknown>>;
+  objeciones: Array<{ name: string; bg_color: string; text_color: string }>;
+}
+
 export const adminDataApi = {
   duplicatesSummary: () => api.get<DuplicatesSummary>(`${BASE}/duplicates/summary/`),
   listDuplicates: (params: { status?: string; search?: string; page?: number; limit?: number }) =>
@@ -104,4 +150,7 @@ export const adminDataApi = {
     ),
   resolveDiscrepancy: (id: number, note?: string) =>
     api.post<{ ok: boolean }>(`${BASE}/discrepancies/${id}/resolve/`, { note }),
+
+  customerActivity: (email: string) =>
+    api.get<CustomerActivity>(`${BASE}/activity/?email=${encodeURIComponent(email)}`),
 };
