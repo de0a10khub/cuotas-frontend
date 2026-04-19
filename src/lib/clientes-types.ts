@@ -117,11 +117,36 @@ export interface ActionLogEntry {
 
 export interface FailedPayment {
   id: string;
+  platform: Platform;
+  customer_id: string;
+  subscription_id: string;
+  due_date: string | null;
+  created_at: string | null;
   amount: number;
   currency: string;
+  /**
+   * Unificado entre plataformas:
+   *  - stripe: 'paid' | 'open' | 'draft' | 'void' | 'uncollectible'
+   *  - whop: 'paid' | 'open' | 'refunded' | 'canceled' | ...
+   *  - whop-erp: 'paid' | 'pending' | 'failed' | ...
+   */
+  status: string;
+  dispute_status: string | null;
   attempt_count: number;
-  last_error: string;
-  failed_at: string;
+  assigned_operator: string | null;
+
+  // Stripe
+  hosted_invoice_url?: string | null;
+  invoice_pdf?: string | null;
+  amount_paid?: number;
+
+  // Whop
+  payment_processor?: string | null;
+
+  // Whop-ERP (Checkout)
+  installment_number?: number;
+  whop_payment_id?: string | null;
+  checkout_session_id?: string | null;
 }
 
 export interface LockResult {

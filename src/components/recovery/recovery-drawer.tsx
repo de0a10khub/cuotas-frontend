@@ -266,7 +266,9 @@ export function RecoveryDrawer({
             <div className="rounded-lg border border-slate-200 bg-background p-4 dark:border-slate-800">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h3 className="truncate text-lg font-semibold">{row.customer_name}</h3>
+                  <h3 className="truncate text-lg font-semibold">
+                    {row.customer_name?.trim() || row.customer_email || row.subscription_id}
+                  </h3>
                   {isMora && (
                     <p className="text-sm font-semibold text-primary">
                       {row.product_name || 'Suscripción'}
