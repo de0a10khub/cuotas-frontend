@@ -1,224 +1,327 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { api } from '@/lib/api';
-import { formatEuros } from '@/lib/format';
-import type { Invoice, Paginated } from '@/lib/types';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Receipt, ChevronLeft, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 
-const STATUS_TONE: Record<string, string> = {
-  paid: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-  open: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
-  uncollectible: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
-  void: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-  draft: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-};
+import { cobrosApi } from '@/lib/cobros-api';
+import type {
+  CobrosKpis,
+  CobrosPeriod,
+  CobrosPlatform,
+  CycleDays,
+  DailyCycleRow,
+  GlobalRange,
+  SubscriptionMonthRow,
+} from '@/lib/cobros-types';
+import { formatEuros } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
-const AGING_TONE: Record<string, string> = {
-  'Al Dia': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-  Recuperame: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
-  Critico: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300',
-  Incobrable: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
-  unknown: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-};
+import { Section } from '@/components/cobros/section';
+import { GlobalKpiCard, type KpiSubIndicator } from '@/components/cobros/global-kpi-card';
+import { CycleDaysSelector } from '@/components/cobros/cycle-days-selector';
+import { DailyCyclesTable } from '@/components/cobros/daily-cycles-table';
+import { StatusStackedChart } from '@/components/cobros/status-stacked-chart';
+import { SubscriptionMonthChart } from '@/components/cobros/subscription-month-chart';
+import { CobrosFilterBar, type CobrosFilters } from '@/components/cobros/filter-bar';
+import { ExportCiclosButton } from '@/components/cobros/export-button';
+import { resolveRange } from '@/components/cobros/date-ranges';
+import { formatEurExact } from '@/components/cobros/format-utils';
+
+function ratioTone(pct: number): string {
+  if (pct >= 20) return 'text-red-600 dark:text-red-400';
+  if (pct >= 10) return 'text-orange-600 dark:text-orange-400';
+  return 'text-emerald-600 dark:text-emerald-400';
+}
+
+function buildKpis(k: CobrosKpis, scope: 'global' | 'range'): {
+  facturado: React.ReactNode;
+  cashCollected: React.ReactNode;
+  pendientes: React.ReactNode;
+  ratio: React.ReactNode;
+} {
+  const expositionRatio = (k.pending_eur / (k.cash_collected_eur + k.pending_eur + 0.01)) * 100;
+  const cleanRatio = (k.pending_eur / (k.paid_invoices_eur + k.pending_eur + 0.01)) * 100;
+  const directRatio =
+    k.cash_collected_eur > 0 ? (k.direct_payments_eur / k.cash_collected_eur) * 100 : 0;
+
+  const cashSubs: KpiSubIndicator[] = [
+    {
+      label: 'Cuotas (Facturas)',
+      value: `${k.paid_invoices_count} (${formatEurExact(k.paid_invoices_eur)})`,
+    },
+    {
+      label: 'Directos (Cierres)',
+      value: `${k.direct_payments_count} (${formatEurExact(k.direct_payments_eur)})`,
+    },
+    {
+      label: 'Ratio Directos',
+      value: `${directRatio.toFixed(1)}% del total`,
+      color: 'text-slate-500',
+    },
+  ];
+
+  const pendSubs: KpiSubIndicator[] = [
+    {
+      label: 'Abiertas (≤7d)',
+      value: `${k.abiertas_count} (${formatEurExact(k.abiertas_eur)})`,
+    },
+    {
+      label: 'Vencidas (8-30d)',
+      value: `${k.vencidas_count} (${formatEurExact(k.vencidas_eur)})`,
+      color: 'text-orange-500 font-medium',
+    },
+    {
+      label: 'Crónicas (31-61d)',
+      value: `${k.cronicas_count} (${formatEurExact(k.cronicas_eur)})`,
+      color: 'text-red-500 font-medium',
+    },
+    {
+      label: 'Incobrable (+61d)',
+      value: `${k.incobrable_count} (${formatEurExact(k.incobrable_eur)})`,
+      color: 'text-slate-900 font-bold dark:text-slate-100',
+    },
+  ];
+
+  return {
+    facturado: (
+      <GlobalKpiCard
+        title="Facturado"
+        icon="💶"
+        mainValue={formatEurExact(k.contract_value_eur)}
+        mainLabel={`${k.contract_value_count} ventas`}
+        colorClass="text-blue-600 dark:text-blue-400"
+        dotColor="bg-blue-500"
+      />
+    ),
+    cashCollected: (
+      <GlobalKpiCard
+        title={scope === 'global' ? 'Cash Collected Global' : 'Cash Collected'}
+        icon="💰"
+        mainValue={formatEurExact(k.cash_collected_eur)}
+        mainLabel={`${k.cash_collected_count} cobros totales`}
+        colorClass="text-emerald-600 dark:text-emerald-400"
+        dotColor="bg-emerald-500"
+        subIndicators={cashSubs}
+      />
+    ),
+    pendientes: (
+      <GlobalKpiCard
+        title={scope === 'global' ? 'Pendientes Global' : 'Pendientes'}
+        icon="🧾"
+        mainValue={formatEurExact(k.pending_eur)}
+        mainLabel={`${k.pending_count} pendientes de cobro`}
+        colorClass="text-amber-600 dark:text-amber-400"
+        dotColor="bg-amber-500"
+        subIndicators={pendSubs}
+      />
+    ),
+    ratio: (
+      <GlobalKpiCard
+        title="Ratio Pendientes"
+        icon="📊"
+        mainValue={`${expositionRatio.toFixed(2)}%`}
+        mainLabel={
+          scope === 'global'
+            ? 'Exposición sobre ingresos totales'
+            : 'Exposición sobre ingresos del período'
+        }
+        colorClass={ratioTone(expositionRatio)}
+        dotColor={
+          expositionRatio >= 20 ? 'bg-red-500' : expositionRatio >= 10 ? 'bg-orange-500' : 'bg-emerald-500'
+        }
+        subIndicators={[
+          {
+            label: 'Ratio Solo Cuotas',
+            value: `${cleanRatio.toFixed(2)}%`,
+            color: ratioTone(cleanRatio),
+          },
+        ]}
+      />
+    ),
+  };
+}
 
 export default function CobrosPage() {
-  const [data, setData] = useState<Paginated<Invoice> | null>(null);
+  const router = useRouter();
+  const sp = useSearchParams();
+
+  const filters: CobrosFilters = {
+    period: (sp.get('period') as CobrosPeriod) || 'mtd',
+    platform: (sp.get('platform') as CobrosPlatform) || 'all',
+    from: sp.get('from') || undefined,
+    to: sp.get('to') || undefined,
+  };
+
+  const range = useMemo(
+    () => resolveRange(filters.period, { from: filters.from, to: filters.to }),
+    [filters.period, filters.from, filters.to],
+  );
+
+  const [cycleDays, setCycleDays] = useState<CycleDays>(7);
+
+  const cycleRange = useMemo(() => {
+    const to = new Date(range.to);
+    const from = new Date(to.getTime() - (cycleDays - 1) * 86400000);
+    return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
+  }, [range.to, cycleDays]);
+
+  const [globalKpis, setGlobalKpis] = useState<CobrosKpis | null>(null);
+  const [rangeKpis, setRangeKpis] = useState<CobrosKpis | null>(null);
+  const [cycles, setCycles] = useState<DailyCycleRow[]>([]);
+  const [subMonths, setSubMonths] = useState<SubscriptionMonthRow[]>([]);
+  const [globalRange, setGlobalRange] = useState<GlobalRange | null>(null);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [debounced, setDebounced] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [page, setPage] = useState(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const pushFilters = useCallback(
+    (next: CobrosFilters) => {
+      const q = new URLSearchParams();
+      q.set('period', next.period);
+      if (next.platform !== 'all') q.set('platform', next.platform);
+      if (next.period === 'custom') {
+        if (next.from) q.set('from', next.from);
+        if (next.to) q.set('to', next.to);
+      }
+      router.push(`/cobros${q.toString() ? `?${q}` : ''}`);
+    },
+    [router],
+  );
+
+  const fetchAll = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      else setIsRefreshing(true);
+      try {
+        const [g, r, c, sm, gr] = await Promise.all([
+          cobrosApi.globalKpis(filters.platform),
+          cobrosApi.rangeKpis({ ...range, platform: filters.platform }),
+          cobrosApi.dailyCycles({ ...cycleRange, platform: filters.platform }),
+          cobrosApi.bySubscriptionMonth({ ...cycleRange, platform: filters.platform }),
+          cobrosApi.globalRange(),
+        ]);
+        setGlobalKpis(g);
+        setRangeKpis(r);
+        setCycles(c.results);
+        setSubMonths(sm.results);
+        setGlobalRange(gr);
+      } catch {
+        toast.error('Error cargando cobros');
+      } finally {
+        setLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [filters.platform, range.from, range.to, cycleRange.from, cycleRange.to],
+  );
 
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(search), 300);
-    return () => clearTimeout(t);
-  }, [search]);
+    fetchAll();
+  }, [fetchAll]);
 
-  useEffect(() => setPage(1), [debounced, statusFilter]);
-
-  const load = useCallback(() => {
-    const params = new URLSearchParams();
-    if (debounced) params.set('search', debounced);
-    if (statusFilter !== 'all') params.set('status', statusFilter);
-    params.set('page', String(page));
-    setLoading(true);
-    api
-      .get<Paginated<Invoice>>(`/api/v1/invoices/?${params}`)
-      .then(setData)
-      .catch(() => toast.error('Error cargando cobros'))
-      .finally(() => setLoading(false));
-  }, [debounced, statusFilter, page]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const totalPages = data ? Math.ceil(data.count / 50) : 1;
+  const g = globalKpis ? buildKpis(globalKpis, 'global') : null;
+  const rK = rangeKpis ? buildKpis(rangeKpis, 'range') : null;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Cobros</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {data ? `${data.count} facturas en el sistema` : 'Cargando...'}
-        </p>
-      </header>
-
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por cliente o ID Stripe..."
-            className="pl-9"
+    <div className="mx-auto max-w-[1400px] space-y-6">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Cobros</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Análisis de facturación y cobros consolidados de todas las plataformas.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => fetchAll(true)}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
+            Actualizar
+          </Button>
+          <ExportCiclosButton
+            from={cycleRange.from}
+            to={cycleRange.to}
+            platform={filters.platform}
+            disabled={cycles.length === 0}
           />
         </div>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v || 'all')}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Estado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los estados</SelectItem>
-            <SelectItem value="open">Abierta</SelectItem>
-            <SelectItem value="paid">Pagada</SelectItem>
-            <SelectItem value="uncollectible">Incobrable</SelectItem>
-            <SelectItem value="void">Anulada</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      </header>
 
-      <div className="rounded-lg border border-slate-200 bg-background dark:border-slate-800">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Aging</TableHead>
-              <TableHead className="text-right">Importe</TableHead>
-              <TableHead className="text-right">Pendiente</TableHead>
-              <TableHead>Vencimiento</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading && !data && (
-              <>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <TableCell key={j}>
-                        <Skeleton className="h-4 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </>
-            )}
-            {data?.results.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="py-16 text-center">
-                  <div className="flex flex-col items-center gap-2 text-slate-500">
-                    <Receipt className="h-10 w-10" />
-                    <p>No hay facturas con esos filtros</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-            {data?.results.map((inv) => {
-              const remaining = Number(inv.amount_remaining);
-              return (
-                <TableRow key={inv.id}>
-                  <TableCell>
-                    <div className="font-medium">{inv.customer_name || '—'}</div>
-                    <div className="text-xs text-slate-500">{inv.customer_email}</div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={cn('font-medium', STATUS_TONE[inv.status])}>
-                      {inv.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {inv.status === 'paid' ? (
-                      <span className="text-xs text-slate-400">—</span>
-                    ) : (
-                      <Badge className={cn('font-medium', AGING_TONE[inv.aging_bucket])}>
-                        {inv.aging_bucket}
-                        {inv.aging_days !== null && inv.aging_days > 0 && (
-                          <span className="ml-1 opacity-70">+{inv.aging_days}d</span>
-                        )}
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatEuros(inv.amount_due)}
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      'text-right font-medium',
-                      remaining > 0
-                        ? 'text-red-600 dark:text-red-400'
-                        : 'text-slate-400',
-                    )}
-                  >
-                    {formatEuros(inv.amount_remaining)}
-                  </TableCell>
-                  <TableCell className="text-sm text-slate-600 dark:text-slate-400">
-                    {inv.due_date ? new Date(inv.due_date).toLocaleDateString('es-ES') : '—'}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      <CobrosFilterBar value={filters} onChange={pushFilters} />
 
-      {data && data.count > 50 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Página {page} de {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!data.previous}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              <ChevronLeft className="h-4 w-4" /> Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!data.next}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Siguiente <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+      <Section
+        title="Indicadores Globales"
+        icon="🌍"
+        subtitle={
+          globalRange?.from && globalRange?.to
+            ? `${globalRange.from} a ${globalRange.to}`
+            : 'Todos los datos'
+        }
+      >
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {g ? (
+            <>
+              {g.facturado}
+              {g.cashCollected}
+              {g.pendientes}
+              {g.ratio}
+            </>
+          ) : (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-48 animate-pulse rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
+              />
+            ))
+          )}
         </div>
-      )}
+      </Section>
+
+      <Section
+        title="Indicadores del Período"
+        icon="📅"
+        subtitle={`${range.from} a ${range.to}`}
+      >
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {rK ? (
+            <>
+              {rK.facturado}
+              {rK.cashCollected}
+              {rK.pendientes}
+              {rK.ratio}
+            </>
+          ) : (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-48 animate-pulse rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
+              />
+            ))
+          )}
+        </div>
+      </Section>
+
+      <Section
+        title="Ciclos Diarios"
+        icon="📆"
+        subtitle={`${cycleRange.from} a ${cycleRange.to}`}
+        actions={<CycleDaysSelector value={cycleDays} onChange={setCycleDays} />}
+      >
+        <div className="space-y-4">
+          <DailyCyclesTable rows={cycles} loading={loading} />
+          {cycles.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <StatusStackedChart rows={cycles} />
+              <SubscriptionMonthChart rows={subMonths} />
+            </div>
+          )}
+        </div>
+      </Section>
     </div>
   );
 }

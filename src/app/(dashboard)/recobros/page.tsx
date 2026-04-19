@@ -1,164 +1,176 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { api } from '@/lib/api';
-import { type MoraTracking, type Paginated } from '@/lib/types';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Search, RefreshCcw } from 'lucide-react';
-import { MoraDetailSheet } from '../mora/mora-detail-sheet';
-import { cn } from '@/lib/utils';
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
-const TERMINAL_STATUSES = ['Incobrable', 'Renegociado', 'Reembolsado', 'Disputa perdida'];
-
-const STATUS_TONE: Record<string, string> = {
-  Incobrable: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
-  Renegociado: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
-  Reembolsado: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-  'Disputa perdida': 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
-};
+import { recobrosApi } from '@/lib/recobros-api';
+import { moraApi } from '@/lib/mora-api';
+import type { MoraRow, Operator } from '@/lib/mora-types';
+import type { ObjecionTag } from '@/lib/clientes-types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MoraFilterHeader, type MoraHardFilters } from '@/components/mora/filter-header';
+import { MoraTable } from '@/components/mora/mora-table';
+import { RecoveryDrawer } from '@/components/recovery/recovery-drawer';
+import { RECOVERY_STATUS_OPTIONS_MORA } from '@/components/recovery/styles';
+import { RecobrosSyncSheetsButton } from '@/components/recobros/sync-sheets-button';
 
 export default function RecobrosPage() {
-  const [data, setData] = useState<Paginated<MoraTracking> | null>(null);
+  const router = useRouter();
+  const sp = useSearchParams();
+
+  // /recobros no tiene filtro de categoría — se fuerza a 'Incobrable' hardcoded
+  // en el MoraTable (aunque el dropdown esté oculto).
+  const filters: MoraHardFilters = {
+    category: 'Incobrable',
+    platform: sp.get('platform') || 'all',
+    dispute_state: sp.get('dispute_state') || 'all',
+  };
+  const page = Math.max(1, Number(sp.get('page')) || 1);
+  const pageSize = Math.max(10, Number(sp.get('limit')) || 50);
+  const search = sp.get('search') || '';
+
+  const [pendingSearch, setPendingSearch] = useState(search);
+  useEffect(() => setPendingSearch(search), [search]);
+
+  const pushParams = useCallback(
+    (next: Partial<{
+      platform: string;
+      dispute_state: string;
+      search: string;
+      page: number;
+      limit: number;
+    }>) => {
+      const q = new URLSearchParams(sp.toString());
+      const merged = {
+        platform: next.platform ?? filters.platform,
+        dispute_state: next.dispute_state ?? filters.dispute_state,
+        search: next.search ?? search,
+        page: next.page ?? page,
+        limit: next.limit ?? pageSize,
+      };
+      for (const [k, v] of Object.entries(merged)) {
+        if (v === '' || v === 'all' || v === undefined || v === null) q.delete(k);
+        else q.set(k, String(v));
+      }
+      router.push(`/recobros${q.toString() ? `?${q}` : ''}`);
+    },
+    [router, sp, filters.platform, filters.dispute_state, search, page, pageSize],
+  );
+
+  const [rows, setRows] = useState<MoraRow[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [debounced, setDebounced] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [operators, setOperators] = useState<Operator[]>([]);
+  const [objecionesCatalog, setObjecionesCatalog] = useState<ObjecionTag[]>([]);
+  const [selected, setSelected] = useState<MoraRow | null>(null);
 
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(search), 300);
-    return () => clearTimeout(t);
-  }, [search]);
-
-  const load = useCallback(() => {
-    const params = new URLSearchParams({ show_all: 'true' });
-    if (debounced) params.set('search', debounced);
-    if (statusFilter !== 'all') params.set('status', statusFilter);
+  const load = useCallback(async () => {
     setLoading(true);
-    api
-      .get<Paginated<MoraTracking>>(`/api/v1/mora-tracking/?${params}`)
-      .then((d) => {
-        // Filtrar solo terminales en cliente (el backend con show_all=true devuelve todo)
-        const filtered = {
-          ...d,
-          results: d.results.filter((m) => TERMINAL_STATUSES.includes(m.status)),
-        };
-        setData(filtered);
-      })
-      .catch(() => toast.error('Error cargando recobros'))
-      .finally(() => setLoading(false));
-  }, [debounced, statusFilter]);
+    try {
+      const data = await recobrosApi.list({
+        search,
+        platform: filters.platform,
+        dispute_state: filters.dispute_state,
+        page,
+        page_size: pageSize,
+      });
+      setRows(data.results);
+      setTotal(data.total_count);
+    } catch {
+      toast.error('Error cargando recobros');
+      setRows([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, filters.platform, filters.dispute_state, page, pageSize]);
 
   useEffect(() => {
     load();
   }, [load]);
 
+  useEffect(() => {
+    moraApi.operators().then((d) => setOperators(d.results)).catch(() => setOperators([]));
+    moraApi.objecionesTags().then((d) => setObjecionesCatalog(d.results)).catch(() => setObjecionesCatalog([]));
+  }, []);
+
+  const handleFilterChange = (next: MoraHardFilters) =>
+    pushParams({
+      platform: next.platform,
+      dispute_state: next.dispute_state,
+      page: 1,
+    });
+  const handleSearch = () => pushParams({ search: pendingSearch, page: 1 });
+  const handleClearSearch = () => {
+    setPendingSearch('');
+    pushParams({ search: '', page: 1 });
+  };
+  const clearFilters = () => {
+    setPendingSearch('');
+    pushParams({ search: '', page: 1 });
+  };
+  const handleRowOpen = (row: MoraRow) => setSelected(row);
+  const handleUpdated = (row: MoraRow) =>
+    setRows((prev) => prev.map((r) => (r.subscription_id === row.subscription_id ? row : r)));
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Recobros</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {data ? `${data.results.length} clientes` : 'Cargando...'} con estados terminales (incobrables, renegociados, reembolsados)
-        </p>
+    <div className="mx-auto max-w-[1800px] space-y-4">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-bold italic tracking-tight">
+            <span className="text-rose-600">🔴</span>
+            Gestión de Recobros
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Seguimiento de clientes críticos y deuda incobrable.
+          </p>
+        </div>
+        <MoraFilterHeader value={filters} onChange={handleFilterChange} hideCategory />
       </header>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre o email..."
-            className="pl-9"
+      <Card className="border-t-4 border-t-rose-500 bg-white/60 shadow-2xl backdrop-blur-xl dark:bg-slate-950/40">
+        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 bg-rose-500/5">
+          <CardTitle className="text-rose-700 dark:text-rose-400">
+            ⚖️ Casos para Departamento de Recobros
+          </CardTitle>
+          <RecobrosSyncSheetsButton />
+        </CardHeader>
+        <CardContent className="p-4">
+          <MoraTable
+            rows={rows}
+            total={total}
+            loading={loading}
+            operators={operators}
+            objecionesCatalog={objecionesCatalog}
+            category="Incobrable"
+            platform={filters.platform}
+            disputeState={filters.dispute_state}
+            search={search}
+            pendingSearch={pendingSearch}
+            onPendingSearchChange={setPendingSearch}
+            onSearch={handleSearch}
+            onClearSearch={handleClearSearch}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={(p) => pushParams({ page: p })}
+            onPageSizeChange={(s) => pushParams({ limit: s, page: 1 })}
+            onRowOpen={handleRowOpen}
+            onClearFilters={clearFilters}
+            mode="recobros"
           />
-        </div>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v || 'all')}>
-          <SelectTrigger className="w-full sm:w-56">
-            <SelectValue placeholder="Estado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los terminales</SelectItem>
-            {TERMINAL_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        </CardContent>
+      </Card>
 
-      <div className="rounded-lg border border-slate-200 bg-background dark:border-slate-800">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Contactado por</TableHead>
-              <TableHead>Fecha</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading && !data && (
-              <TableRow>
-                <TableCell colSpan={4}>
-                  <Skeleton className="h-5 w-full" />
-                </TableCell>
-              </TableRow>
-            )}
-            {data?.results.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="py-16 text-center">
-                  <div className="flex flex-col items-center gap-2 text-slate-500">
-                    <RefreshCcw className="h-10 w-10" />
-                    <p>Sin recobros con esos filtros</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-            {data?.results.map((m) => (
-              <TableRow key={m.id} className="cursor-pointer" onClick={() => setSelectedId(m.id)}>
-                <TableCell>
-                  <div className="font-medium">{m.customer_name || '—'}</div>
-                  <div className="text-xs text-slate-500">{m.customer_email}</div>
-                </TableCell>
-                <TableCell>
-                  <Badge className={cn('font-medium', STATUS_TONE[m.status])}>{m.status}</Badge>
-                </TableCell>
-                <TableCell className="text-slate-600 dark:text-slate-400">
-                  {m.contacted_by_name || '—'}
-                </TableCell>
-                <TableCell className="text-slate-600 dark:text-slate-400 text-sm">
-                  {new Date(m.updated_at).toLocaleDateString('es-ES')}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <MoraDetailSheet
-        trackingId={selectedId}
-        open={!!selectedId}
-        onClose={() => setSelectedId(null)}
-        onUpdate={load}
+      <RecoveryDrawer
+        mode="mora"
+        api={moraApi}
+        statusOptions={RECOVERY_STATUS_OPTIONS_MORA}
+        row={selected}
+        operators={operators}
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        onUpdated={handleUpdated}
       />
     </div>
   );

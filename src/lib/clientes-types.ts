@@ -1,0 +1,131 @@
+// Tipos del directorio operativo /clientes.
+// NO mezclar con el CRUD legacy de src/lib/types.ts (Customer, CustomerDetail).
+
+export type AgingCategory =
+  | 'Full pay'
+  | 'Al día'
+  | 'Abiertas'
+  | 'Vencidas'
+  | 'Crónicas'
+  | 'Incobrable';
+
+export type Platform = 'stripe' | 'whop' | 'whop-erp';
+
+export type DisputeState = 'open' | 'won' | 'lost';
+
+export type SubscriptionStatus =
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+  | 'trialing'
+  | 'drafted';
+
+export type RecoveryStatus =
+  | 'Pendiente'
+  | 'Contactado'
+  | 'Promesa Pago'
+  | 'RENEGOCIADO'
+  | 'Recuperado'
+  | 'PAGOS COMPLETADOS'
+  | 'REEMBOLSADO'
+  | 'DISPUTA PERDIDA'
+  | 'Incobrable';
+
+export interface ObjecionTag {
+  id: string;
+  name: string;
+  bg_color: string;
+  text_color: string;
+}
+
+export interface ClienteRow {
+  subscription_id: string;
+  customer_id: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  platform: Platform;
+  subscription_status: SubscriptionStatus | string;
+  subscription_created_at: string;
+  pause_collection: { resumes_at: string | null } | null;
+  days_overdue: number;
+  paid_invoices_count: number;
+  unpaid_invoices_count: number;
+  unpaid_invoices_total: number;
+  category: AgingCategory | string;
+  open_disputes: number;
+  won_disputes: number;
+  lost_disputes: number;
+  recovery_status: RecoveryStatus | string | null;
+  recovery_contacted_by: string;
+  recovery_comment_1: string;
+  recovery_comment_2: string;
+  recovery_continue_with: string;
+  recovery_locked_by: string | null;
+  recovery_lock_expires_at: string | null;
+  retry_count: number;
+  last_retry_status: 'SUCCESS' | 'FAILURE' | null;
+  is_refinanced: boolean;
+  original_subscription_id: string | null;
+  refinance_status: string | null;
+  total_count: number;
+
+  // Campos enriquecidos por el backend (presentes tanto en /clientes como
+  // en /mora aunque /clientes no los pinta todos).
+  product_name?: string | null;
+  mentor_name?: string | null;
+  mentorship_comment?: string;
+  paid_count?: number;
+  paid_total?: number;
+  unpaid_total?: number;
+  total_contract_value?: number;
+  remaining_contract?: number;
+  is_action_needed?: boolean;
+  oldest_invoice_date?: string | null;
+  recovery_updated_at?: string | null;
+  objeciones_tags?: ObjecionTag[];
+  dni?: string | null;
+  address?: string | null;
+  /** En /mora: puede ser 'needs_response' | 'under_review' | null. */
+  dispute_kind?: 'needs_response' | 'under_review' | null;
+}
+
+export interface ClientesListResponse {
+  results: ClienteRow[];
+  total_count: number;
+  page: number;
+  page_size: number;
+}
+
+export interface Operator {
+  id: string;
+  display_name: string;
+  email: string;
+}
+
+export interface ActionLogEntry {
+  id: string;
+  subscription_id: string;
+  customer_id: string;
+  platform: string;
+  action_type: string;
+  status: 'SUCCESS' | 'FAILURE' | 'NEUTRAL' | 'PAID' | string;
+  performed_by: string;
+  result_payload: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface FailedPayment {
+  id: string;
+  amount: number;
+  currency: string;
+  attempt_count: number;
+  last_error: string;
+  failed_at: string;
+}
+
+export interface LockResult {
+  locked: boolean;
+  locked_by: string | null;
+  expires_at: string | null;
+}

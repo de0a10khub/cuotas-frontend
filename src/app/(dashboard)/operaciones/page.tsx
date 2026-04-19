@@ -1,151 +1,218 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Legend,
-} from 'recharts';
-import { api } from '@/lib/api';
-import { formatPercent } from '@/lib/format';
-import { KpiCard } from '@/components/kpi-card';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Briefcase, RefreshCcw, Users } from 'lucide-react';
-import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import {
+  dashboardsApi,
+  type CohortDefaultRow,
+  type OperationalKpis,
+} from '@/lib/dashboards-api';
 
-interface OperacionesData {
-  cohorts: { cohort: string; total: number; defaulted: number; default_rate: number }[];
-  refinance_customers: number;
-  refinance_rate: number;
-  total_customers: number;
+function fmtMonth(iso: string): string {
+  try {
+    const d = new Date(iso);
+    const mes = d.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '');
+    const year = String(d.getFullYear()).slice(2);
+    return `${mes} ${year}`;
+  } catch {
+    return iso;
+  }
 }
 
 export default function OperacionesPage() {
-  const [data, setData] = useState<OperacionesData | null>(null);
+  const [kpis, setKpis] = useState<OperationalKpis | null>(null);
+  const [cohorts, setCohorts] = useState<CohortDefaultRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get<OperacionesData>('/api/v1/operaciones/')
-      .then(setData)
+    Promise.all([dashboardsApi.operaciones.kpis(), dashboardsApi.operaciones.cohorts()])
+      .then(([k, c]) => {
+        setKpis(k);
+        setCohorts(c.results);
+      })
       .catch(() => toast.error('Error cargando operaciones'))
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-[1400px] space-y-4">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Operaciones</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Cohort default rate y clientes refinanciados
+        <h1 className="text-2xl font-bold">Operaciones</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Refinanciaciones, duplicados y operaciones especiales
         </p>
       </header>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      {/* 4 KPIs */}
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Clientes totales"
-          value={data?.total_customers ?? (loading ? '...' : '—')}
-          icon={Users}
-          tone="default"
-          sentiment="neutral"
+          emoji="🔁"
+          title="Refinanciaciones (30d)"
+          value={loading ? '—' : String(kpis?.refinanciaciones_30d ?? 0)}
+          sublabel={
+            loading
+              ? ''
+              : `Ratio: ${kpis?.ratio_refinanciacion_pct ?? 0}%`
+          }
+          loading={loading}
         />
         <KpiCard
-          label="Refinanciados"
-          value={data?.refinance_customers ?? (loading ? '...' : '—')}
-          hint="Clientes con >1 compra"
-          icon={RefreshCcw}
-          tone="default"
-          sentiment="neutral"
+          emoji="🔂"
+          title="Duplicados (30d)"
+          value={loading ? '—' : String(kpis?.duplicados_30d ?? 0)}
+          sublabel={
+            loading ? '' : `Total histórico: ${kpis?.duplicados_total ?? 0}`
+          }
+          loading={loading}
         />
         <KpiCard
-          label="Refinance rate"
-          value={data ? formatPercent(data.refinance_rate) : loading ? '...' : '—'}
-          hint="% clientes que recompran"
-          icon={Briefcase}
-          tone="default"
-          sentiment={data && data.refinance_rate > 20 ? 'positive' : 'neutral'}
+          emoji="🎁"
+          title="Bonuses (30d)"
+          value={loading ? '—' : String(kpis?.bonuses_30d ?? 0)}
+          loading={loading}
         />
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/40 dark:to-emerald-900/20">
+          <CardContent className="p-4">
+            <p className="text-xs font-medium text-muted-foreground">✅ Status</p>
+            <p className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              Operando Normal
+            </p>
+          </CardContent>
+        </Card>
       </section>
 
+      {/* Cohort default rate */}
       <Card>
         <CardHeader>
-          <CardTitle>Cohort default rate (últimos 12 meses)</CardTitle>
+          <CardTitle className="text-base">📈 Default Rate por Cohorte</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Porcentaje de impagos por mes de alta
+          </p>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <Skeleton className="h-72 w-full" />
-          ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={data?.cohorts}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-800" />
-                <XAxis dataKey="cohort" className="text-xs" />
-                <YAxis
-                  yAxisId="left"
-                  className="text-xs"
-                  label={{ value: '%', angle: -90, position: 'insideLeft' }}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  className="text-xs"
-                  allowDecimals={false}
-                  label={{ value: 'compras', angle: 90, position: 'insideRight' }}
-                />
-                <Tooltip />
-                <Legend />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="default_rate"
-                  name="Default rate (%)"
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="total"
-                  name="Compras"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          {loading && (
+            <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 w-full" />
+              ))}
+            </div>
+          )}
+          {!loading && cohorts.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No hay datos de cohorte disponibles
+            </p>
+          )}
+          {!loading && cohorts.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
+              {cohorts.map((c) => {
+                const tone =
+                  c.default_rate_pct > 15
+                    ? 'bg-red-100 dark:bg-red-900/20'
+                    : c.default_rate_pct > 5
+                      ? 'bg-yellow-100 dark:bg-yellow-900/20'
+                      : 'bg-green-100 dark:bg-green-900/20';
+                return (
+                  <div
+                    key={c.cohorte_mes}
+                    className={cn('rounded-md p-3 text-center', tone)}
+                  >
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {fmtMonth(c.cohorte_mes)}
+                    </p>
+                    <p className="mt-1 text-3xl font-black tabular-nums">
+                      {c.default_rate_pct}%
+                    </p>
+                    <p className="text-[10px] text-muted-foreground tabular-nums">
+                      {c.compras_overdue}/{c.compras_total}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Compras por cohorte</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <Skeleton className="h-64 w-full" />
-          ) : (
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={data?.cohorts}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-800" />
-                <XAxis dataKey="cohort" className="text-xs" />
-                <YAxis className="text-xs" allowDecimals={false} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="total" name="Total compras" fill="#10b981" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="defaulted" name="Con default" fill="#ef4444" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </CardContent>
-      </Card>
+      {/* Info cards */}
+      <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">🔁 Refinanciación</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-xs text-muted-foreground">
+            <p>Una refinanciación ocurre cuando un cliente solicita modificar su plan de pagos.</p>
+            <div>
+              <p className="font-medium text-foreground">El proceso incluye:</p>
+              <ul className="ml-4 list-disc space-y-0.5">
+                <li>Cancelar la suscripción actual</li>
+                <li>Crear una nueva suscripción con nuevos términos</li>
+                <li>
+                  Marcar el segmento original como{' '}
+                  <code className="rounded bg-muted px-1 text-[10px]">paused_by_refinance</code>
+                </li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">🔂 Duplicados</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-xs text-muted-foreground">
+            <p>
+              Los duplicados se detectan cuando un cliente tiene múltiples compras del mismo
+              producto.
+            </p>
+            <div>
+              <p className="font-medium text-foreground">El proceso de merge:</p>
+              <ul className="ml-4 list-disc space-y-0.5">
+                <li>Consolidar en una única Purchase</li>
+                <li>
+                  Marcar segmentos duplicados con{' '}
+                  <code className="rounded bg-muted px-1 text-[10px]">paused_by_support</code>
+                </li>
+                <li>Excluir del balance los duplicados</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
     </div>
+  );
+}
+
+function KpiCard({
+  emoji,
+  title,
+  value,
+  sublabel,
+  loading,
+}: {
+  emoji: string;
+  title: string;
+  value: string;
+  sublabel?: string;
+  loading?: boolean;
+}) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <p className="text-xs font-medium text-muted-foreground">
+          {emoji} {title}
+        </p>
+        {loading ? (
+          <Skeleton className="mt-1 h-8 w-20" />
+        ) : (
+          <>
+            <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight">{value}</p>
+            {sublabel && <p className="mt-0.5 text-xs text-muted-foreground">{sublabel}</p>}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

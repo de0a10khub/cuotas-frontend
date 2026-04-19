@@ -1,12 +1,24 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { api } from '@/lib/api';
-import { formatEuros } from '@/lib/format';
-import type { MentorTeam, Paginated, ProductCatalog } from '@/lib/types';
-import { Input } from '@/components/ui/input';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -22,314 +34,447 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Label } from '@/components/ui/label';
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Plus, Package, Loader2, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+  Check,
+  Edit2,
+  Plus,
+  RefreshCcw,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
-const BILLING_LABELS = {
-  one_time: 'Pago único',
-  recurring: 'Recurrente',
-  installments: 'Cuotas',
-} as const;
+import { catalogApi, type CatalogProduct } from '@/lib/catalog-api';
+import { empleadosApi } from '@/lib/empleados-api';
+import type { MentorTeam } from '@/lib/empleados-types';
+import { cn } from '@/lib/utils';
 
-const PLATFORM_COLOR: Record<string, string> = {
-  stripe: 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300',
-  whop: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
-};
+const BILLING_OPTIONS = [
+  { value: 'financing', label: 'Financiación' },
+  { value: 'subscription', label: 'Suscripción' },
+  { value: 'one_time', label: 'Pago único' },
+];
 
-type FormData = {
-  nombre: string;
-  platform: 'stripe' | 'whop';
-  external_id: string;
-  billing_type: 'one_time' | 'recurring' | 'installments';
-  total_contract_value: string;
-  currency: string;
-  mentor_team: string;
-  activo: boolean;
-};
-
-const emptyForm: FormData = {
-  nombre: '',
-  platform: 'stripe',
-  external_id: '',
-  billing_type: 'installments',
-  total_contract_value: '',
-  currency: 'EUR',
-  mentor_team: '',
-  activo: true,
-};
+function formatCurrency(n: number): string {
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(n || 0);
+}
 
 export default function CatalogoPage() {
-  const [data, setData] = useState<Paginated<ProductCatalog> | null>(null);
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [teams, setTeams] = useState<MentorTeam[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState('');
-  const [debounced, setDebounced] = useState('');
-  const [platform, setPlatform] = useState('all');
-  const [editing, setEditing] = useState<ProductCatalog | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [platform, setPlatform] = useState<'all' | 'stripe' | 'whop'>('all');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<Partial<CatalogProduct>>({});
 
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(search), 300);
-    return () => clearTimeout(t);
-  }, [search]);
-
-  useEffect(() => {
-    api.get<Paginated<MentorTeam>>('/api/v1/mentor-teams/').then((d) => setTeams(d.results));
-  }, []);
-
-  const load = useCallback(() => {
-    const params = new URLSearchParams();
-    if (debounced) params.set('search', debounced);
-    if (platform !== 'all') params.set('platform', platform);
+  const load = useCallback(async () => {
     setLoading(true);
-    api
-      .get<Paginated<ProductCatalog>>(`/api/v1/productos/?${params}`)
-      .then(setData)
-      .catch(() => toast.error('Error cargando catálogo'))
-      .finally(() => setLoading(false));
-  }, [debounced, platform]);
+    try {
+      const r = await catalogApi.list();
+      setProducts(r.results);
+    } catch {
+      toast.error('Error cargando catálogo');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     load();
+    empleadosApi
+      .listTeams()
+      .then((d) => setTeams(d.results))
+      .catch(() => setTeams([]));
   }, [load]);
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return products.filter((p) => {
+      if (platform !== 'all' && p.platform !== platform) return false;
+      if (q) {
+        const hay =
+          (p.external_name || '').toLowerCase().includes(q) ||
+          (p.external_identifier || '').toLowerCase().includes(q);
+        if (!hay) return false;
+      }
+      return true;
+    });
+  }, [products, search, platform]);
+
+  const teamName = useCallback(
+    (id: string | null) => teams.find((t) => t.id === id)?.name || 'N/A',
+    [teams],
+  );
+
+  const sync = async () => {
+    setSyncing(true);
+    try {
+      const r = await catalogApi.syncMissing();
+      toast.success(r.message);
+      await load();
+    } catch {
+      toast.error('Error sincronizando');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const startEdit = (p: CatalogProduct) => {
+    setEditingId(p.id);
+    setEditDraft({
+      total_contract_value: p.total_contract_value,
+      product_group: p.product_group,
+      mentor_team_id: p.mentor_team_id,
+    });
+  };
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditDraft({});
+  };
+  const saveEdit = async (id: string) => {
+    try {
+      const updated = await catalogApi.update(id, editDraft);
+      setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+      toast.success('Producto actualizado');
+      cancelEdit();
+    } catch {
+      toast.error('Error al guardar');
+    }
+  };
+
+  const toggleFlag = async (
+    p: CatalogProduct,
+    field: 'has_mentorship' | 'has_refinancing' | 'has_amortization',
+  ) => {
+    try {
+      const updated = await catalogApi.update(p.id, { [field]: !p[field] });
+      setProducts((prev) => prev.map((x) => (x.id === p.id ? updated : x)));
+    } catch {
+      toast.error('Error actualizando flag');
+    }
+  };
+
+  const remove = async (p: CatalogProduct) => {
+    if (!confirm('¿Estás seguro de eliminar este producto del catálogo?')) return;
+    try {
+      await catalogApi.remove(p.id);
+      setProducts((prev) => prev.filter((x) => x.id !== p.id));
+      toast.success('Producto eliminado');
+    } catch {
+      toast.error('Error al eliminar');
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Catálogo de productos</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {data ? `${data.count} productos configurados` : 'Cargando...'}
-          </p>
+    <div className="mx-auto max-w-[1600px] space-y-4">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold tracking-tight">Catálogo de Productos</h1>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={sync} disabled={syncing}>
+            <RefreshCcw className={cn('h-4 w-4', syncing && 'animate-spin')} />
+            Sincronizar Productos
+          </Button>
+          <AddProductDialog teams={teams} onCreated={load} />
         </div>
-        <Button onClick={() => setCreating(true)}>
-          <Plus className="h-4 w-4" />
-          Nuevo producto
-        </Button>
       </header>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre o external ID..."
-            className="pl-9"
-          />
-        </div>
-        <Select value={platform} onValueChange={(v) => setPlatform(v || 'all')}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las plataformas</SelectItem>
-            <SelectItem value="stripe">Stripe</SelectItem>
-            <SelectItem value="whop">Whop</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Card>
+        <CardContent className="flex flex-wrap items-center gap-2 p-3">
+          <div className="relative min-w-64 flex-1">
+            <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <Input
+              placeholder="Buscar por nombre o ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 pl-7"
+            />
+          </div>
+          <Select
+            value={platform}
+            onValueChange={(v) => setPlatform((v as 'all' | 'stripe' | 'whop') || 'all')}
+          >
+            <SelectTrigger className="h-8 w-36" size="sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="stripe">Stripe</SelectItem>
+              <SelectItem value="whop">Whop</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground">
+            {filtered.length} producto{filtered.length === 1 ? '' : 's'}
+          </span>
+        </CardContent>
+      </Card>
 
-      <div className="rounded-lg border border-slate-200 bg-background dark:border-slate-800">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Producto</TableHead>
-              <TableHead>Plataforma</TableHead>
-              <TableHead>Facturación</TableHead>
-              <TableHead className="text-right">Contrato total</TableHead>
-              <TableHead>Equipo</TableHead>
-              <TableHead>Estado</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading && !data && (
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-base">Productos registrados</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6}>
-                  <Skeleton className="h-5 w-full" />
-                </TableCell>
+                <TableHead>Plataforma</TableHead>
+                <TableHead>Producto</TableHead>
+                <TableHead className="text-right">Valor Contrato</TableHead>
+                <TableHead>Grupo</TableHead>
+                <TableHead>Tipo Facturación</TableHead>
+                <TableHead className="text-center">Mentoría</TableHead>
+                <TableHead>Equipo Mentor</TableHead>
+                <TableHead className="text-center">Refin.</TableHead>
+                <TableHead className="text-center">Amortiz.</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
-            )}
-            {data?.results.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="py-16 text-center">
-                  <div className="flex flex-col items-center gap-2 text-slate-500">
-                    <Package className="h-10 w-10" />
-                    <p>Sin productos</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-            {data?.results.map((p) => (
-              <TableRow key={p.id} className="cursor-pointer" onClick={() => setEditing(p)}>
-                <TableCell>
-                  <div className="font-medium">{p.nombre}</div>
-                  <div className="text-xs text-slate-500 font-mono">{p.external_id}</div>
-                </TableCell>
-                <TableCell>
-                  <Badge className={cn('font-medium', PLATFORM_COLOR[p.platform])}>
-                    {p.platform}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{BILLING_LABELS[p.billing_type]}</Badge>
-                </TableCell>
-                <TableCell className="text-right font-medium text-emerald-600 dark:text-emerald-400">
-                  {formatEuros(p.total_contract_value)}
-                </TableCell>
-                <TableCell className="text-slate-600 dark:text-slate-400">
-                  {p.mentor_team_nombre || '—'}
-                </TableCell>
-                <TableCell>
-                  {p.activo ? (
-                    <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                      Activo
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">Inactivo</Badge>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {loading &&
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={`sk-${i}`}>
+                    {Array.from({ length: 10 }).map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton className="h-4 w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
 
-      <ProductoDialog
-        producto={editing}
-        open={!!editing}
-        onClose={() => setEditing(null)}
-        onSaved={() => {
-          setEditing(null);
-          load();
-        }}
-        teams={teams}
-      />
+              {!loading && filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={10} className="py-10 text-center text-sm text-muted-foreground">
+                    Sin productos con esos filtros.
+                  </TableCell>
+                </TableRow>
+              )}
 
-      <ProductoDialog
-        producto={null}
-        open={creating}
-        onClose={() => setCreating(false)}
-        onSaved={() => {
-          setCreating(false);
-          load();
-        }}
-        teams={teams}
-      />
+              {!loading &&
+                filtered.map((p) => {
+                  const isEditing = editingId === p.id;
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell>
+                        <Badge variant={p.platform === 'stripe' ? 'default' : 'secondary'}>
+                          {p.platform}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-bold">{p.external_name || '—'}</div>
+                        <div className="font-mono text-[10px] text-muted-foreground">
+                          {p.external_identifier}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {isEditing ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <Input
+                              type="number"
+                              value={editDraft.total_contract_value ?? p.total_contract_value}
+                              onChange={(e) =>
+                                setEditDraft({
+                                  ...editDraft,
+                                  total_contract_value: Number(e.target.value) || 0,
+                                })
+                              }
+                              className="h-7 w-24 text-right"
+                            />
+                            <Button size="icon-sm" variant="ghost" onClick={() => saveEdit(p.id)}>
+                              <Check className="h-3.5 w-3.5 text-emerald-600" />
+                            </Button>
+                            <Button size="icon-sm" variant="ghost" onClick={cancelEdit}>
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        ) : (
+                          formatCurrency(p.total_contract_value)
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <Input
+                            value={editDraft.product_group ?? p.product_group ?? ''}
+                            onChange={(e) =>
+                              setEditDraft({ ...editDraft, product_group: e.target.value || null })
+                            }
+                            className="h-7"
+                          />
+                        ) : p.product_group ? (
+                          <Badge variant="secondary">{p.product_group}</Badge>
+                        ) : (
+                          <span className="text-xs italic text-muted-foreground">Sin Grupo</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[10px]">
+                          {BILLING_OPTIONS.find((o) => o.value === p.billing_type)?.label ||
+                            p.billing_type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <input
+                          type="checkbox"
+                          checked={p.has_mentorship}
+                          onChange={() => toggleFlag(p, 'has_mentorship')}
+                          className="h-4 w-4 cursor-pointer accent-primary"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <Select
+                            value={editDraft.mentor_team_id ?? p.mentor_team_id ?? '__none__'}
+                            onValueChange={(v) =>
+                              setEditDraft({
+                                ...editDraft,
+                                mentor_team_id: v === '__none__' ? null : v,
+                              })
+                            }
+                          >
+                            <SelectTrigger className="h-7 w-36" size="sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">Sin equipo</SelectItem>
+                              {teams.map((t) => (
+                                <SelectItem key={t.id} value={t.id}>
+                                  {t.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            {teamName(p.mentor_team_id)}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <input
+                          type="checkbox"
+                          checked={p.has_refinancing}
+                          onChange={() => toggleFlag(p, 'has_refinancing')}
+                          className="h-4 w-4 cursor-pointer accent-primary"
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <input
+                          type="checkbox"
+                          checked={p.has_amortization}
+                          onChange={() => toggleFlag(p, 'has_amortization')}
+                          className="h-4 w-4 cursor-pointer accent-primary"
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {!isEditing && (
+                          <>
+                            <Button size="icon-sm" variant="ghost" onClick={() => startEdit(p)}>
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              onClick={() => remove(p)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-function ProductoDialog({
-  producto,
-  open,
-  onClose,
-  onSaved,
+function AddProductDialog({
   teams,
+  onCreated,
 }: {
-  producto: ProductCatalog | null;
-  open: boolean;
-  onClose: () => void;
-  onSaved: () => void;
   teams: MentorTeam[];
+  onCreated: () => void;
 }) {
-  const [form, setForm] = useState<FormData>(emptyForm);
+  const [open, setOpen] = useState(false);
+  const [platform, setPlatform] = useState<'stripe' | 'whop'>('stripe');
+  const [externalId, setExternalId] = useState('');
+  const [externalName, setExternalName] = useState('');
+  const [totalValue, setTotalValue] = useState<number>(0);
+  const [billingType, setBillingType] = useState('one_time');
+  const [productGroup, setProductGroup] = useState('');
+  const [mentorTeamId, setMentorTeamId] = useState<string | null>(null);
+  const [flags, setFlags] = useState({ mentor: false, refin: false, amort: false });
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const editing = !!producto;
 
-  useEffect(() => {
-    if (producto) {
-      setForm({
-        nombre: producto.nombre,
-        platform: producto.platform,
-        external_id: producto.external_id,
-        billing_type: producto.billing_type,
-        total_contract_value: producto.total_contract_value,
-        currency: producto.currency,
-        mentor_team: producto.mentor_team || '',
-        activo: producto.activo,
-      });
-    } else {
-      setForm(emptyForm);
+  const reset = () => {
+    setPlatform('stripe');
+    setExternalId('');
+    setExternalName('');
+    setTotalValue(0);
+    setBillingType('one_time');
+    setProductGroup('');
+    setMentorTeamId(null);
+    setFlags({ mentor: false, refin: false, amort: false });
+  };
+
+  const submit = async () => {
+    if (!externalId.trim()) {
+      toast.error('external_identifier requerido');
+      return;
     }
-  }, [producto, open]);
-
-  const update = <K extends keyof FormData>(key: K, value: FormData[K]) =>
-    setForm((f) => ({ ...f, [key]: value }));
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
     setSaving(true);
-    const payload: Record<string, unknown> = {
-      ...form,
-      mentor_team: form.mentor_team || null,
-    };
     try {
-      if (editing) {
-        await api.patch(`/api/v1/productos/${producto.id}/`, payload);
-        toast.success('Producto actualizado');
-      } else {
-        await api.post('/api/v1/productos/', payload);
-        toast.success('Producto creado');
-      }
-      onSaved();
-    } catch {
-      toast.error('Error al guardar');
+      await catalogApi.create({
+        platform,
+        external_identifier: externalId.trim(),
+        external_name: externalName.trim() || null,
+        total_contract_value: totalValue,
+        billing_type: billingType as CatalogProduct['billing_type'],
+        has_mentorship: flags.mentor,
+        has_refinancing: flags.refin,
+        has_amortization: flags.amort,
+        product_group: productGroup.trim() || null,
+        mentor_team_id: mentorTeamId,
+      });
+      toast.success('Producto creado');
+      reset();
+      setOpen(false);
+      onCreated();
+    } catch (err) {
+      toast.error((err as { data?: { detail?: string } })?.data?.detail || 'Error al crear');
     } finally {
       setSaving(false);
     }
   };
 
-  const remove = async () => {
-    if (!producto) return;
-    if (!confirm(`¿Eliminar producto "${producto.nombre}"?`)) return;
-    setDeleting(true);
-    try {
-      await api.delete(`/api/v1/productos/${producto.id}/`);
-      toast.success('Producto eliminado');
-      onSaved();
-    } catch {
-      toast.error('Error al eliminar');
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger
+        render={
+          <Button size="sm">
+            <Plus className="h-4 w-4" />
+            Añadir Producto
+          </Button>
+        }
+      />
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{editing ? 'Editar producto' : 'Nuevo producto'}</DialogTitle>
+          <DialogTitle>Añadir producto</DialogTitle>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="nombre">Nombre *</Label>
-            <Input
-              id="nombre"
-              value={form.nombre}
-              onChange={(e) => update('nombre', e.target.value)}
-              required
-            />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label>Plataforma *</Label>
-              <Select
-                value={form.platform}
-                onValueChange={(v) => v && update('platform', v as 'stripe' | 'whop')}
-              >
-                <SelectTrigger>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Plataforma">
+              <Select value={platform} onValueChange={(v) => setPlatform((v as 'stripe' | 'whop') || 'stripe')}>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -337,95 +482,115 @@ function ProductoDialog({
                   <SelectItem value="whop">Whop</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="external_id">External ID *</Label>
-              <Input
-                id="external_id"
-                value={form.external_id}
-                onChange={(e) => update('external_id', e.target.value)}
-                placeholder="prod_xxx / whop_xxx"
-                required
-              />
-            </div>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label>Facturación</Label>
-              <Select
-                value={form.billing_type}
-                onValueChange={(v) =>
-                  v && update('billing_type', v as FormData['billing_type'])
-                }
-              >
-                <SelectTrigger>
+            </Field>
+            <Field label="Tipo facturación">
+              <Select value={billingType} onValueChange={(v) => setBillingType(v || 'one_time')}>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="one_time">Pago único</SelectItem>
-                  <SelectItem value="recurring">Recurrente</SelectItem>
-                  <SelectItem value="installments">Cuotas</SelectItem>
+                  {BILLING_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="value">Valor contrato (€)</Label>
-              <Input
-                id="value"
-                type="number"
-                step="0.01"
-                value={form.total_contract_value}
-                onChange={(e) => update('total_contract_value', e.target.value)}
-                required
-              />
-            </div>
+            </Field>
           </div>
-          <div className="space-y-1.5">
-            <Label>Equipo mentor</Label>
+          <Field label="External ID">
+            <Input
+              value={externalId}
+              onChange={(e) => setExternalId(e.target.value)}
+              placeholder="price_XXX / plan_YYY"
+            />
+          </Field>
+          <Field label="Nombre producto">
+            <Input
+              value={externalName}
+              onChange={(e) => setExternalName(e.target.value)}
+              placeholder="Ej: Master Trading 2026"
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Valor contrato (€)">
+              <Input
+                type="number"
+                value={totalValue}
+                onChange={(e) => setTotalValue(Number(e.target.value) || 0)}
+              />
+            </Field>
+            <Field label="Grupo">
+              <Input
+                value={productGroup}
+                onChange={(e) => setProductGroup(e.target.value)}
+                placeholder="Ej: Mentoría"
+              />
+            </Field>
+          </div>
+          <Field label="Equipo mentor">
             <Select
-              value={form.mentor_team || 'none'}
-              onValueChange={(v) => update('mentor_team', !v || v === 'none' ? '' : v)}
+              value={mentorTeamId || '__none__'}
+              onValueChange={(v) => setMentorTeamId(v === '__none__' ? null : v)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Sin asignar" />
+              <SelectTrigger className="w-full">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Sin asignar</SelectItem>
+                <SelectItem value="__none__">Sin equipo</SelectItem>
                 {teams.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
-                    {t.nombre}
+                    {t.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </Field>
+          <div className="flex flex-wrap gap-3 rounded-md border border-slate-200 p-2 dark:border-slate-800">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={flags.mentor}
+                onChange={(e) => setFlags({ ...flags, mentor: e.target.checked })}
+              />
+              Tiene mentoría
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={flags.refin}
+                onChange={(e) => setFlags({ ...flags, refin: e.target.checked })}
+              />
+              Refinanciación
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={flags.amort}
+                onChange={(e) => setFlags({ ...flags, amort: e.target.checked })}
+              />
+              Amortización
+            </label>
           </div>
-          <DialogFooter className="flex-row justify-between sm:justify-between">
-            {editing ? (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={remove}
-                disabled={deleting || saving}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
-              >
-                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                Eliminar
-              </Button>
-            ) : (
-              <span />
-            )}
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Guardar
-              </Button>
-            </div>
-          </DialogFooter>
-        </form>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={submit} disabled={saving}>
+            {saving ? 'Creando...' : 'Crear producto'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
+      {children}
+    </label>
   );
 }

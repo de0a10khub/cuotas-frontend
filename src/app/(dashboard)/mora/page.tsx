@@ -1,190 +1,190 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { api } from '@/lib/api';
-import { MORA_STATUSES, type MoraTracking, type Paginated } from '@/lib/types';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Search, AlertTriangle, Lock, LockOpen } from 'lucide-react';
-import { MoraDetailSheet } from './mora-detail-sheet';
-import { cn } from '@/lib/utils';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
-const STATUS_TONE: Record<string, string> = {
-  'Al Dia': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-  Recuperame: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
-  Critico: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300',
-  Incobrable: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
-  Recuperado: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-  Renegociado: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
-  Reembolsado: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-  'Pagos completados': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-  'Disputa perdida': 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
-};
+import { moraApi } from '@/lib/mora-api';
+import type { MoraRow, Operator } from '@/lib/mora-types';
+import type { ObjecionTag } from '@/lib/clientes-types';
+import { Card, CardContent } from '@/components/ui/card';
+import { MoraFilterHeader, type MoraHardFilters } from '@/components/mora/filter-header';
+import { MoraTable } from '@/components/mora/mora-table';
+import { RecoveryDrawer } from '@/components/recovery/recovery-drawer';
+import { RECOVERY_STATUS_OPTIONS_MORA } from '@/components/recovery/styles';
 
 export default function MoraPage() {
-  const [data, setData] = useState<Paginated<MoraTracking> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [debounced, setDebounced] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const router = useRouter();
+  const sp = useSearchParams();
 
+  const filters: MoraHardFilters = {
+    category: sp.get('category') || 'all',
+    platform: sp.get('platform') || 'all',
+    dispute_state: sp.get('dispute_state') || 'all',
+  };
+  const page = Math.max(1, Number(sp.get('page')) || 1);
+  const pageSize = Math.max(10, Number(sp.get('limit')) || 50);
+  const search = sp.get('search') || '';
+
+  const [pendingSearch, setPendingSearch] = useState(search);
+  useEffect(() => setPendingSearch(search), [search]);
+
+  // /mora usa debounce 500ms + mínimo 3 chars (a diferencia de /clientes que es Enter).
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(search), 300);
+    const cleaned = pendingSearch.trim();
+    if (cleaned === search) return;
+    const t = setTimeout(() => {
+      if (cleaned.length >= 3 || cleaned === '') {
+        pushParams({ search: cleaned, page: 1 });
+      }
+    }, 500);
     return () => clearTimeout(t);
-  }, [search]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingSearch]);
 
-  const load = useCallback(() => {
-    const params = new URLSearchParams();
-    if (debounced) params.set('search', debounced);
-    if (statusFilter !== 'all') params.set('status', statusFilter);
+  const pushParams = useCallback(
+    (next: Partial<{
+      category: string;
+      platform: string;
+      dispute_state: string;
+      search: string;
+      page: number;
+      limit: number;
+    }>) => {
+      const q = new URLSearchParams(sp.toString());
+      const merged = {
+        category: next.category ?? filters.category,
+        platform: next.platform ?? filters.platform,
+        dispute_state: next.dispute_state ?? filters.dispute_state,
+        search: next.search ?? search,
+        page: next.page ?? page,
+        limit: next.limit ?? pageSize,
+      };
+      for (const [k, v] of Object.entries(merged)) {
+        if (v === '' || v === 'all' || v === undefined || v === null) q.delete(k);
+        else q.set(k, String(v));
+      }
+      router.push(`/mora${q.toString() ? `?${q}` : ''}`);
+    },
+    [router, sp, filters.category, filters.platform, filters.dispute_state, search, page, pageSize],
+  );
+
+  const [rows, setRows] = useState<MoraRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [operators, setOperators] = useState<Operator[]>([]);
+  const [objecionesCatalog, setObjecionesCatalog] = useState<ObjecionTag[]>([]);
+  const [selected, setSelected] = useState<MoraRow | null>(null);
+
+  const load = useCallback(async () => {
     setLoading(true);
-    api
-      .get<Paginated<MoraTracking>>(`/api/v1/mora-tracking/?${params}`)
-      .then(setData)
-      .catch(() => toast.error('Error cargando morosos'))
-      .finally(() => setLoading(false));
-  }, [debounced, statusFilter]);
+    try {
+      const data = await moraApi.list({
+        search,
+        platform: filters.platform,
+        category: filters.category,
+        dispute_state: filters.dispute_state,
+        page,
+        page_size: pageSize,
+      });
+      setRows(data.results);
+      setTotal(data.total_count);
+    } catch {
+      toast.error('Error cargando mora');
+      setRows([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, filters.platform, filters.category, filters.dispute_state, page, pageSize]);
 
   useEffect(() => {
     load();
   }, [load]);
 
+  useEffect(() => {
+    moraApi.operators().then((d) => setOperators(d.results)).catch(() => setOperators([]));
+    moraApi.objecionesTags().then((d) => setObjecionesCatalog(d.results)).catch(() => setObjecionesCatalog([]));
+  }, []);
+
+  const handleFilterChange = (next: MoraHardFilters) => pushParams({ ...next, page: 1 });
+  const handleSearch = () => pushParams({ search: pendingSearch, page: 1 });
+  const handleClearSearch = () => {
+    setPendingSearch('');
+    pushParams({ search: '', page: 1 });
+  };
+  const clearFilters = () => {
+    setPendingSearch('');
+    pushParams({ search: '', page: 1 });
+  };
+
+  const handleRowOpen = (row: MoraRow) => setSelected(row);
+  const handleUpdated = (row: MoraRow) => {
+    setRows((prev) => prev.map((r) => (r.subscription_id === row.subscription_id ? row : r)));
+  };
+
+  const hasAnyFilter = useMemo(
+    () =>
+      search !== '' ||
+      filters.category !== 'all' ||
+      filters.platform !== 'all' ||
+      filters.dispute_state !== 'all',
+    [search, filters.category, filters.platform, filters.dispute_state],
+  );
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Mora</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {data ? `${data.count} clientes en gestión` : 'Cargando...'} · Excluye estados terminales
-        </p>
+    <div className="mx-auto max-w-[1800px] space-y-4">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Clientes con Pagos Pendientes</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Investigación de deuda y comportamiento de pago por cliente
+          </p>
+        </div>
+        <MoraFilterHeader value={filters} onChange={handleFilterChange} />
       </header>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre o email..."
-            className="pl-9"
+      <Card>
+        <CardContent className="p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+              Gestión operativa de mora
+            </h2>
+            {hasAnyFilter && <span className="text-xs text-slate-400">Filtros activos</span>}
+          </div>
+          <MoraTable
+            rows={rows}
+            total={total}
+            loading={loading}
+            operators={operators}
+            objecionesCatalog={objecionesCatalog}
+            category={filters.category}
+            platform={filters.platform}
+            disputeState={filters.dispute_state}
+            search={search}
+            pendingSearch={pendingSearch}
+            onPendingSearchChange={setPendingSearch}
+            onSearch={handleSearch}
+            onClearSearch={handleClearSearch}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={(p) => pushParams({ page: p })}
+            onPageSizeChange={(s) => pushParams({ limit: s, page: 1 })}
+            onRowOpen={handleRowOpen}
+            onClearFilters={clearFilters}
           />
-        </div>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v || 'all')}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Estado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los estados</SelectItem>
-            {MORA_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        </CardContent>
+      </Card>
 
-      <div className="rounded-lg border border-slate-200 bg-background dark:border-slate-800">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Contactado por</TableHead>
-              <TableHead>Lock</TableHead>
-              <TableHead>Última actualización</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading && !data && (
-              <>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 5 }).map((_, j) => (
-                      <TableCell key={j}>
-                        <Skeleton className="h-4 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </>
-            )}
-            {data?.results.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="py-16 text-center">
-                  <div className="flex flex-col items-center gap-2 text-slate-500">
-                    <AlertTriangle className="h-10 w-10" />
-                    <p>No hay morosos con esos filtros</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-            {data?.results.map((m) => (
-              <TableRow
-                key={m.id}
-                className="cursor-pointer"
-                onClick={() => setSelectedId(m.id)}
-              >
-                <TableCell>
-                  <div className="font-medium">{m.customer_name || '—'}</div>
-                  <div className="text-xs text-slate-500">{m.customer_email}</div>
-                </TableCell>
-                <TableCell>
-                  <Badge className={cn('font-medium', STATUS_TONE[m.status])}>{m.status}</Badge>
-                </TableCell>
-                <TableCell className="text-slate-600 dark:text-slate-400">
-                  {m.contacted_by_name || '—'}
-                </TableCell>
-                <TableCell>
-                  {m.is_locked ? (
-                    <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                      <Lock className="h-3.5 w-3.5" />
-                      <span className="text-xs">{m.locked_by_name}</span>
-                    </div>
-                  ) : (
-                    <span className="flex items-center gap-1 text-xs text-slate-400">
-                      <LockOpen className="h-3.5 w-3.5" />
-                      Libre
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="text-slate-600 dark:text-slate-400 text-sm">
-                  {new Date(m.updated_at).toLocaleString('es-ES', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <MoraDetailSheet
-        trackingId={selectedId}
-        open={!!selectedId}
-        onClose={() => setSelectedId(null)}
-        onUpdate={load}
+      <RecoveryDrawer
+        mode="mora"
+        api={moraApi}
+        statusOptions={RECOVERY_STATUS_OPTIONS_MORA}
+        row={selected}
+        operators={operators}
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        onUpdated={handleUpdated}
       />
     </div>
   );

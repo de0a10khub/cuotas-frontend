@@ -1,163 +1,226 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Cell,
-  LineChart,
-  Line,
-} from 'recharts';
-import { api } from '@/lib/api';
-import { formatEuros, formatPercent } from '@/lib/format';
-import { KpiCard } from '@/components/kpi-card';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { AgingBuckets, InvoiceStats } from '@/lib/types';
-import { Wallet, TrendingDown, CheckCircle2, Percent } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { BarChart3, Database, Download, RefreshCw, TableIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface DashboardKpis {
-  cash_by_day: { day: string; total: number }[];
-  invoices_by_status: { status: string; count: number }[];
-}
+import { datosApi } from '@/lib/datos-api';
+import type { DatosEntity } from '@/lib/datos-types';
+import { getAccessToken } from '@/lib/api';
+import { DynamicTable } from '@/components/datos/dynamic-table';
 
-const AGING_COLORS = {
-  al_dia: '#10b981',
-  recuperame: '#f59e0b',
-  critico: '#f97316',
-  incobrable: '#ef4444',
-} as const;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
-const AGING_LABELS = {
-  al_dia: 'Al día (0-7d)',
-  recuperame: 'Recupérame (8-30d)',
-  critico: 'Crítico (31-60d)',
-  incobrable: 'Incobrable (60+d)',
-} as const;
+const LIMIT_OPTIONS = [
+  { value: 1000, label: '1k' },
+  { value: 2000, label: '2k' },
+  { value: 3000, label: '3k' },
+  { value: 5000, label: '5k' },
+  { value: 10000, label: '10k' },
+  { value: -1, label: 'Todo' },
+];
 
 export default function DatosPage() {
-  const [stats, setStats] = useState<InvoiceStats | null>(null);
-  const [aging, setAging] = useState<AgingBuckets | null>(null);
-  const [kpis, setKpis] = useState<DashboardKpis | null>(null);
+  const router = useRouter();
+  const sp = useSearchParams();
+
+  const [entities, setEntities] = useState<DatosEntity[]>([]);
+  const [rows, setRows] = useState<Record<string, unknown>[]>([]);
+  const [total, setTotal] = useState(0);
+  const [dateColumn, setDateColumn] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [tab, setTab] = useState<'table' | 'charts'>('table');
+  const [limit, setLimit] = useState(1000);
+
+  const entity = sp.get('entity') || 'purchases';
+  const from = sp.get('from') || undefined;
+  const to = sp.get('to') || undefined;
+
+  const pushParams = (next: Partial<Record<string, string>>) => {
+    const q = new URLSearchParams(sp.toString());
+    for (const [k, v] of Object.entries(next)) {
+      if (!v || v === 'purchases') q.delete(k);
+      else q.set(k, v);
+    }
+    router.push(`/datos${q.toString() ? `?${q}` : ''}`);
+  };
 
   useEffect(() => {
-    Promise.all([
-      api.get<InvoiceStats>('/api/v1/invoices/stats/'),
-      api.get<AgingBuckets>('/api/v1/invoices/aging/'),
-      api.get<DashboardKpis>('/api/v1/dashboard-kpis/'),
-    ])
-      .then(([s, a, k]) => {
-        setStats(s);
-        setAging(a);
-        setKpis(k);
-      })
-      .catch(() => toast.error('Error cargando datos'))
-      .finally(() => setLoading(false));
+    datosApi
+      .entities()
+      .then((d) => setEntities(d.results))
+      .catch(() => toast.error('Error cargando entidades'));
   }, []);
 
-  const agingData = aging
-    ? (Object.keys(AGING_LABELS) as (keyof typeof AGING_LABELS)[]).map((key) => ({
-        bucket: AGING_LABELS[key],
-        count: aging[key],
-        color: AGING_COLORS[key],
-      }))
-    : [];
+  const load = useCallback(
+    async (silent = false) => {
+      if (silent) setRefreshing(true);
+      else setLoading(true);
+      try {
+        const r = await datosApi.listEntity(entity, { from, to, limit });
+        setRows(r.results);
+        setTotal(r.total_count);
+        setDateColumn(r.date_column);
+      } catch {
+        toast.error('Error cargando datos');
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [entity, from, to, limit],
+  );
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const downloadCsv = async () => {
+    try {
+      const path = datosApi.exportEntityUrl(entity, { from, to, limit });
+      const token = getAccessToken();
+      const res = await fetch(`${API_URL}${path}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error('export_failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `export_${entity}_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success('CSV generado');
+    } catch {
+      toast.error('No se pudo exportar');
+    }
+  };
+
+  const shownCount = rows.length;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Datos</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          KPIs de facturación y aging detallado
-        </p>
+    <div className="mx-auto max-w-[1700px] space-y-4">
+      <header className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-3 dark:border-slate-800">
+        <div className="flex items-center gap-2">
+          <Database className="h-5 w-5 text-primary" />
+          <h1 className="text-lg font-bold">Datos</h1>
+        </div>
+
+        <span className="h-6 w-px bg-slate-200 dark:bg-slate-800" />
+
+        <div className="inline-flex rounded-md border border-slate-200 bg-background p-0.5 dark:border-slate-800">
+          {(['table', 'charts'] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={cn(
+                'flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors',
+                tab === t
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
+              )}
+            >
+              {t === 'table' ? <TableIcon className="h-3 w-3" /> : <BarChart3 className="h-3 w-3" />}
+              {t === 'table' ? 'Tabla' : 'Gráficos'}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-muted-foreground">Entidad:</label>
+          <Select value={entity} onValueChange={(v) => pushParams({ entity: v || 'purchases' })}>
+            <SelectTrigger className="h-8 w-60" size="sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {entities.map((e) => (
+                <SelectItem key={e.id} value={e.id}>
+                  {e.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-muted-foreground">Límite:</label>
+          <Select value={String(limit)} onValueChange={(v) => setLimit(Number(v) || 1000)}>
+            <SelectTrigger className="h-8 w-24" size="sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LIMIT_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={String(o.value)}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-muted-foreground">Desde:</label>
+          <Input
+            type="date"
+            value={from || ''}
+            onChange={(e) => pushParams({ from: e.target.value })}
+            className="h-8 w-36"
+          />
+          <Input
+            type="date"
+            value={to || ''}
+            onChange={(e) => pushParams({ to: e.target.value })}
+            className="h-8 w-36"
+          />
+        </div>
+
+        <div className="ml-auto flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => load(true)} disabled={refreshing}>
+            <RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />
+            Actualizar
+          </Button>
+          <Button
+            size="sm"
+            onClick={downloadCsv}
+            disabled={rows.length === 0 || tab !== 'table'}
+          >
+            <Download className="h-4 w-4" />
+            CSV
+          </Button>
+        </div>
       </header>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="Cash cobrado (30d)"
-          value={stats ? formatEuros(stats.cash_collected_30d) : loading ? '...' : '—'}
-          hint="Pagos exitosos"
-          icon={Wallet}
-          tone="success"
-          sentiment="positive"
-        />
-        <KpiCard
-          label="Exposure"
-          value={stats ? formatEuros(stats.exposure) : loading ? '...' : '—'}
-          hint="Deuda abierta"
-          icon={TrendingDown}
-          tone="danger"
-          sentiment={stats && stats.exposure > 0 ? 'negative' : 'neutral'}
-        />
-        <KpiCard
-          label="Success rate"
-          value={stats ? formatPercent(stats.success_rate) : loading ? '...' : '—'}
-          hint={stats ? `${stats.paid_invoices}/${stats.total_invoices} pagadas` : undefined}
-          icon={CheckCircle2}
-          tone="success"
-          sentiment={stats && stats.success_rate >= 80 ? 'positive' : 'negative'}
-        />
-        <KpiCard
-          label="Total invoices"
-          value={stats?.total_invoices ?? (loading ? '...' : '—')}
-          icon={Percent}
-          tone="default"
-          sentiment="neutral"
-        />
-      </section>
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          Mostrando <b>{shownCount}</b> de <b>{total}</b> filas · columna de fecha:{' '}
+          <code className="font-mono text-[10px]">{dateColumn}</code>
+        </span>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Aging detallado</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <Skeleton className="h-64 w-full" />
-          ) : (
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={agingData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-800" />
-                <XAxis dataKey="bucket" className="text-xs" />
-                <YAxis className="text-xs" allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                  {agingData.map((row) => (
-                    <Cell key={row.bucket} fill={row.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Cash collected diario</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <Skeleton className="h-72 w-full" />
-          ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={kpis?.cash_by_day}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-800" />
-                <XAxis dataKey="day" className="text-xs" />
-                <YAxis className="text-xs" tickFormatter={(v) => `€${v}`} />
-                <Tooltip formatter={(v) => [formatEuros(Number(v)), 'Cobrado']} />
-                <Line type="monotone" dataKey="total" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </CardContent>
-      </Card>
+      {tab === 'table' ? (
+        <DynamicTable rows={rows} loading={loading} />
+      ) : (
+        <div className="rounded-lg border border-dashed border-slate-200 py-20 text-center text-sm text-muted-foreground dark:border-slate-800">
+          <BarChart3 className="mx-auto mb-2 h-8 w-8" />
+          <p>Gráficos auto-generados — próximamente.</p>
+          <p className="text-xs">Por ahora, usa la tab Tabla para explorar los datos.</p>
+        </div>
+      )}
     </div>
   );
 }
