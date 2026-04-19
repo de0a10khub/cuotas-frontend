@@ -300,7 +300,15 @@ export function ClientesTable({
         key={`${search}-${page}-${platform}-${category}-${disputeState}`}
         className="rounded-lg border border-slate-200 bg-background dark:border-slate-800"
       >
-        <Table>
+        <Table
+          className={cn(
+            // Densidad compacta (como Conciliación): cabe en ~1600px sin scroll.
+            'text-[11px]',
+            '[&_th]:h-8 [&_th]:px-1.5 [&_th]:text-[10.5px]',
+            '[&_td]:px-1.5 [&_td]:py-1.5',
+            '[&_[data-slot=badge]]:text-[10px] [&_[data-slot=badge]]:px-1.5 [&_[data-slot=badge]]:py-0',
+          )}
+        >
           <TableHeader>
             {/* Fila-resumen KPI dentro del thead (3 celdas + franja gris — como la web vieja) */}
             <TableRow className="bg-primary/5">
@@ -343,9 +351,9 @@ export function ClientesTable({
               <TableHead>Estado</TableHead>
               <TableHead>Tipo mora</TableHead>
               <TableHead>Operario</TableHead>
-              <TableHead className="max-w-[220px]">C1 (Inic.)</TableHead>
-              <TableHead className="max-w-[180px]">Continuar</TableHead>
-              <TableHead className="max-w-[200px]">C2 (Seg.)</TableHead>
+              <TableHead className="max-w-[140px]">C1 (Inic.)</TableHead>
+              <TableHead className="max-w-[120px]">Continuar</TableHead>
+              <TableHead className="max-w-[140px]">C2 (Seg.)</TableHead>
               <TableHead>Disputas</TableHead>
               <TableHead>Pagos</TableHead>
               <TableHead>Plat.</TableHead>
@@ -404,12 +412,12 @@ export function ClientesTable({
                       {(page - 1) * pageSize + idx + 1}
                     </TableCell>
 
-                    <TableCell className="max-w-[240px] cursor-copy hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20">
+                    <TableCell className="max-w-[180px] cursor-copy hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20">
                       <div className="min-w-0">
                         <p className="truncate font-medium">{r.customer_name || '—'}</p>
                         <Copyable
                           value={r.customer_email}
-                          className="text-xs text-slate-500"
+                          className="text-[10px] text-slate-500"
                         />
                         <RefinanIndicator
                           isRefinanced={r.is_refinanced}
@@ -440,21 +448,21 @@ export function ClientesTable({
                     </TableCell>
 
                     <TableCell
-                      className="max-w-[220px] truncate text-xs text-slate-600 dark:text-slate-300"
+                      className="max-w-[140px] truncate text-[10px] text-slate-600 dark:text-slate-300"
                       title={r.recovery_comment_1}
                     >
                       {r.recovery_comment_1 || <span className="text-slate-400">—</span>}
                     </TableCell>
 
                     <TableCell
-                      className="max-w-[180px] truncate text-xs font-medium text-primary"
+                      className="max-w-[120px] truncate text-[10px] font-medium text-primary"
                       title={r.recovery_continue_with}
                     >
                       {r.recovery_continue_with || <span className="text-slate-400">—</span>}
                     </TableCell>
 
                     <TableCell
-                      className="max-w-[200px] truncate text-xs text-slate-600 dark:text-slate-300"
+                      className="max-w-[140px] truncate text-[10px] text-slate-600 dark:text-slate-300"
                       title={r.recovery_comment_2}
                     >
                       {r.recovery_comment_2 || <span className="text-slate-400">—</span>}
