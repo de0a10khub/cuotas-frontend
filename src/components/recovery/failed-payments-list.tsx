@@ -65,11 +65,20 @@ export function FailedPaymentsList({
   const [loading, setLoading] = useState(true);
   const [retryingId, setRetryingId] = useState<string | null>(null);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const load = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const d = await api.failedPayments(subscriptionId);
-      setItems(d.results);
+      setItems(Array.isArray(d?.results) ? d.results : []);
+    } catch (err) {
+      console.error('[FailedPaymentsList] load error', err);
+      const msg = err instanceof Error ? err.message : 'Error cargando pagos';
+      setLoadError(msg);
+      setItems([]);
+      toast.error(`No se pudieron cargar los pagos: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -101,6 +110,20 @@ export function FailedPaymentsList({
   };
 
   if (loading) return <Skeleton className="h-24 w-full" />;
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-10 text-center text-sm text-rose-600 dark:text-rose-400">
+        <AlertCircle className="h-8 w-8" />
+        <p>No se pudieron cargar los pagos.</p>
+        <p className="font-mono text-[10px] text-rose-500">{loadError}</p>
+        <Button size="sm" variant="outline" onClick={load}>
+          <RotateCw className="h-3.5 w-3.5" />
+          Reintentar
+        </Button>
+      </div>
+    );
+  }
 
   if (!items || items.length === 0) {
     return (
