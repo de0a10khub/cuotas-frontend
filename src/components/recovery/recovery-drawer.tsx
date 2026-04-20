@@ -474,10 +474,10 @@ export function RecoveryDrawer({
                         onValueChange={(v) => setContactedBy(!v || v === '__none__' ? '' : v)}
                       >
                         <SelectTrigger className="w-full">
-                          <SelectValue />
+                          <SelectValue placeholder="Nadie" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="__none__">Sin asignar</SelectItem>
+                          <SelectItem value="__none__">Nadie</SelectItem>
                           {operatorOptions.map((o) => (
                             <SelectItem key={o.value} value={o.value}>
                               {o.label}
