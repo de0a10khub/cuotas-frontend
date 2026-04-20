@@ -122,6 +122,10 @@ export interface CustomerActivity {
 
 export const adminDataApi = {
   duplicatesSummary: () => api.get<DuplicatesSummary>(`${BASE}/duplicates/summary/`),
+  duplicatesClientRows: (params: { search?: string; page?: number; page_size?: number }) =>
+    api.get<{ results: unknown[]; total_count: number; page: number; page_size: number }>(
+      `${BASE}/duplicates/client-rows/${qs(params)}`,
+    ),
   listDuplicates: (params: { status?: string; search?: string; page?: number; limit?: number }) =>
     api.get<{ results: DuplicatePending[]; total_count: number; page: number; limit: number }>(
       `${BASE}/duplicates/${qs(params)}`,
