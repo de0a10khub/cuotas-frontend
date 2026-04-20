@@ -166,6 +166,10 @@ export default function DuplicadosPage() {
         duplicate={selectedDupe}
         open={!!selectedDupe || loadingDupe}
         onClose={() => setSelectedDupe(null)}
+        onResolved={() => {
+          setSelectedDupe(null);
+          load();
+        }}
       />
     </div>
   );

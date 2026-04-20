@@ -139,6 +139,19 @@ export const adminDataApi = {
     api.post<{ ok: boolean; customers_created: string[] }>(`${BASE}/duplicates/${id}/split/`, { note }),
   ignoreDuplicate: (id: string, note?: string) =>
     api.post<{ ok: boolean }>(`${BASE}/duplicates/${id}/ignore/`, { note }),
+  refinanceDuplicate: (
+    id: string,
+    payload: {
+      original: { platform: string; external_id: string };
+      new: { platform: string; external_id: string };
+      operation_type: 'refinanciacion' | 'amortizacion_anticipada';
+      comment?: string;
+    },
+  ) =>
+    api.post<{ ok: boolean; customer_id: string; operation_type: string; platform_accounts_created: number }>(
+      `${BASE}/duplicates/${id}/refinance/`,
+      payload,
+    ),
 
   discrepanciesSummary: () => api.get<DiscrepancySummary>(`${BASE}/discrepancies/summary/`),
   listDiscrepancies: (params: {
