@@ -240,35 +240,44 @@ export function DuplicatesDrawer({ duplicate, open, onClose, onResolved }: Props
                   <CreditCard className="h-4 w-4 text-muted-foreground" />
                   <h4 className="text-sm font-semibold">Elige acción</h4>
                 </div>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="flex flex-col gap-2">
                   <Button
                     variant="outline"
-                    className="justify-start border-emerald-500/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                    size="lg"
+                    className="h-auto w-full flex-col items-start gap-1 whitespace-normal border-l-4 border-l-emerald-500 py-3 text-left hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                     onClick={() => setMode('unify')}
                     disabled={submitting}
                   >
-                    🔗 Unificar
+                    <span className="text-sm font-semibold">🔗 Unificar mismo contrato</span>
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      Mismo plan, solo cambió la plataforma de cobro.
+                    </span>
                   </Button>
                   <Button
                     variant="outline"
-                    className="justify-start border-indigo-500/50 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+                    size="lg"
+                    className="h-auto w-full flex-col items-start gap-1 whitespace-normal border-l-4 border-l-indigo-500 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-950/30 disabled:opacity-50"
                     onClick={() => setMode('refi')}
                     disabled={submitting || accounts.length < 2}
                   >
-                    🔄 Refinanciación
+                    <span className="text-sm font-semibold">🔄 Marcar como refinanciación</span>
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      Se canceló el plan viejo y se creó uno nuevo (precio o cuotas distintas).
+                    </span>
                   </Button>
                   <Button
                     variant="outline"
-                    className="justify-start border-slate-400/50 hover:bg-slate-50 dark:hover:bg-slate-900"
+                    size="lg"
+                    className="h-auto w-full flex-col items-start gap-1 whitespace-normal border-l-4 border-l-slate-400 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-900"
                     onClick={() => setMode('ignore')}
                     disabled={submitting}
                   >
-                    ✕ No es lo mismo
+                    <span className="text-sm font-semibold">✕ No es lo mismo</span>
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      Son 2 compras distintas del mismo cliente. Descartar candidato.
+                    </span>
                   </Button>
                 </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Las descripciones detalladas están en la cabecera de la página /admin/duplicados.
-                </p>
               </CardContent>
             </Card>
           )}
