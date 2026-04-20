@@ -470,7 +470,7 @@ export function RecoveryDrawer({
                     </Field>
                     <Field label="Contactado por (Operario)">
                       <Select
-                        value={contactedBy || '__none__'}
+                        value={contactedBy}
                         onValueChange={(v) => setContactedBy(!v || v === '__none__' ? '' : v)}
                       >
                         <SelectTrigger className="w-full">
