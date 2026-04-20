@@ -322,7 +322,7 @@ export function DuplicatesDrawer({ duplicate, open, onClose, onResolved }: Props
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs">Cuenta original (vieja)</Label>
-                    <Select value={originalKey} onValueChange={setOriginalKey}>
+                    <Select value={originalKey} onValueChange={(v) => setOriginalKey(v ?? '')}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona..." />
                       </SelectTrigger>
@@ -337,7 +337,7 @@ export function DuplicatesDrawer({ duplicate, open, onClose, onResolved }: Props
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Cuenta nueva (actual)</Label>
-                    <Select value={newKey} onValueChange={setNewKey}>
+                    <Select value={newKey} onValueChange={(v) => setNewKey(v ?? '')}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona..." />
                       </SelectTrigger>
@@ -354,7 +354,7 @@ export function DuplicatesDrawer({ duplicate, open, onClose, onResolved }: Props
 
                 <div className="space-y-1.5">
                   <Label className="text-xs">Tipo de operación</Label>
-                  <Select value={opType} onValueChange={(v) => setOpType(v as typeof opType)}>
+                  <Select value={opType} onValueChange={(v) => v && setOpType(v as typeof opType)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
