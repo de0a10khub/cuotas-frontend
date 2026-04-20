@@ -54,7 +54,7 @@ export default function DuplicadosPage() {
 
   const handleRowOpen = useCallback(
     async (row: ClienteRow) => {
-      const email = (row.email || '').toLowerCase();
+      const email = (row.customer_email || '').toLowerCase();
       if (!email) return;
       const local = dupesByEmail[email];
       if (local) {
