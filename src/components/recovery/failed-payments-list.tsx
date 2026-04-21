@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { FailedPayment, Operator } from '@/lib/clientes-types';
+import type { FailedPayment } from '@/lib/clientes-types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +34,7 @@ interface Props {
   subscriptionId: string;
   customerId: string;
   platform: string;
-  operators?: Operator[];
+  operators?: { id: string; display_name: string }[];
   showChargeAction?: boolean;
   onRetryResult?: (success: boolean) => void;
 }
