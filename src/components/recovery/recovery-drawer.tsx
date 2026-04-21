@@ -23,6 +23,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertCircle,
+  CheckCircle2,
   Clock,
   CreditCard,
   FileText,
@@ -244,157 +245,212 @@ export function RecoveryDrawer({
   const showActionNeeded = isMora && row.is_action_needed;
   const showMentorship = isMora && !!row.mentor_name;
   const tcv = Number(row.total_contract_value) || 0;
+  const displayName = row.customer_name?.trim() || row.customer_email || row.subscription_id;
+  const initials = displayName
+    .split(/\s+/)
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || '?';
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:w-1/3 sm:min-w-[560px] sm:max-w-none">
-        <SheetHeader className="border-b border-slate-200 bg-slate-50/60 px-6 py-4 dark:border-slate-800 dark:bg-slate-950/40">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" />
-            <SheetTitle className="text-lg">
-              {isMora ? 'Gestión de Recobro' : 'Detalles Cliente'}
-            </SheetTitle>
+        {/* HERO: gradiente sutil + avatar + nombre + badges */}
+        <SheetHeader className="relative border-b border-slate-200 bg-gradient-to-br from-indigo-50 via-white to-slate-50 px-6 py-5 dark:border-slate-800 dark:from-indigo-950/40 dark:via-slate-950 dark:to-slate-950">
+          <div className="flex items-start gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-lg font-bold text-white shadow-sm">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <SheetTitle className="break-words text-xl font-bold leading-tight">
+                {displayName}
+              </SheetTitle>
+              {isMora && row.product_name && (
+                <p className="mt-0.5 text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                  {row.product_name}
+                </p>
+              )}
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1',
+                    row.platform === 'stripe' &&
+                      'bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-950/40 dark:text-violet-200 dark:ring-violet-800/50',
+                    row.platform === 'whop' &&
+                      'bg-orange-50 text-orange-700 ring-orange-200 dark:bg-orange-950/40 dark:text-orange-200 dark:ring-orange-800/50',
+                    row.platform === 'whop-erp' &&
+                      'bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-950/40 dark:text-sky-200 dark:ring-sky-800/50',
+                  )}
+                >
+                  {row.platform === 'stripe' && '💳 Stripe'}
+                  {row.platform === 'whop' && '⚡ Whop'}
+                  {row.platform === 'whop-erp' && '📦 Whop-ERP'}
+                </span>
+                {row.recovery_status && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                    {row.recovery_status}
+                  </span>
+                )}
+                {row.category && (
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1',
+                      row.category === 'Al día' &&
+                        'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-800/50',
+                      row.category !== 'Al día' &&
+                        'bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-200 dark:ring-rose-800/50',
+                    )}
+                  >
+                    {row.category}
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                {row.subscription_id}
+              </p>
+            </div>
           </div>
-          <SheetDescription className="text-xs text-slate-500">
-            Lock exclusivo 2 min
-          </SheetDescription>
+          <SheetDescription className="sr-only">Lock exclusivo 2 min</SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto">
           <div className="space-y-4 p-6">
-            {/* Cabecera: nombre, producto, sub id, acciones */}
-            <div className="rounded-lg border border-slate-200 bg-background p-4 dark:border-slate-800">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="truncate text-lg font-semibold">
-                    {row.customer_name?.trim() || row.customer_email || row.subscription_id}
-                  </h3>
-                  {isMora && (
-                    <p className="text-sm font-semibold text-primary">
-                      {row.product_name || 'Suscripción'}
-                    </p>
-                  )}
-                  <p className="font-mono text-xs text-slate-500">{row.subscription_id}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handlePaymentLink}
-                    disabled={generatingLink}
-                    title={
-                      row.platform === 'whop-erp'
-                        ? 'Genera link de pago de la cuota pendiente. La nueva tarjeta se guarda para futuros cobros.'
-                        : undefined
-                    }
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    Cambio Tarjeta
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleGenerateContract}
-                    disabled={generatingContract}
-                  >
-                    <FileText className="h-4 w-4" />
-                    Contrato
-                  </Button>
-                </div>
-              </div>
+            {/* Contacto rápido: email + teléfono con botones de copiar */}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <QuickContactTile
+                icon={Mail}
+                label="Email"
+                value={row.customer_email}
+                copyable
+              />
+              <QuickContactTile
+                icon={Phone}
+                label="Teléfono"
+                value={row.customer_phone || null}
+                copyable
+              />
+            </div>
 
-              {paymentLink && (
-                <div className="mt-3 flex items-center gap-2 rounded-md bg-slate-50 p-2 text-xs dark:bg-slate-900">
-                  <LinkIcon className="h-3 w-3 shrink-0 text-slate-400" />
-                  <span className="flex-1 truncate font-mono">{paymentLink}</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      navigator.clipboard.writeText(paymentLink);
-                      toast.success('Copiado');
-                    }}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setPaymentLink(null)}>
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              )}
-
-              {/* Bloque financiero: 3 tiles siempre visibles en /mora */}
-              {isMora && (
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  <FinancialTile
-                    label="Pagado"
-                    amount={Number(row.paid_total) || 0}
-                    subtitle={`${row.paid_count ?? 0} cuotas`}
-                    tone="emerald"
-                  />
-                  <FinancialTile
-                    label="Deuda"
-                    amount={Number(row.unpaid_total) || 0}
-                    subtitle={`${row.unpaid_invoices_count} cuotas`}
-                    tone="rose"
-                  />
-                  <FinancialTile
-                    label="A Pagar"
-                    amount={tcv > 0 ? Number(row.remaining_contract) || 0 : null}
-                    subtitle={tcv > 0 ? `de ${formatEuros(tcv, { decimals: 0 })}` : undefined}
-                    tone="slate"
-                  />
-                </div>
-              )}
-
-              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <InfoRow icon={Mail} label="Email" value={row.customer_email} />
-                <InfoRow icon={Phone} label="Teléfono" value={row.customer_phone || '—'} />
-              </div>
-
-              {/* Bloque mentoría (solo mora) */}
-              {showMentorship && (
-                <div className="mt-3 rounded-md border border-primary/20 bg-primary/5 p-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                    <GraduationCap className="h-4 w-4" />
-                    Contexto de Mentoría: {row.mentor_name}
-                  </div>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                    {row.mentorship_comment || 'El mentor no ha dejado comentarios todavía.'}
-                  </p>
-                </div>
-              )}
-
-              {/* Bloque action needed (solo mora) */}
-              {showActionNeeded && (
-                <div className="mt-3 flex gap-2 rounded-md border border-rose-300 bg-rose-50 p-3 text-xs text-rose-800 animate-pulse dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200">
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <p>
-                    Se han detectado facturas impagadas{' '}
-                    {row.oldest_invoice_date && (
-                      <>
-                        desde el{' '}
-                        <b>
-                          {new Date(row.oldest_invoice_date).toLocaleDateString('es-ES')}
-                        </b>{' '}
-                      </>
-                    )}
-                    posteriores a la última gestión. Por favor, actualiza el estado.
-                  </p>
-                </div>
-              )}
-
+            {/* Acciones rápidas */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handlePaymentLink}
+                disabled={generatingLink}
+                title={
+                  row.platform === 'whop-erp'
+                    ? 'Genera link de pago de la cuota pendiente. La nueva tarjeta se guarda para futuros cobros.'
+                    : undefined
+                }
+              >
+                <CreditCard className="h-4 w-4" />
+                Cambio Tarjeta
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleGenerateContract}
+                disabled={generatingContract}
+              >
+                <FileText className="h-4 w-4" />
+                Contrato
+              </Button>
               {contractUrl && (
-                <button
-                  type="button"
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => setPdfOpen(true)}
-                  className="mt-3 flex w-full items-center gap-2 rounded-md bg-emerald-50 p-2 text-left text-xs text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-900"
+                  className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
                 >
-                  <FileText className="h-3 w-3" />
-                  Abrir contrato persistido
-                </button>
+                  <FileText className="h-4 w-4" />
+                  Abrir contrato
+                </Button>
               )}
             </div>
+
+            {paymentLink && (
+              <div className="flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50/60 p-2.5 text-xs dark:border-indigo-900/50 dark:bg-indigo-950/30">
+                <LinkIcon className="h-3.5 w-3.5 shrink-0 text-indigo-500" />
+                <span className="flex-1 truncate font-mono text-indigo-900 dark:text-indigo-200">
+                  {paymentLink}
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 p-0"
+                  onClick={() => {
+                    navigator.clipboard.writeText(paymentLink);
+                    toast.success('Copiado');
+                  }}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 p-0"
+                  onClick={() => setPaymentLink(null)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+
+            {/* KPIs financieros (solo mora) */}
+            {isMora && (
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                <FinancialTile
+                  label="Pagado"
+                  amount={Number(row.paid_total) || 0}
+                  subtitle={`${row.paid_count ?? 0} cuotas`}
+                  tone="emerald"
+                />
+                <FinancialTile
+                  label="Deuda"
+                  amount={Number(row.unpaid_total) || 0}
+                  subtitle={`${row.unpaid_invoices_count} cuotas`}
+                  tone="rose"
+                />
+                <FinancialTile
+                  label="A Pagar"
+                  amount={tcv > 0 ? Number(row.remaining_contract) || 0 : null}
+                  subtitle={tcv > 0 ? `de ${formatEuros(tcv, { decimals: 0 })}` : undefined}
+                  tone="slate"
+                />
+              </div>
+            )}
+
+            {/* Alerts destacados */}
+            {showActionNeeded && (
+              <div className="flex gap-2.5 rounded-lg border-l-4 border-l-rose-500 bg-rose-50 p-3 text-xs text-rose-900 shadow-sm dark:bg-rose-950/40 dark:text-rose-200">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                <p className="leading-relaxed">
+                  <span className="font-semibold">Acción necesaria:</span> facturas impagadas
+                  {row.oldest_invoice_date && (
+                    <>
+                      {' '}desde el{' '}
+                      <b>{new Date(row.oldest_invoice_date).toLocaleDateString('es-ES')}</b>
+                    </>
+                  )}{' '}
+                  posteriores a la última gestión. Actualiza el estado.
+                </p>
+              </div>
+            )}
+
+            {showMentorship && (
+              <div className="rounded-lg border-l-4 border-l-indigo-500 bg-indigo-50/60 p-3 dark:bg-indigo-950/30">
+                <div className="flex items-center gap-2 text-sm font-semibold text-indigo-800 dark:text-indigo-200">
+                  <GraduationCap className="h-4 w-4" />
+                  Contexto de Mentoría · {row.mentor_name}
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-indigo-700/90 dark:text-indigo-300/90">
+                  {row.mentorship_comment || 'El mentor no ha dejado comentarios todavía.'}
+                </p>
+              </div>
+            )}
 
             {lockState === 'loading' && <Skeleton className="h-40 w-full" />}
 
@@ -419,36 +475,41 @@ export function RecoveryDrawer({
                 onValueChange={(v) => setTab(v as TabKey)}
                 className="gap-4"
               >
-                <TabsList className={cn('w-full', isMora && 'grid grid-cols-4')}>
-                  <TabsTrigger value="gestion" className="gap-1.5 text-[11px]">
+                <TabsList
+                  className={cn(
+                    'h-auto w-full gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-900',
+                    isMora && 'grid grid-cols-4',
+                  )}
+                >
+                  <TabsTrigger
+                    value="gestion"
+                    className="gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
+                  >
                     <MessageSquare className="h-3.5 w-3.5" />
                     Gestión
                   </TabsTrigger>
                   {isMora && (
-                    <TabsTrigger value="seguimiento" className="gap-1.5 text-[11px]">
+                    <TabsTrigger
+                      value="seguimiento"
+                      className="gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
+                    >
                       <Clock className="h-3.5 w-3.5" />
                       Seguimiento
                     </TabsTrigger>
                   )}
-                  <TabsTrigger value="pagos" className="gap-1.5 text-[11px]">
-                    {isMora ? (
-                      <>
-                        <WalletCards className="h-3.5 w-3.5" />
-                        Pagos ({row.unpaid_invoices_count || 0})
-                      </>
-                    ) : (
-                      'Pagos'
-                    )}
+                  <TabsTrigger
+                    value="pagos"
+                    className="gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
+                  >
+                    <WalletCards className="h-3.5 w-3.5" />
+                    {isMora ? `Pagos (${row.unpaid_invoices_count || 0})` : 'Pagos'}
                   </TabsTrigger>
-                  <TabsTrigger value="historial" className="gap-1.5 text-[11px]">
-                    {isMora ? (
-                      <>
-                        <RotateCcw className="h-3.5 w-3.5" />
-                        Reintentos
-                      </>
-                    ) : (
-                      'Historial'
-                    )}
+                  <TabsTrigger
+                    value="historial"
+                    className="gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    {isMora ? 'Reintentos' : 'Historial'}
                   </TabsTrigger>
                 </TabsList>
 
@@ -588,26 +649,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function InfoRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-start gap-2 rounded-md border border-slate-200 p-2 dark:border-slate-800">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-      <div className="min-w-0 flex-1">
-        <p className="text-xs text-slate-500">{label}</p>
-        <p className="break-all text-sm">{value}</p>
-      </div>
-    </div>
-  );
-}
-
 function FinancialTile({
   label,
   amount,
@@ -620,17 +661,75 @@ function FinancialTile({
   tone: 'emerald' | 'rose' | 'slate';
 }) {
   const tones = {
-    emerald: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200',
-    rose: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200',
-    slate: 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-200',
+    emerald:
+      'border-emerald-200/70 bg-gradient-to-br from-emerald-50 to-white text-emerald-800 dark:border-emerald-900/50 dark:from-emerald-950/50 dark:to-slate-950 dark:text-emerald-200',
+    rose: 'border-rose-200/70 bg-gradient-to-br from-rose-50 to-white text-rose-800 dark:border-rose-900/50 dark:from-rose-950/50 dark:to-slate-950 dark:text-rose-200',
+    slate:
+      'border-slate-200/70 bg-gradient-to-br from-slate-50 to-white text-slate-800 dark:border-slate-800 dark:from-slate-900/60 dark:to-slate-950 dark:text-slate-200',
   }[tone];
   return (
-    <div className={cn('rounded-md border p-2.5', tones)}>
-      <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{label}</p>
-      <p className="mt-0.5 text-lg font-bold tabular-nums">
+    <div className={cn('rounded-lg border p-3 shadow-sm', tones)}>
+      <p className="text-[10px] font-bold uppercase tracking-wider opacity-70">{label}</p>
+      <p className="mt-1 text-xl font-extrabold tabular-nums">
         {amount === null ? '—' : formatEuros(amount, { decimals: 2 })}
       </p>
-      {subtitle && <p className="text-[10px] opacity-60">{subtitle}</p>}
+      {subtitle && <p className="mt-0.5 text-[11px] opacity-60">{subtitle}</p>}
+    </div>
+  );
+}
+
+function QuickContactTile({
+  icon: Icon,
+  label,
+  value,
+  copyable,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string | null;
+  copyable?: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      toast.success(`${label} copiado`);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error('No se pudo copiar');
+    }
+  }
+
+  return (
+    <div className="group relative flex items-center gap-3 rounded-lg border border-slate-200 bg-background p-3 transition-colors hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          {label}
+        </p>
+        <p className="break-all text-sm font-medium text-slate-900 dark:text-slate-100">
+          {value || <span className="text-slate-400">—</span>}
+        </p>
+      </div>
+      {copyable && value && (
+        <button
+          type="button"
+          onClick={copy}
+          className="opacity-0 transition-opacity group-hover:opacity-100"
+          title={`Copiar ${label.toLowerCase()}`}
+        >
+          {copied ? (
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          ) : (
+            <Copy className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" />
+          )}
+        </button>
+      )}
     </div>
   );
 }
