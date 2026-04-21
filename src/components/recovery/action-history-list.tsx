@@ -5,7 +5,7 @@ import type { ActionLogEntry } from '@/lib/clientes-types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, XCircle, Info, ChevronDown, ChevronRight, History } from 'lucide-react';
+import { CheckCircle2, XCircle, Info, ChevronDown, ChevronRight, History, AlertTriangle } from 'lucide-react';
 import type { RecoveryDrawerApi } from './types';
 
 interface Props {
@@ -22,6 +22,29 @@ function statusTone(status: string) {
     return { Icon: XCircle, className: 'text-red-600 dark:text-red-400' };
   }
   return { Icon: Info, className: 'text-slate-500' };
+}
+
+const ACTION_LABELS: Record<string, string> = {
+  RETRY_PAYMENT: 'Intento de cobro',
+  UPDATE_TRACKING: 'Actualización gestión',
+  GENERATE_CONTRACT: 'Contrato generado',
+  MANUAL_RECOVERY: 'Recuperación manual',
+  PAYMENT_LINK_GENERATED: 'Link de pago generado',
+};
+
+function humanizeAction(type: string): string {
+  return ACTION_LABELS[type] || type.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
+}
+
+function extractError(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const p = payload as Record<string, unknown>;
+  const candidates = ['error', 'error_message', 'message', 'failure_reason', 'decline_code'];
+  for (const k of candidates) {
+    const v = p[k];
+    if (typeof v === 'string' && v.trim()) return v.trim();
+  }
+  return null;
 }
 
 export function ActionHistoryList({ api, subscriptionId }: Props) {
@@ -57,6 +80,10 @@ export function ActionHistoryList({ api, subscriptionId }: Props) {
       {items.map((item) => {
         const { Icon, className } = statusTone(item.status);
         const isOpen = expanded[item.id];
+        const errorMsg =
+          item.status.toUpperCase() === 'FAILURE' || item.status.toUpperCase() === 'FAILED'
+            ? extractError(item.result_payload)
+            : null;
         return (
           <li
             key={item.id}
@@ -70,8 +97,8 @@ export function ActionHistoryList({ api, subscriptionId }: Props) {
               <Icon className={cn('h-4 w-4 mt-0.5 shrink-0', className)} />
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium">{item.action_type}</span>
-                  <Badge variant="outline" className="text-xs">
+                  <span className="text-sm font-medium">{humanizeAction(item.action_type)}</span>
+                  <Badge variant="outline" className="text-xs capitalize">
                     {item.platform}
                   </Badge>
                   <Badge variant="outline" className={cn('text-xs', className, 'border-current/30')}>
@@ -88,6 +115,12 @@ export function ActionHistoryList({ api, subscriptionId }: Props) {
                 <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
               )}
             </button>
+            {errorMsg && (
+              <div className="mt-2 flex items-start gap-1.5 rounded-md bg-rose-50 px-2 py-1.5 text-xs text-rose-800 dark:bg-rose-950/40 dark:text-rose-200">
+                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                <span className="leading-snug">{errorMsg}</span>
+              </div>
+            )}
             {isOpen && (
               <pre className="mt-2 max-h-48 overflow-auto rounded bg-background p-2 text-xs text-slate-600 dark:text-slate-300">
                 {JSON.stringify(item.result_payload, null, 2)}
