@@ -602,7 +602,7 @@ function InfoRow({
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
       <div className="min-w-0 flex-1">
         <p className="text-xs text-slate-500">{label}</p>
-        <p className="truncate text-sm">{value}</p>
+        <p className="break-all text-sm">{value}</p>
       </div>
     </div>
   );
