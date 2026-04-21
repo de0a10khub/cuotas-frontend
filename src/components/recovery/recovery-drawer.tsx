@@ -247,7 +247,7 @@ export function RecoveryDrawer({
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:w-1/3 sm:max-w-none">
+      <SheetContent className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:w-1/3 sm:min-w-[560px] sm:max-w-none">
         <SheetHeader className="border-b border-slate-200 bg-slate-50/60 px-6 py-4 dark:border-slate-800 dark:bg-slate-950/40">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-primary" />
