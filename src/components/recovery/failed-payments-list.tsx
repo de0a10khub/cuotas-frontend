@@ -328,19 +328,19 @@ export function FailedPaymentsList({
               <div className="flex items-center gap-1.5">
                 {api.assignPaymentOperator && operators.length > 0 && (
                   <Select
-                    value={p.assigned_operator_id || '__none__'}
+                    value={p.assigned_operator_id || ''}
                     onValueChange={(v) =>
-                      assign(p, v === '__none__' || !v ? null : v)
+                      assign(p, !v || v === '__none__' ? null : v)
                     }
                     disabled={assigningId === p.id}
                   >
                     <SelectTrigger className="h-7 min-w-[130px] gap-1 border-sky-300/50 bg-sky-50/50 text-[11px] dark:border-sky-800/50 dark:bg-sky-950/30">
                       <UserCog className="h-3 w-3 text-sky-500" />
-                      <SelectValue placeholder="Asignar" />
+                      <SelectValue placeholder="Nadie" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__" className="text-xs text-muted-foreground">
-                        Sin asignar
+                        Nadie
                       </SelectItem>
                       {operators.map((op) => (
                         <SelectItem key={op.id} value={op.id} className="text-xs">
