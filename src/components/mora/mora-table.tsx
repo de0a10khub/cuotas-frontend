@@ -24,10 +24,7 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  GraduationCap,
   Lock,
-  MessageSquare,
-  RotateCw,
   Search,
   Users,
   X,
@@ -68,7 +65,7 @@ type SortKey =
   | null;
 type SortDir = 'asc' | 'desc';
 
-const COLSPAN_TOTAL = 23;
+const COLSPAN_TOTAL = 17;
 
 interface Props {
   rows: MoraRow[];
@@ -353,23 +350,23 @@ export function MoraTable({
           )}
         >
           <TableHeader>
-            {/* KPI row: 6 celdas con proporciones 1+3+3+5+2+9 = 23 (web vieja) */}
+            {/* KPI row: 6 celdas con proporciones 1+2+2+3+2+7 = 17 */}
             <TableRow className="bg-primary/5">
               <TableHead colSpan={1} className="py-2" />
               <TableHead
-                colSpan={3}
+                colSpan={2}
                 className="py-2 text-sm font-bold uppercase tracking-wider text-primary"
               >
                 Resumen filtrado
               </TableHead>
               <TableHead
-                colSpan={3}
+                colSpan={2}
                 className="py-2 text-center text-sm font-bold text-primary"
               >
                 {kpiCount} clientes
               </TableHead>
               <TableHead
-                colSpan={5}
+                colSpan={3}
                 className="py-2 text-right text-sm font-bold text-primary"
               >
                 Deuda total:{' '}
@@ -384,7 +381,7 @@ export function MoraTable({
                 Pagado: {formatEuros(kpiPaid, { decimals: 2 })}
               </TableHead>
               <TableHead
-                colSpan={9}
+                colSpan={7}
                 className="bg-slate-100/60 py-2 dark:bg-slate-800/50"
               />
             </TableRow>
@@ -398,8 +395,6 @@ export function MoraTable({
                 onClick={() => toggleSort('customer_name')}
               />
               <TableHead>Teléfono</TableHead>
-              <TableHead>Producto</TableHead>
-              <TableHead>Mentor</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Tipo mora</TableHead>
               <TableHead>Objeciones</TableHead>
@@ -430,24 +425,6 @@ export function MoraTable({
                 onClick={() => toggleSort('unpaid_total')}
                 className="text-right"
               />
-              <SortableHead
-                label="Pagado"
-                active={sortKey === 'paid_total'}
-                dir={sortDir}
-                onClick={() => toggleSort('paid_total')}
-                className="text-right"
-              />
-              <SortableHead
-                label="A pagar"
-                active={sortKey === 'remaining_contract'}
-                dir={sortDir}
-                onClick={() => toggleSort('remaining_contract')}
-                className="text-right"
-              />
-              <TableHead className="text-center" title="Intentos de Cobro">
-                <RotateCw className="mx-auto h-3.5 w-3.5" />
-              </TableHead>
-              <TableHead className="text-center">Acción</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -473,8 +450,6 @@ export function MoraTable({
                   CATEGORY_STYLES[r.category] ??
                   CATEGORY_STYLES[categoryFromDays(r.days_overdue)];
                 const unpaid = Number(r.unpaid_total ?? r.unpaid_invoices_total) || 0;
-                const paid = Number(r.paid_total) || 0;
-                const remaining = Number(r.remaining_contract) || 0;
                 return (
                   <TableRow
                     key={r.subscription_id}
@@ -511,28 +486,6 @@ export function MoraTable({
 
                     <TableCell className="cursor-copy text-sm hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20">
                       <Copyable value={r.customer_phone} />
-                    </TableCell>
-
-                    <TableCell className="max-w-[180px]">
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-medium">
-                          {r.product_name || 'Suscripción'}
-                        </p>
-                        <p className="text-[10px] text-primary">
-                          {r.paid_count ?? 0} cuotas pagadas
-                        </p>
-                      </div>
-                    </TableCell>
-
-                    <TableCell>
-                      {r.mentor_name ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-primary">
-                          <GraduationCap className="h-3.5 w-3.5" />
-                          {r.mentor_name}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 opacity-50">—</span>
-                      )}
                     </TableCell>
 
                     <TableCell className="px-1">
@@ -661,57 +614,13 @@ export function MoraTable({
                       ) : (
                         <span className="text-slate-400">—</span>
                       )}
-                    </TableCell>
-
-                    <TableCell className="text-right tabular-nums">
-                      {paid > 0 ? (
-                        <span className="text-emerald-600 dark:text-emerald-400">
-                          {formatEuros(paid, { decimals: 2 })}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400">—</span>
-                      )}
-                    </TableCell>
-
-                    <TableCell className="text-right tabular-nums text-slate-700 dark:text-slate-300">
-                      {remaining > 0 ? formatEuros(remaining, { decimals: 2 }) : '—'}
-                    </TableCell>
-
-                    <TableCell className="text-center">
-                      <span
-                        className={cn(
-                          'inline-flex min-w-[20px] items-center justify-center rounded-full px-1.5 py-0.5 font-mono text-[10px] font-medium',
-                          r.last_retry_status === 'SUCCESS'
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                            : r.last_retry_status === 'FAILURE'
-                              ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
-                              : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
-                        )}
-                      >
-                        {r.retry_count || 0}
-                      </span>
-                    </TableCell>
-
-                    <TableCell className="text-center">
-                      {isLocked ? (
+                      {isLocked && (
                         <span
-                          className="inline-flex items-center gap-1 text-xs font-medium text-amber-600"
+                          className="ml-1 inline-flex items-center gap-0.5 text-[9px] font-medium text-amber-600"
                           title={`Bloqueado por ${r.recovery_locked_by}`}
                         >
                           <Lock className="h-3 w-3" />
-                          LOCKED
                         </span>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRowOpen(r);
-                          }}
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                        </Button>
                       )}
                     </TableCell>
                   </TableRow>
