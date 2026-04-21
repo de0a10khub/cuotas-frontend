@@ -1,10 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { FailedPayment } from '@/lib/clientes-types';
+import type { FailedPayment, Operator } from '@/lib/clientes-types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { formatEuros } from '@/lib/format';
 import { toast } from 'sonner';
 import {
@@ -17,6 +24,7 @@ import {
   Clock,
   CalendarDays,
   ArrowRight,
+  UserCog,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RecoveryDrawerApi } from './types';
@@ -26,6 +34,7 @@ interface Props {
   subscriptionId: string;
   customerId: string;
   platform: string;
+  operators?: Operator[];
   showChargeAction?: boolean;
   onRetryResult?: (success: boolean) => void;
 }
@@ -105,13 +114,41 @@ export function FailedPaymentsList({
   subscriptionId,
   customerId,
   platform,
+  operators = [],
   showChargeAction = true,
   onRetryResult,
 }: Props) {
   const [items, setItems] = useState<FailedPayment[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  async function assign(item: FailedPayment, operatorId: string | null) {
+    if (!api.assignPaymentOperator) return;
+    setAssigningId(item.id);
+    try {
+      await api.assignPaymentOperator({
+        platform: item.platform,
+        item_id: item.id,
+        operator_id: operatorId,
+      });
+      setItems((prev) =>
+        prev
+          ? prev.map((p) =>
+              p.id === item.id && p.platform === item.platform
+                ? { ...p, assigned_operator_id: operatorId }
+                : p,
+            )
+          : prev,
+      );
+      toast.success(operatorId ? 'Operario asignado' : 'Operario eliminado');
+    } catch {
+      toast.error('Error al asignar operario');
+    } finally {
+      setAssigningId(null);
+    }
+  }
 
   const load = async () => {
     setLoading(true);
@@ -283,12 +320,36 @@ export function FailedPaymentsList({
               )}
             </div>
 
-            {/* FOOTER: id + actions */}
-            <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-3.5 py-2 dark:border-slate-800/50 dark:bg-slate-950/40">
+            {/* FOOTER: id + operario + actions */}
+            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/60 px-3.5 py-2 dark:border-slate-800/50 dark:bg-slate-950/40">
               <p className="truncate font-mono text-[10px] text-slate-400" title={p.id}>
                 {p.id}
               </p>
               <div className="flex items-center gap-1.5">
+                {api.assignPaymentOperator && operators.length > 0 && (
+                  <Select
+                    value={p.assigned_operator_id || '__none__'}
+                    onValueChange={(v) =>
+                      assign(p, v === '__none__' || !v ? null : v)
+                    }
+                    disabled={assigningId === p.id}
+                  >
+                    <SelectTrigger className="h-7 min-w-[130px] gap-1 border-sky-300/50 bg-sky-50/50 text-[11px] dark:border-sky-800/50 dark:bg-sky-950/30">
+                      <UserCog className="h-3 w-3 text-sky-500" />
+                      <SelectValue placeholder="Asignar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__" className="text-xs text-muted-foreground">
+                        Sin asignar
+                      </SelectItem>
+                      {operators.map((op) => (
+                        <SelectItem key={op.id} value={op.id} className="text-xs">
+                          {op.display_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 {p.platform === 'stripe' && tone === 'paid' && p.invoice_pdf && (
                   <a
                     href={p.invoice_pdf}

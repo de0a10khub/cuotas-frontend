@@ -93,6 +93,16 @@ export const moraApi = {
       payload,
     ),
 
+  assignPaymentOperator: (payload: {
+    platform: string;
+    item_id: string;
+    operator_id: string | null;
+  }) =>
+    api.post<{ ok: boolean; assigned_operator_id: string | null }>(
+      `/api/v1/clientes-directorio/assign-payment-operator/`,
+      payload,
+    ),
+
   paymentUpdateLink: (payload: {
     subscription_id: string;
     customer_id: string;

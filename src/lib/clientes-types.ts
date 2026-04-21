@@ -135,7 +135,7 @@ export interface FailedPayment {
   status: string;
   dispute_status: string | null;
   attempt_count: number;
-  assigned_operator: string | null;
+  assigned_operator_id: string | null;
 
   // Stripe
   hosted_invoice_url?: string | null;

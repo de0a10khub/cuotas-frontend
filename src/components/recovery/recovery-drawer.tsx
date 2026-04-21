@@ -604,6 +604,7 @@ export function RecoveryDrawer({
                     subscriptionId={row.subscription_id}
                     customerId={row.customer_id}
                     platform={row.platform}
+                    operators={operators}
                     showChargeAction
                   />
                 </TabsContent>
