@@ -121,6 +121,8 @@ export interface FailedPayment {
   customer_id: string;
   subscription_id: string;
   due_date: string | null;
+  /** Fecha real de cobro (distinta de due_date si hubo past_due + recovery). */
+  paid_at?: string | null;
   created_at: string | null;
   amount: number;
   currency: string;

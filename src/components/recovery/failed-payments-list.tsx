@@ -37,11 +37,30 @@ function classifyStatus(status: string): StatusTone {
   return 'failed';
 }
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso.slice(0, 10);
   return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function sameDay(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  const da = new Date(a);
+  const db = new Date(b);
+  if (isNaN(da.getTime()) || isNaN(db.getTime())) return a.slice(0, 10) === b.slice(0, 10);
+  return (
+    da.getUTCFullYear() === db.getUTCFullYear() &&
+    da.getUTCMonth() === db.getUTCMonth() &&
+    da.getUTCDate() === db.getUTCDate()
+  );
+}
+
+function daysBetween(a: string, b: string): number {
+  const da = new Date(a).getTime();
+  const db = new Date(b).getTime();
+  if (!Number.isFinite(da) || !Number.isFinite(db)) return 0;
+  return Math.round(Math.abs(db - da) / (1000 * 60 * 60 * 24));
 }
 
 function platformLabel(p: string): string {
@@ -138,7 +157,15 @@ export function FailedPaymentsList({
     <ul className="space-y-2">
       {items.map((p) => {
         const tone = classifyStatus(p.status);
-        const date = p.due_date || p.created_at;
+        const scheduled = p.due_date || p.created_at;
+        const paidAt = p.paid_at || null;
+        const showBothDates =
+          !!scheduled &&
+          !!paidAt &&
+          !sameDay(scheduled, paidAt) &&
+          tone === 'paid';
+        const lateDays =
+          showBothDates && scheduled && paidAt ? daysBetween(scheduled, paidAt) : 0;
         return (
           <li
             key={`${p.platform}-${p.id}`}
@@ -206,7 +233,26 @@ export function FailedPaymentsList({
                   >
                     {formatEuros(p.amount, { decimals: 2 })}
                   </span>
-                  <span className="text-xs text-slate-500">{formatDate(date)}</span>
+                  {showBothDates ? (
+                    <span className="text-xs text-slate-500">
+                      <span className="text-slate-400">Prevista</span>{' '}
+                      {formatDate(scheduled)}
+                      <span className="mx-1 text-slate-300">·</span>
+                      <span className="text-slate-400">Cobrada</span>{' '}
+                      <span className="text-slate-700 dark:text-slate-200">
+                        {formatDate(paidAt)}
+                      </span>
+                      {lateDays > 0 && (
+                        <span className="ml-1.5 text-amber-600 dark:text-amber-400">
+                          ({lateDays}d tarde)
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-500">
+                      {formatDate(scheduled || paidAt)}
+                    </span>
+                  )}
                 </div>
 
                 <p className="mt-1 truncate font-mono text-[10px] text-slate-400">{p.id}</p>
