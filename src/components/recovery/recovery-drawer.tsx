@@ -317,8 +317,8 @@ export function RecoveryDrawer({
 
         <div className="flex-1 overflow-y-auto">
           <div className="space-y-4 p-6">
-            {/* Contacto rápido: email + teléfono con botones de copiar */}
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {/* Contacto rápido: email ocupa ancho completo, teléfono debajo */}
+            <div className="space-y-2">
               <QuickContactTile
                 icon={Mail}
                 label="Email"
