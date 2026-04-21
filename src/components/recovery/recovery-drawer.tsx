@@ -419,6 +419,7 @@ export function RecoveryDrawer({
                   amount={tcv > 0 ? Number(row.remaining_contract) || 0 : null}
                   subtitle={tcv > 0 ? `de ${formatEuros(tcv, { decimals: 0 })}` : undefined}
                   tone="slate"
+                  beta
                 />
               </div>
             )}
@@ -655,11 +656,13 @@ function FinancialTile({
   amount,
   subtitle,
   tone,
+  beta,
 }: {
   label: string;
   amount: number | null;
   subtitle?: string;
   tone: 'emerald' | 'rose' | 'slate';
+  beta?: boolean;
 }) {
   const tones = {
     emerald:
@@ -669,7 +672,15 @@ function FinancialTile({
       'border-slate-200/70 bg-gradient-to-br from-slate-50 to-white text-slate-800 dark:border-slate-800 dark:from-slate-900/60 dark:to-slate-950 dark:text-slate-200',
   }[tone];
   return (
-    <div className={cn('rounded-lg border p-3 shadow-sm', tones)}>
+    <div className={cn('relative rounded-lg border p-3 shadow-sm', tones)}>
+      {beta && (
+        <span
+          className="absolute right-1.5 top-1.5 inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0 text-[9px] font-bold uppercase tracking-wider text-amber-800 ring-1 ring-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-800/60"
+          title="Este valor se calcula a partir del metadata de Stripe/ThriveCart. En algunos clientes puede no ser exacto."
+        >
+          Beta
+        </span>
+      )}
       <p className="text-[10px] font-bold uppercase tracking-wider opacity-70">{label}</p>
       <p className="mt-1 text-xl font-extrabold tabular-nums">
         {amount === null ? '—' : formatEuros(amount, { decimals: 2 })}
