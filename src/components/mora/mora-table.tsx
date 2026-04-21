@@ -343,7 +343,15 @@ export function MoraTable({
         key={`${search}-${page}-${platform}-${category}-${disputeState}`}
         className="rounded-lg border border-slate-200 bg-background dark:border-slate-800"
       >
-        <Table>
+        <Table
+          className={cn(
+            // Densidad compacta (como Conciliación y /clientes): cabe en ~1600px.
+            'text-[11px]',
+            '[&_th]:h-8 [&_th]:px-1.5 [&_th]:text-[10.5px]',
+            '[&_td]:px-1.5 [&_td]:py-1.5',
+            '[&_[data-slot=badge]]:text-[10px] [&_[data-slot=badge]]:px-1.5 [&_[data-slot=badge]]:py-0',
+          )}
+        >
           <TableHeader>
             {/* KPI row: 6 celdas con proporciones 1+3+3+5+2+9 = 23 (web vieja) */}
             <TableRow className="bg-primary/5">
