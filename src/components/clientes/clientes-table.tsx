@@ -24,10 +24,7 @@ import {
   ArrowUp,
   ArrowUpDown,
   Lock,
-  MessageSquare,
-  RotateCw,
   Search,
-  User as UserIcon,
   Users,
   X,
 } from 'lucide-react';
@@ -334,7 +331,7 @@ export function ClientesTable({
                 </span>
               </TableHead>
               <TableHead
-                colSpan={5}
+                colSpan={2}
                 className="bg-slate-100/60 py-2 dark:bg-slate-800/50"
               />
             </TableRow>
@@ -372,18 +369,13 @@ export function ClientesTable({
                 onClick={() => toggleSort('unpaid_invoices_total')}
                 className="text-right"
               />
-              <TableHead className="text-center" title="Intentos de Cobro">
-                <RotateCw className="mx-auto h-3.5 w-3.5" />
-              </TableHead>
-              <TableHead className="text-center">CRM</TableHead>
-              <TableHead className="text-center">Acción</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading &&
               Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={`sk-${i}`}>
-                  {Array.from({ length: 19 }).map((_, j) => (
+                  {Array.from({ length: 16 }).map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
@@ -392,7 +384,7 @@ export function ClientesTable({
               ))}
 
             {!loading && sorted.length === 0 && (
-              <EmptyTable colSpan={19} icon={Users} title="Sin clientes con esos filtros" />
+              <EmptyTable colSpan={16} icon={Users} title="Sin clientes con esos filtros" />
             )}
 
             {!loading &&
@@ -527,56 +519,13 @@ export function ClientesTable({
                       ) : (
                         <span className="text-slate-400">—</span>
                       )}
-                    </TableCell>
-
-                    <TableCell className="text-center">
-                      <span
-                        className={cn(
-                          'inline-flex min-w-[20px] items-center justify-center rounded-full px-1.5 py-0.5 font-mono text-[10px] font-medium',
-                          r.last_retry_status === 'SUCCESS'
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                            : r.last_retry_status === 'FAILURE'
-                              ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
-                              : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
-                        )}
-                      >
-                        {r.retry_count || 0}
-                      </span>
-                    </TableCell>
-
-                    <TableCell className="text-center">
-                      <a
-                        href={`/crm/contacts?search=${encodeURIComponent(r.customer_email)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-primary dark:border-slate-800 dark:hover:bg-slate-800"
-                        title="Abrir en CRM"
-                      >
-                        <UserIcon className="h-3.5 w-3.5" />
-                      </a>
-                    </TableCell>
-
-                    <TableCell className="text-center">
-                      {isLocked ? (
+                      {isLocked && (
                         <span
-                          className="inline-flex items-center gap-1 text-xs font-medium text-amber-600"
+                          className="ml-1 inline-flex items-center text-[9px] font-medium text-amber-600"
                           title={`Bloqueado por ${r.recovery_locked_by}`}
                         >
                           <Lock className="h-3 w-3" />
-                          LOCKED
                         </span>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRowOpen(r);
-                          }}
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                        </Button>
                       )}
                     </TableCell>
                   </TableRow>
