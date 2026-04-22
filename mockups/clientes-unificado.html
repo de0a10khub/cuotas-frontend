@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Mockup: /clientes unificado + ficha + modal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  .pill { @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold; }
+  .chip-platform { @apply inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium; }
+</style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+<!-- NAV -->
+<nav class="sticky top-0 z-40 bg-white border-b border-slate-200 px-6 py-3 flex items-center gap-4 shadow-sm">
+  <strong class="text-indigo-700">MOCKUP</strong>
+  <span class="text-slate-400">—</span>
+  <button class="tab-btn text-sm font-semibold text-slate-700 border-b-2 border-indigo-600 px-2 py-1" data-show="v1">1 · Vista /clientes (1 fila por persona)</button>
+  <button class="tab-btn text-sm text-slate-500 hover:text-slate-700 px-2 py-1" data-show="v2">2 · Ficha del cliente (drawer)</button>
+  <button class="tab-btn text-sm text-slate-500 hover:text-slate-700 px-2 py-1" data-show="v3">3 · Modal Vincular pago nuevo</button>
+  <div class="ml-auto text-xs text-slate-500">datos mock • Jaime Baelo Suárez</div>
+</nav>
+
+<!-- ========================= VISTA 1 ========================= -->
+<section id="v1" class="view p-6">
+  <div class="max-w-[1400px] mx-auto">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h1 class="text-xl font-bold">Gestión de clientes</h1>
+        <p class="text-sm text-slate-500">Vista unificada · 1 fila por persona · acciones y seguimiento</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <select class="rounded border border-slate-300 text-sm px-2 py-1"><option>🌍 Todas las plataformas</option></select>
+        <select class="rounded border border-slate-300 text-sm px-2 py-1"><option>🚀 Todos los estados</option></select>
+        <select class="rounded border border-slate-300 text-sm px-2 py-1"><option>👤 Todos los operarios</option></select>
+        <input class="rounded border border-slate-300 text-sm px-2 py-1" placeholder="Buscar email / nombre / DNI"/>
+      </div>
+    </div>
+
+    <!-- Resumen filtrado -->
+    <div class="bg-white border border-slate-200 rounded-lg px-4 py-3 mb-3 flex items-center gap-6">
+      <span class="font-semibold">Resumen filtrado</span>
+      <span class="text-slate-600"><strong>5</strong> clientes</span>
+      <span class="text-slate-600">Deuda vencida total: <strong class="text-red-600">2.450,00 €</strong></span>
+      <span class="text-slate-600">Deuda futura total: <strong>8.800,00 €</strong></span>
+    </div>
+
+    <!-- Tabla -->
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
+          <tr>
+            <th class="text-left px-3 py-2">#</th>
+            <th class="text-left px-3 py-2">Cliente</th>
+            <th class="text-left px-3 py-2">Teléfono</th>
+            <th class="text-left px-3 py-2">Producto</th>
+            <th class="text-left px-3 py-2">Plataformas</th>
+            <th class="text-left px-3 py-2">Estado global</th>
+            <th class="text-left px-3 py-2">Pagos</th>
+            <th class="text-right px-3 py-2">Cobrado</th>
+            <th class="text-right px-3 py-2">Deuda vencida</th>
+            <th class="text-left px-3 py-2">Operario</th>
+            <th class="text-left px-3 py-2">Gestión</th>
+            <th class="px-2 py-2"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <!-- Fila 1: Jaime (el caso Paso 1a que arreglamos) -->
+          <tr class="hover:bg-indigo-50/40 cursor-pointer" onclick="show('v2')">
+            <td class="px-3 py-3 text-slate-400">1</td>
+            <td class="px-3 py-3">
+              <div class="font-semibold">Jaime Baelo Suárez</div>
+              <div class="text-xs text-slate-500">jbaelosuarez@gmail.com</div>
+            </td>
+            <td class="px-3 py-3">+34 681022342</td>
+            <td class="px-3 py-3">
+              <div>De0a10k - 3K</div>
+              <div class="text-xs text-slate-500">6 cuotas · 550€</div>
+            </td>
+            <td class="px-3 py-3">
+              <span class="chip-platform bg-cyan-100 text-cyan-700">Whop</span>
+              <span class="chip-platform bg-teal-100 text-teal-700 ml-1">Whop-ERP</span>
+            </td>
+            <td class="px-3 py-3">
+              <span class="pill bg-emerald-100 text-emerald-700">✅ AL DÍA</span>
+            </td>
+            <td class="px-3 py-3 text-slate-600">2 / 6</td>
+            <td class="px-3 py-3 text-right font-medium">1.100 €</td>
+            <td class="px-3 py-3 text-right text-slate-400">—</td>
+            <td class="px-3 py-3">
+              <div class="text-sm">Adrián</div>
+              <div class="text-xs text-slate-500">📞 Contactado</div>
+            </td>
+            <td class="px-3 py-3 max-w-[220px] truncate text-xs text-slate-600" title="Incidencia con tarjeta bloqueada por el banco...">Incidencia con tarjeta bloqueada por el banco...</td>
+            <td class="px-2 py-3 text-indigo-600 text-sm">→</td>
+          </tr>
+
+          <!-- Fila 2: cliente en mora -->
+          <tr class="hover:bg-indigo-50/40 cursor-pointer">
+            <td class="px-3 py-3 text-slate-400">2</td>
+            <td class="px-3 py-3">
+              <div class="font-semibold">Alejandro Ibáñez Capel</div>
+              <div class="text-xs text-slate-500">alejandro.ibanezcapel@gmail.com</div>
+            </td>
+            <td class="px-3 py-3">+34 612 345 678</td>
+            <td class="px-3 py-3">
+              <div>De0a10k - SMMA 3K</div>
+              <div class="text-xs text-slate-500">6 cuotas · 550€</div>
+            </td>
+            <td class="px-3 py-3">
+              <span class="chip-platform bg-cyan-100 text-cyan-700">Whop</span>
+              <span class="chip-platform bg-teal-100 text-teal-700 ml-1">Whop-ERP</span>
+            </td>
+            <td class="px-3 py-3">
+              <span class="pill bg-orange-100 text-orange-700">🟠 VENCIDA (18d)</span>
+            </td>
+            <td class="px-3 py-3 text-slate-600">3 / 6</td>
+            <td class="px-3 py-3 text-right font-medium">1.650 €</td>
+            <td class="px-3 py-3 text-right text-red-600 font-semibold">550 €</td>
+            <td class="px-3 py-3">
+              <div class="text-sm">Ana</div>
+              <div class="text-xs text-slate-500">🤝 Promesa pago</div>
+            </td>
+            <td class="px-3 py-3 max-w-[220px] truncate text-xs text-slate-600" title="Paga viernes por bizum">Paga viernes por bizum</td>
+            <td class="px-2 py-3 text-indigo-600 text-sm">→</td>
+          </tr>
+
+          <!-- Fila 3: Pago único -->
+          <tr class="hover:bg-indigo-50/40 cursor-pointer">
+            <td class="px-3 py-3 text-slate-400">3</td>
+            <td class="px-3 py-3">
+              <div class="font-semibold">Enaitz Hernández</div>
+              <div class="text-xs text-slate-500">enaitzhernandez7@gmail.com</div>
+            </td>
+            <td class="px-3 py-3">+34 655 987 654</td>
+            <td class="px-3 py-3">
+              <div>De0a10k - 3K</div>
+              <div class="text-xs text-slate-500">Pago único</div>
+            </td>
+            <td class="px-3 py-3">
+              <span class="chip-platform bg-teal-100 text-teal-700">Whop-ERP</span>
+            </td>
+            <td class="px-3 py-3">
+              <span class="pill bg-violet-100 text-violet-700">💎 PAGO ÚNICO</span>
+            </td>
+            <td class="px-3 py-3 text-slate-600">1 / 1</td>
+            <td class="px-3 py-3 text-right font-medium">2.000 €</td>
+            <td class="px-3 py-3 text-right text-slate-400">—</td>
+            <td class="px-3 py-3 text-slate-400 text-sm">—</td>
+            <td class="px-3 py-3 text-xs text-slate-400">—</td>
+            <td class="px-2 py-3 text-indigo-600 text-sm">→</td>
+          </tr>
+
+          <!-- Fila 4: Refinanciado -->
+          <tr class="hover:bg-indigo-50/40 cursor-pointer">
+            <td class="px-3 py-3 text-slate-400">4</td>
+            <td class="px-3 py-3">
+              <div class="font-semibold">Leo Font González</div>
+              <div class="text-xs text-slate-500">leofontgonzalezz@gmail.com</div>
+            </td>
+            <td class="px-3 py-3">+34 699 111 222</td>
+            <td class="px-3 py-3">
+              <div>De0a10k - 3K</div>
+              <div class="text-xs text-slate-500 text-indigo-600">🔄 Refinanciado · 6 cuotas × 300€</div>
+            </td>
+            <td class="px-3 py-3">
+              <span class="chip-platform bg-teal-100 text-teal-700">Whop-ERP</span>
+              <span class="chip-platform bg-indigo-100 text-indigo-700 ml-1">Stripe</span>
+            </td>
+            <td class="px-3 py-3">
+              <span class="pill bg-emerald-100 text-emerald-700">✅ AL DÍA</span>
+              <span class="pill bg-indigo-100 text-indigo-700 ml-1">🔄 RENEGOCIADO</span>
+            </td>
+            <td class="px-3 py-3 text-slate-600">2 / 6</td>
+            <td class="px-3 py-3 text-right font-medium">2.700 €</td>
+            <td class="px-3 py-3 text-right text-slate-400">—</td>
+            <td class="px-3 py-3">
+              <div class="text-sm">Estefanía</div>
+              <div class="text-xs text-slate-500">✅ Recuperado</div>
+            </td>
+            <td class="px-3 py-3 text-xs text-slate-600 max-w-[220px] truncate" title="Refi 15/mar. Cliente ok.">Refi 15/mar. Cliente ok.</td>
+            <td class="px-2 py-3 text-indigo-600 text-sm">→</td>
+          </tr>
+
+          <!-- Fila 5: Full Pay (cerrado con operador) -->
+          <tr class="hover:bg-indigo-50/40 cursor-pointer">
+            <td class="px-3 py-3 text-slate-400">5</td>
+            <td class="px-3 py-3">
+              <div class="font-semibold">Antonio Manuel Bonilla</div>
+              <div class="text-xs text-slate-500">antonio.71131@gmail.com</div>
+            </td>
+            <td class="px-3 py-3">+34 644 555 333</td>
+            <td class="px-3 py-3">
+              <div>De0a10k - 3K</div>
+              <div class="text-xs text-slate-500 text-emerald-600">💎 Full Pay · liquidado</div>
+            </td>
+            <td class="px-3 py-3">
+              <span class="chip-platform bg-cyan-100 text-cyan-700">Whop</span>
+              <span class="chip-platform bg-teal-100 text-teal-700 ml-1">Whop-ERP</span>
+            </td>
+            <td class="px-3 py-3">
+              <span class="pill bg-emerald-600 text-white">💎 FULL PAY</span>
+            </td>
+            <td class="px-3 py-3 text-slate-600">1 + 1</td>
+            <td class="px-3 py-3 text-right font-medium">733 €</td>
+            <td class="px-3 py-3 text-right text-slate-400">—</td>
+            <td class="px-3 py-3">
+              <div class="text-sm">Adrián</div>
+              <div class="text-xs text-emerald-600">🎉 Pagos completados</div>
+            </td>
+            <td class="px-3 py-3 text-xs text-slate-600 max-w-[220px] truncate" title="Cliente liquidó el 20/abr por bizum">Cliente liquidó el 20/abr por bizum</td>
+            <td class="px-2 py-3 text-indigo-600 text-sm">→</td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-3 text-xs text-slate-500">
+      💡 Click en cualquier fila → abre ficha del cliente en pestaña 2. Click en "3" de la barra superior → modal de vinculación.
+    </div>
+  </div>
+</section>
+
+<!-- ========================= VISTA 2 (ficha) ========================= -->
+<section id="v2" class="view p-6 hidden">
+  <div class="max-w-[1100px] mx-auto grid grid-cols-3 gap-0 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden min-h-[700px]">
+
+    <!-- COL IZQUIERDA -->
+    <div class="col-span-1 bg-slate-50 border-r border-slate-200 p-6 flex flex-col">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-14 h-14 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xl font-bold">JB</div>
+        <div>
+          <div class="font-bold text-lg leading-tight">Jaime Baelo Suárez</div>
+          <div class="text-xs text-slate-500">awakeaerosol</div>
+        </div>
+      </div>
+
+      <div class="space-y-2 text-sm">
+        <div class="flex items-start gap-2"><span>📧</span><span class="text-slate-700 break-all">jbaelosuarez@gmail.com</span></div>
+        <div class="flex items-start gap-2"><span>📱</span><span>+34 681022342</span></div>
+        <div class="flex items-start gap-2"><span>📍</span><span>Valsequillo, Las Palmas (ES)</span></div>
+        <div class="flex items-start gap-2"><span>🪪</span><span>DNI: 45340700H</span></div>
+      </div>
+
+      <hr class="my-4 border-slate-200"/>
+
+      <div class="space-y-3">
+        <div>
+          <div class="text-xs text-slate-500">Producto</div>
+          <div class="font-semibold">De0a10k - 3K</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500">Estado global</div>
+          <div><span class="pill bg-emerald-100 text-emerald-700">✅ AL DÍA</span></div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500">Plataformas</div>
+          <div class="flex gap-1 mt-1">
+            <span class="chip-platform bg-cyan-100 text-cyan-700">Whop nativo</span>
+            <span class="chip-platform bg-teal-100 text-teal-700">Whop-ERP</span>
+          </div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500">Total cobrado</div>
+          <div class="font-semibold text-emerald-700">1.100 € / 3.300 €</div>
+        </div>
+      </div>
+
+      <hr class="my-4 border-slate-200"/>
+
+      <div class="space-y-2 text-sm">
+        <button class="w-full text-left rounded bg-indigo-600 text-white px-3 py-2 hover:bg-indigo-700">🔗 Vincular pago nuevo (refi / full pay)</button>
+        <button class="w-full text-left rounded bg-white border border-slate-300 px-3 py-2 hover:bg-slate-50">💰 Marcar pago completo</button>
+        <button class="w-full text-left rounded bg-white border border-slate-300 px-3 py-2 hover:bg-slate-50">🔄 Refinanciar contrato</button>
+        <button class="w-full text-left rounded bg-white border border-slate-300 px-3 py-2 hover:bg-slate-50">📞 Nueva interacción</button>
+      </div>
+    </div>
+
+    <!-- COL DERECHA (pestañas) -->
+    <div class="col-span-2 p-0 flex flex-col">
+      <div class="border-b border-slate-200 px-6 pt-3 flex items-end gap-1">
+        <button class="pestana active-tab px-4 py-2 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600" data-tab="contrato">Contrato</button>
+        <button class="pestana px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700" data-tab="pagos">Pagos</button>
+        <button class="pestana px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700" data-tab="gestion">Gestión</button>
+        <button class="pestana px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700" data-tab="accesos">Accesos Whop</button>
+        <button class="pestana px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700" data-tab="resumen">Resumen</button>
+      </div>
+
+      <!-- TAB CONTRATO (default) -->
+      <div class="tab-panel p-6" data-panel="contrato">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="text-xs text-slate-500 uppercase">Contrato</div>
+            <div class="font-bold text-lg">De0a10k - 3K · 6 cuotas de 550 €</div>
+            <div class="text-xs text-slate-500">Inicio: 27/02/2026 · Fin previsto: 27/07/2026</div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-slate-500">Pagado / Total</div>
+            <div class="font-bold text-emerald-700">1.100 € / 3.300 €</div>
+          </div>
+        </div>
+
+        <!-- Calendario de cuotas -->
+        <div class="border border-slate-200 rounded-lg overflow-hidden mb-4">
+          <div class="grid grid-cols-6 bg-slate-100 text-xs uppercase tracking-wide text-slate-600">
+            <div class="px-3 py-2">Cuota</div>
+            <div class="px-3 py-2">Vencimiento</div>
+            <div class="px-3 py-2">Cobrado</div>
+            <div class="px-3 py-2">Importe</div>
+            <div class="px-3 py-2">Estado</div>
+            <div class="px-3 py-2">Plataforma</div>
+          </div>
+          <div class="grid grid-cols-6 border-t border-slate-200 text-sm">
+            <div class="px-3 py-2">1 / 6</div>
+            <div class="px-3 py-2">27/02/2026</div>
+            <div class="px-3 py-2 text-emerald-700">27/02/2026</div>
+            <div class="px-3 py-2">550 €</div>
+            <div class="px-3 py-2"><span class="pill bg-emerald-100 text-emerald-700">✅ Pagada</span></div>
+            <div class="px-3 py-2 text-xs text-slate-500">Whop-ERP</div>
+          </div>
+          <div class="grid grid-cols-6 border-t border-slate-200 text-sm bg-amber-50/30">
+            <div class="px-3 py-2">2 / 6</div>
+            <div class="px-3 py-2">29/03/2026</div>
+            <div class="px-3 py-2 text-amber-700">13/04/2026 <span class="text-xs">(+15d)</span></div>
+            <div class="px-3 py-2">550 €</div>
+            <div class="px-3 py-2"><span class="pill bg-emerald-100 text-emerald-700">✅ Pagada</span> <span class="text-[11px] text-amber-700">tardía</span></div>
+            <div class="px-3 py-2 text-xs text-slate-500">Whop-ERP</div>
+          </div>
+          <div class="grid grid-cols-6 border-t border-slate-200 text-sm">
+            <div class="px-3 py-2">3 / 6</div>
+            <div class="px-3 py-2">28/04/2026</div>
+            <div class="px-3 py-2 text-slate-400">—</div>
+            <div class="px-3 py-2">550 €</div>
+            <div class="px-3 py-2"><span class="pill bg-slate-100 text-slate-600">⏳ Pendiente</span></div>
+            <div class="px-3 py-2 text-xs text-slate-500">Whop-ERP</div>
+          </div>
+          <div class="grid grid-cols-6 border-t border-slate-200 text-sm">
+            <div class="px-3 py-2">4 / 6</div>
+            <div class="px-3 py-2">28/05/2026</div>
+            <div class="px-3 py-2 text-slate-400">—</div>
+            <div class="px-3 py-2">550 €</div>
+            <div class="px-3 py-2"><span class="pill bg-slate-100 text-slate-600">⏳ Pendiente</span></div>
+            <div class="px-3 py-2 text-xs text-slate-500">Whop-ERP</div>
+          </div>
+          <div class="grid grid-cols-6 border-t border-slate-200 text-sm">
+            <div class="px-3 py-2">5 / 6</div>
+            <div class="px-3 py-2">27/06/2026</div>
+            <div class="px-3 py-2 text-slate-400">—</div>
+            <div class="px-3 py-2">550 €</div>
+            <div class="px-3 py-2"><span class="pill bg-slate-100 text-slate-600">⏳ Pendiente</span></div>
+            <div class="px-3 py-2 text-xs text-slate-500">Whop-ERP</div>
+          </div>
+          <div class="grid grid-cols-6 border-t border-slate-200 text-sm">
+            <div class="px-3 py-2">6 / 6</div>
+            <div class="px-3 py-2">27/07/2026</div>
+            <div class="px-3 py-2 text-slate-400">—</div>
+            <div class="px-3 py-2">550 €</div>
+            <div class="px-3 py-2"><span class="pill bg-slate-100 text-slate-600">⏳ Pendiente</span></div>
+            <div class="px-3 py-2 text-xs text-slate-500">Whop-ERP</div>
+          </div>
+        </div>
+
+        <!-- Eventos -->
+        <div class="text-xs uppercase tracking-wide text-slate-500 mb-2">Eventos del contrato</div>
+        <div class="space-y-2 text-sm">
+          <div class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+            <span>⚠️</span>
+            <div>
+              <div class="font-medium">Cuota 2 llegó tardía (+15d)</div>
+              <div class="text-xs text-slate-600">Whop cobró el 13/abr pero la BD ERP no confirmó el día que debía. Marcada como paid tras backfill.</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded px-3 py-2">
+            <span>📅</span>
+            <div>
+              <div class="font-medium">Próxima cuota: 28/04/2026 (550 €)</div>
+              <div class="text-xs text-slate-600">Cobro automático vía Whop-ERP · token activo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB PAGOS (oculto) -->
+      <div class="tab-panel hidden p-6" data-panel="pagos">
+        <div class="text-sm text-slate-500 mb-3">Cronológico, todas las plataformas.</div>
+        <div class="relative border-l-2 border-slate-200 pl-6 space-y-4">
+          <div class="relative"><span class="absolute -left-[30px] top-1 w-4 h-4 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
+            <div class="font-semibold">27/02/2026 · 550 €</div>
+            <div class="text-xs text-slate-600">pay_KAJ4WE26bvaCv7 · Whop nativo (cobro cuota 1/6)</div>
+            <div class="text-xs text-slate-500">License key: A-DACF7E-EB6B6276-CFBE4DW</div>
+          </div>
+          <div class="relative"><span class="absolute -left-[30px] top-1 w-4 h-4 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
+            <div class="font-semibold">13/04/2026 · 550 €</div>
+            <div class="text-xs text-slate-600">pay_45dWsoiL6NpSpX · Whop nativo (cobro cuota 2/6) <span class="text-amber-700">tardío +15d</span></div>
+            <div class="text-xs text-slate-500">License key: A-C555E0-D58317F8-605008W</div>
+          </div>
+          <div class="relative opacity-60"><span class="absolute -left-[30px] top-1 w-4 h-4 rounded-full bg-slate-300 ring-4 ring-slate-100"></span>
+            <div class="font-semibold">28/04/2026 · 550 €</div>
+            <div class="text-xs text-slate-600">Pendiente · cobro automático programado</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB GESTION (oculto) -->
+      <div class="tab-panel hidden p-6" data-panel="gestion">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="text-xs text-slate-500">Operario asignado</div>
+            <div class="font-semibold">Adrián · <span class="text-xs text-slate-600">📞 Contactado</span></div>
+          </div>
+          <button class="text-xs rounded border border-slate-300 px-2 py-1">Cambiar operario</button>
+        </div>
+        <div class="space-y-3">
+          <div class="border border-slate-200 rounded px-3 py-2">
+            <div class="text-xs text-slate-500">Comentario 1 (inicial)</div>
+            <div class="text-sm">Incidencia con tarjeta bloqueada por el banco. Pendiente de actualizar método de pago para relanzar cobro.</div>
+          </div>
+          <div class="border border-slate-200 rounded px-3 py-2">
+            <div class="text-xs text-slate-500">Comentario 2 (seguimiento)</div>
+            <div class="text-sm text-slate-400 italic">(vacío)</div>
+          </div>
+        </div>
+        <div class="mt-4 text-xs uppercase tracking-wide text-slate-500 mb-2">Objeciones</div>
+        <div class="flex gap-1">
+          <span class="pill bg-pink-100 text-pink-700">Tarjeta bloqueada</span>
+          <span class="pill bg-blue-100 text-blue-700">Requiere seguimiento</span>
+        </div>
+      </div>
+
+      <!-- TAB ACCESOS WHOP (oculto) -->
+      <div class="tab-panel hidden p-6" data-panel="accesos">
+        <div class="text-sm text-slate-500 mb-3">Accesos / memberships activas del cliente en Whop (informativo).</div>
+        <div class="space-y-2 text-sm">
+          <div class="flex items-center justify-between border border-slate-200 rounded px-3 py-2">
+            <div>
+              <div class="font-medium">De0a10k - SMMA - 3k</div>
+              <div class="text-xs text-slate-500">mem_FoblYSsPu4vLZj · status: completed</div>
+            </div>
+            <span class="pill bg-emerald-100 text-emerald-700">✅ Acceso OK</span>
+          </div>
+          <div class="flex items-center justify-between border border-slate-200 rounded px-3 py-2">
+            <div>
+              <div class="font-medium">De0a10k - 3K</div>
+              <div class="text-xs text-slate-500">mem_6DZ9kr6J8gvdys · status: completed</div>
+            </div>
+            <span class="pill bg-emerald-100 text-emerald-700">✅ Acceso OK</span>
+          </div>
+        </div>
+        <div class="mt-3 text-xs text-slate-500">
+          Ambas memberships pertenecen al mismo <code>order_id = po_6b8d7628-5e7</code> (1 compra · 2 accesos).
+        </div>
+      </div>
+
+      <!-- TAB RESUMEN (oculto) -->
+      <div class="tab-panel hidden p-6" data-panel="resumen">
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div><span class="text-slate-500">Nombre:</span> Jaime Baelo Suárez</div>
+          <div><span class="text-slate-500">Alias Whop:</span> awakeaerosol</div>
+          <div><span class="text-slate-500">Email:</span> jbaelosuarez@gmail.com</div>
+          <div><span class="text-slate-500">Teléfono:</span> +34 681022342</div>
+          <div><span class="text-slate-500">DNI:</span> 45340700H</div>
+          <div><span class="text-slate-500">Dirección:</span> Tara N13, Valsequillo (35217), Las Palmas</div>
+          <div><span class="text-slate-500">Alta:</span> 27/02/2026</div>
+          <div><span class="text-slate-500">Contratos:</span> 1 (De0a10k - 3K)</div>
+          <div><span class="text-slate-500">Total cobrado:</span> 1.100 €</div>
+          <div><span class="text-slate-500">Total contrato:</span> 3.300 €</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="max-w-[1100px] mx-auto mt-3 text-xs text-slate-500">
+    💡 Click pestañas (Contrato / Pagos / Gestión / Accesos / Resumen) para cambiar contenido. Botón "🔗 Vincular pago nuevo" → pestaña 3.
+  </div>
+</section>
+
+<!-- ========================= VISTA 3 (modal) ========================= -->
+<section id="v3" class="view p-6 hidden">
+  <div class="relative max-w-[1100px] mx-auto">
+
+    <!-- Mockup de ficha detrás semi-visible -->
+    <div class="bg-white border border-slate-200 rounded-lg shadow opacity-40 pointer-events-none p-6 min-h-[500px]">
+      <div class="font-bold text-lg">Ficha · Juan López (juan@gmail.com)</div>
+      <div class="text-sm text-slate-500">(fondo atenuado)</div>
+    </div>
+
+    <!-- Modal -->
+    <div class="absolute inset-0 flex items-start justify-center pt-8">
+      <div class="bg-white border border-slate-200 rounded-lg shadow-xl w-[520px] p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <div class="text-xs text-slate-500 uppercase">Vincular pago nuevo a este cliente</div>
+            <div class="font-bold text-lg">Juan López</div>
+            <div class="text-xs text-slate-500">juan@gmail.com · De0a10k 3K · 3 cuotas restantes</div>
+          </div>
+          <button class="text-slate-400 hover:text-slate-600 text-xl leading-none">✕</button>
+        </div>
+
+        <!-- Tipo -->
+        <div class="mb-4">
+          <div class="text-xs font-semibold text-slate-700 mb-1">Tipo de operación</div>
+          <div class="flex gap-2">
+            <label class="flex items-center gap-2 border border-indigo-600 bg-indigo-50 rounded px-3 py-2 text-sm cursor-pointer flex-1">
+              <input type="radio" name="tipo" checked/>
+              🔄 Refinanciación
+            </label>
+            <label class="flex items-center gap-2 border border-slate-200 rounded px-3 py-2 text-sm cursor-pointer flex-1 hover:bg-slate-50">
+              <input type="radio" name="tipo"/>
+              💎 Full Pay
+            </label>
+          </div>
+        </div>
+
+        <!-- Plataforma -->
+        <div class="mb-4">
+          <div class="text-xs font-semibold text-slate-700 mb-1">Plataforma del pago nuevo</div>
+          <div class="flex gap-2 flex-wrap">
+            <label class="flex items-center gap-2 border border-indigo-600 bg-indigo-50 rounded px-3 py-2 text-sm cursor-pointer">
+              <input type="radio" name="plat" checked/> Whop
+            </label>
+            <label class="flex items-center gap-2 border border-slate-200 rounded px-3 py-2 text-sm cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="plat"/> Stripe
+            </label>
+            <label class="flex items-center gap-2 border border-slate-200 rounded px-3 py-2 text-sm cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="plat"/> Checkout
+            </label>
+            <label class="flex items-center gap-2 border border-slate-200 rounded px-3 py-2 text-sm cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="plat"/> Manual (bizum/transfer)
+            </label>
+          </div>
+        </div>
+
+        <!-- Identificador -->
+        <div class="mb-4">
+          <div class="text-xs font-semibold text-slate-700 mb-1">Identificador (según plataforma)</div>
+          <input class="w-full rounded border border-slate-300 px-3 py-2 text-sm font-mono" placeholder="License key — ej. A-C555E0-D58317F8-605008W"/>
+          <div class="text-[11px] text-slate-500 mt-1">Whop → license key. Stripe → <code>#1234-5678</code>. Checkout → <code>po_...</code>. Manual → dejar vacío y rellenar fecha + importe abajo.</div>
+        </div>
+
+        <!-- Fallback -->
+        <details class="mb-4">
+          <summary class="text-xs text-indigo-600 cursor-pointer">¿No tienes el identificador? Buscar por fecha + importe</summary>
+          <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
+            <div>
+              <div class="text-xs text-slate-500 mb-1">Fecha del cobro</div>
+              <input type="date" class="w-full rounded border border-slate-300 px-3 py-2"/>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 mb-1">Importe exacto</div>
+              <div class="relative">
+                <input class="w-full rounded border border-slate-300 px-3 py-2 pr-6" placeholder="300.00"/>
+                <span class="absolute right-3 top-2 text-slate-400">€</span>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <!-- Candidato encontrado -->
+        <div class="border-2 border-emerald-200 bg-emerald-50 rounded p-3 mb-4">
+          <div class="text-xs font-semibold text-emerald-700 mb-1">✅ Candidato encontrado en Whop</div>
+          <div class="text-sm"><strong>mem_X9k2Ps3Jqw4A</strong> · 300 € · 15/04/2026</div>
+          <div class="text-xs text-slate-700">Email del pago: <code>juanito2@outlook.com</code> (distinto al del cliente original)</div>
+          <div class="text-xs text-slate-700">Producto: De0a10k - 3K (refi 6×300€)</div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button class="px-4 py-2 text-sm text-slate-600 hover:text-slate-900">Cancelar</button>
+          <button class="px-4 py-2 text-sm font-semibold rounded bg-indigo-600 text-white hover:bg-indigo-700">Vincular como Refinanciación →</button>
+        </div>
+
+        <div class="mt-3 text-[11px] text-slate-500 bg-slate-50 border-l-2 border-slate-300 px-2 py-1">
+          Al confirmar: se crea fila en <code>refinanciaciones</code> (operation_type=refinanciacion),
+          se añade evento al contrato, el operario queda registrado como autor del match,
+          la suscripción original se marca como "reemplazada".
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  function show(id) {
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('font-semibold','text-slate-700','border-b-2','border-indigo-600');
+      b.classList.add('text-slate-500');
+    });
+    const btn = document.querySelector(`.tab-btn[data-show="${id}"]`);
+    if (btn) {
+      btn.classList.add('font-semibold','text-slate-700','border-b-2','border-indigo-600');
+      btn.classList.remove('text-slate-500');
+    }
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => show(b.dataset.show)));
+
+  // Pestañas del drawer
+  document.querySelectorAll('.pestana').forEach(p => {
+    p.addEventListener('click', () => {
+      document.querySelectorAll('.pestana').forEach(x => {
+        x.classList.remove('border-b-2','border-indigo-600','text-indigo-600','font-semibold');
+        x.classList.add('text-slate-500');
+      });
+      p.classList.add('border-b-2','border-indigo-600','text-indigo-600','font-semibold');
+      p.classList.remove('text-slate-500');
+      const panel = p.dataset.tab;
+      document.querySelectorAll('.tab-panel').forEach(tp => tp.classList.add('hidden'));
+      const target = document.querySelector(`.tab-panel[data-panel="${panel}"]`);
+      if (target) target.classList.remove('hidden');
+    });
+  });
+</script>
+</body>
+</html>
