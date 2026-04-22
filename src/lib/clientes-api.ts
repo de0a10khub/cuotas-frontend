@@ -6,6 +6,7 @@ import type {
   FailedPayment,
   LockResult,
   Operator,
+  PersonListResponse,
 } from './clientes-types';
 
 const BASE = '/api/v1/clientes-directorio';
@@ -32,6 +33,9 @@ function toQuery(params: Record<string, string | number | undefined>): string {
 export const clientesApi = {
   list: (p: ListParams) =>
     api.get<ClientesListResponse>(`${BASE}/list/${toQuery({ ...p })}`),
+
+  listGrouped: (p: ListParams) =>
+    api.get<PersonListResponse>(`${BASE}/list-grouped/${toQuery({ ...p })}`),
 
   operators: () => api.get<{ results: Operator[] }>(`${BASE}/operators/`),
 

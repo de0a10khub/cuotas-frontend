@@ -97,6 +97,66 @@ export interface ClientesListResponse {
   page_size: number;
 }
 
+// Vista agrupada (1 fila por persona = unified_customer)
+export interface PersonContract {
+  subscription_id: string;
+  platform: Platform | string;
+  product_name: string | null;
+  subscription_status: string;
+  subscription_created_at: string | null;
+  paid_count: number;
+  unpaid_count: number;
+  paid_total: number;
+  unpaid_total: number;
+  total_contract_value: number;
+  remaining_contract: number;
+  days_overdue: number;
+  category: AgingCategory | string;
+  oldest_invoice_date: string | null;
+  total_installments_all: number | null;
+  /** true = fila de "acceso al grupo Whop" espejo de un whop-erp (no es contrato real). */
+  is_access_only: boolean;
+}
+
+export interface PersonRow {
+  person_key: string;
+  unified_customer_id: string | null;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  category: AgingCategory | string;
+  platforms: Platform[] | string[];
+  n_contracts: number;
+  paid_count: number;
+  unpaid_count: number;
+  paid_total: number;
+  unpaid_total: number;
+  paid_total_cents: number;
+  unpaid_total_cents: number;
+  total_contract_value: number;
+  remaining_contract: number;
+  days_overdue: number;
+  open_disputes: number;
+  won_disputes: number;
+  lost_disputes: number;
+  product_name: string | null;
+  recovery_status: RecoveryStatus | string | null;
+  recovery_contacted_by: string | null;
+  recovery_comment_1: string | null;
+  recovery_comment_2: string | null;
+  recovery_continue_with: string | null;
+  recovery_updated_at: string | null;
+  objeciones_tags: ObjecionTag[];
+  contracts: PersonContract[];
+}
+
+export interface PersonListResponse {
+  results: PersonRow[];
+  total_count: number;
+  page: number;
+  page_size: number;
+}
+
 export interface Operator {
   id: string;
   display_name: string;
