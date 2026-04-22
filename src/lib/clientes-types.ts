@@ -100,6 +100,7 @@ export interface ClientesListResponse {
 // Vista agrupada (1 fila por persona = unified_customer)
 export interface PersonContract {
   subscription_id: string;
+  external_customer_id: string | null;
   platform: Platform | string;
   product_name: string | null;
   subscription_status: string;
