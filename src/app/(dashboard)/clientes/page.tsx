@@ -5,64 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { clientesApi } from '@/lib/clientes-api';
-import type { ClienteRow, Operator, PersonRow } from '@/lib/clientes-types';
-
-/**
- * Convierte una fila agrupada por persona en el formato ClienteRow que usa
- * la tabla y el drawer.
- *
- * Estrategia: el "contrato representativo" es el primero (ya viene ordenado
- * por urgencia). Sus identificadores (subscription_id, customer_id) son los
- * que se usan para acciones (drawer, retry, lock, tracking). Los totales y
- * numeros se toman de los agregados de la persona (sumas, peor estado).
- *
- * Limitacion temporal: acciones operan sobre el contrato representativo.
- * Para gestionar N contratos por separado hay que rediseñar el drawer
- * (proximas sesiones).
- */
-function personToClienteRow(p: PersonRow): ClienteRow {
-  const rep = p.contracts[0] ?? null;
-  return {
-    subscription_id: rep?.subscription_id ?? p.person_key,
-    customer_id: rep?.external_customer_id ?? (p.unified_customer_id ?? ''),
-    customer_name: p.customer_name,
-    customer_email: p.customer_email,
-    customer_phone: p.customer_phone,
-    platform: (rep?.platform as ClienteRow['platform']) ?? 'stripe',
-    subscription_status: rep?.subscription_status ?? 'unknown',
-    subscription_created_at: rep?.subscription_created_at ?? '',
-    pause_collection: null,
-    days_overdue: p.days_overdue,
-    paid_invoices_count: p.paid_count,
-    unpaid_invoices_count: p.unpaid_count,
-    unpaid_invoices_total: p.unpaid_total,
-    category: p.category,
-    open_disputes: p.open_disputes,
-    won_disputes: p.won_disputes,
-    lost_disputes: p.lost_disputes,
-    recovery_status: p.recovery_status,
-    recovery_contacted_by: p.recovery_contacted_by ?? '',
-    recovery_comment_1: p.recovery_comment_1 ?? '',
-    recovery_comment_2: p.recovery_comment_2 ?? '',
-    recovery_continue_with: p.recovery_continue_with ?? '',
-    recovery_locked_by: null,
-    recovery_lock_expires_at: null,
-    retry_count: 0,
-    last_retry_status: null,
-    is_refinanced: false,
-    original_subscription_id: null,
-    refinance_status: null,
-    total_count: 0,
-    product_name: p.product_name,
-    paid_count: p.paid_count,
-    paid_total: p.paid_total,
-    unpaid_total: p.unpaid_total,
-    total_contract_value: p.total_contract_value,
-    remaining_contract: p.remaining_contract,
-    recovery_updated_at: p.recovery_updated_at,
-    objeciones_tags: p.objeciones_tags,
-  };
-}
+import type { ClienteRow, Operator } from '@/lib/clientes-types';
 import { Card, CardContent } from '@/components/ui/card';
 import { FilterHeader, type HardFilters } from '@/components/clientes/filter-header';
 import { ClientesTable } from '@/components/clientes/clientes-table';
@@ -129,7 +72,7 @@ export default function ClientesPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await clientesApi.listGrouped({
+      const data = await clientesApi.list({
         search,
         platform: filters.platform,
         category: filters.category,
@@ -137,7 +80,7 @@ export default function ClientesPage() {
         page,
         page_size: pageSize,
       });
-      setRows(data.results.map(personToClienteRow));
+      setRows(data.results);
       setTotal(data.total_count);
     } catch {
       toast.error('Error cargando clientes');
