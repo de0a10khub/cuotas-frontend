@@ -29,9 +29,9 @@ export const RECOVERY_STATUS_OPTIONS_MORA: string[] = [
 ];
 
 export const CATEGORY_STYLES: Record<string, { className: string; label: string }> = {
-  'Full pay': {
+  'Pago único': {
     className: 'bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-200',
-    label: '💎 FULL PAY',
+    label: '💎 PAGO ÚNICO',
   },
   'Al día': {
     className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200',

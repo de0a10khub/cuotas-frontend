@@ -2,7 +2,7 @@
 // NO mezclar con el CRUD legacy de src/lib/types.ts (Customer, CustomerDetail).
 
 export type AgingCategory =
-  | 'Full pay'
+  | 'Pago único'
   | 'Al día'
   | 'Abiertas'
   | 'Vencidas'

@@ -3,7 +3,7 @@
 import type { Platform } from '@/lib/clientes-types';
 import type { MoraAgingCategory, MoraDisputeState } from '@/lib/mora-types';
 
-// /mora solo contempla los tramos activos, no Full pay / Al día / Incobrable
+// /mora solo contempla los tramos activos, no Pago único / Al día / Incobrable
 // (estos últimos se derivan a /recobros).
 export const MORA_CATEGORY_OPTIONS: { value: 'all' | MoraAgingCategory; label: string }[] = [
   { value: 'all', label: '🚀 Todos los Tramos' },

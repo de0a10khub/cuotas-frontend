@@ -5,7 +5,7 @@ import type { AgingCategory, Platform } from '@/lib/clientes-types';
 
 export const CATEGORY_OPTIONS: { value: 'all' | AgingCategory; label: string }[] = [
   { value: 'all', label: '🚀 Todos' },
-  { value: 'Full pay', label: '💎 Full pay' },
+  { value: 'Pago único', label: '💎 Pago único' },
   { value: 'Al día', label: '✅ Al día' },
   { value: 'Abiertas', label: '🟡 Abiertas (≤7d)' },
   { value: 'Vencidas', label: '🟠 Vencidas (8-30d)' },
