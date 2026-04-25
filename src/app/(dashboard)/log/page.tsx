@@ -258,104 +258,138 @@ export default function LogPage() {
         </CardContent>
       </Card>
 
-      {/* Events feed */}
-      <div className="space-y-2">
-        {loading &&
-          Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={`sk-${i}`} className="h-16 w-full rounded-xl" />
-          ))}
+      {/* Events feed — timeline style */}
+      <div className="relative">
+        {/* Vertical timeline line */}
+        <div className="absolute left-[27px] top-2 bottom-2 w-px bg-gradient-to-b from-slate-200 via-slate-200 to-transparent dark:from-slate-800 dark:via-slate-800" />
 
-        {!loading && events.length === 0 && (
-          <Card>
-            <CardContent className="py-12 text-center text-sm text-muted-foreground">
-              <Search className="mx-auto mb-2 h-8 w-8 text-slate-300" />
-              Sin eventos con esos filtros.
-            </CardContent>
-          </Card>
-        )}
+        <div className="space-y-3">
+          {loading &&
+            Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={`sk-${i}`} className="ml-12 h-20 w-[calc(100%-3rem)] rounded-2xl" />
+            ))}
 
-        {!loading &&
-          events.map((e) => {
-            const src = SOURCES.find((s) => s.id === e.source);
-            const initial = (e.customer_name || e.customer_email || '?').trim()[0]?.toUpperCase() || '?';
-            return (
-              <button
-                key={e.id}
-                type="button"
-                onClick={() => setSelected(e)}
-                className={cn(
-                  'group flex w-full items-center gap-4 rounded-xl border bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900',
-                  e.is_success
-                    ? 'border-l-4 border-slate-200 border-l-emerald-500 dark:border-slate-800 dark:border-l-emerald-500'
-                    : 'border-l-4 border-slate-200 border-l-rose-500 bg-rose-50/20 dark:border-slate-800 dark:bg-rose-950/10',
-                )}
-              >
-                {/* Avatar with initial */}
-                <div
-                  className={cn(
-                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white',
-                    e.is_success
-                      ? 'bg-gradient-to-br from-emerald-400 to-emerald-600'
-                      : 'bg-gradient-to-br from-rose-400 to-rose-600',
-                  )}
-                >
-                  {initial}
-                </div>
+          {!loading && events.length === 0 && (
+            <Card>
+              <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                <Search className="mx-auto mb-2 h-8 w-8 text-slate-300" />
+                Sin eventos con esos filtros.
+              </CardContent>
+            </Card>
+          )}
 
-                {/* Customer info */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-semibold">{e.customer_name || e.customer_email || 'Cliente sin nombre'}</span>
-                    {src && (
-                      <span
-                        className="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white"
-                        style={{ backgroundColor: src.color }}
-                      >
-                        {src.label}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <span className="truncate">{e.customer_email || '—'}</span>
-                  </div>
-                  {e.failure_reason && (
-                    <p className="mt-1 text-xs text-rose-600 dark:text-rose-400 line-clamp-1">
-                      <AlertCircle className="mr-1 inline h-3 w-3" />
-                      {e.failure_reason}
-                    </p>
-                  )}
-                </div>
-
-                {/* Amount + time */}
-                <div className="shrink-0 text-right">
-                  <p
+          {!loading &&
+            events.map((e) => {
+              const src = SOURCES.find((s) => s.id === e.source);
+              const platformIcon = e.source === 'stripe' ? '💳' : e.source === 'whop' ? '⚡' : '📦';
+              return (
+                <div key={e.id} className="relative flex items-start gap-4">
+                  {/* Timeline dot with platform icon */}
+                  <div
                     className={cn(
-                      'text-lg font-bold tabular-nums',
+                      'relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-2xl shadow-md ring-4 ring-background transition-transform group-hover:scale-110',
                       e.is_success
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-slate-900 dark:text-slate-100',
+                        ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900'
+                        : 'bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950 dark:to-rose-900',
                     )}
                   >
-                    {formatEur(e.amount)}
-                  </p>
-                  <div className="mt-0.5 flex items-center justify-end gap-1.5 text-[10px] text-muted-foreground">
-                    <span suppressHydrationWarning>{toMadridTime(e.created_at, 'time')}</span>
-                    <span>·</span>
-                    <span>{relativeTime(e.created_at, now)}</span>
+                    <span>{platformIcon}</span>
+                    {/* Status badge bottom-right */}
+                    <span
+                      className={cn(
+                        'absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white shadow',
+                        e.is_success ? 'bg-emerald-500' : 'bg-rose-500',
+                      )}
+                    >
+                      {e.is_success ? '✓' : '✗'}
+                    </span>
                   </div>
-                </div>
 
-                {/* Status icon */}
-                <div className="shrink-0">
-                  {e.is_success ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-500 transition-transform group-hover:scale-110" />
-                  ) : (
-                    <AlertCircle className="h-5 w-5 text-rose-500 transition-transform group-hover:scale-110" />
-                  )}
+                  {/* Card */}
+                  <button
+                    type="button"
+                    onClick={() => setSelected(e)}
+                    className={cn(
+                      'group relative flex-1 overflow-hidden rounded-2xl border bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg dark:bg-slate-900',
+                      e.is_success
+                        ? 'border-emerald-200/60 dark:border-emerald-900/40'
+                        : 'border-rose-200/60 dark:border-rose-900/40',
+                    )}
+                  >
+                    {/* Decorative gradient accent */}
+                    <div
+                      className={cn(
+                        'absolute inset-y-0 left-0 w-1',
+                        e.is_success ? 'bg-emerald-500' : 'bg-rose-500',
+                      )}
+                    />
+                    <div
+                      className="absolute inset-y-0 left-1 w-px opacity-50"
+                      style={{ backgroundColor: src?.color }}
+                    />
+
+                    <div className="flex items-start gap-3">
+                      {/* Customer info */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="truncate text-base font-bold text-slate-900 dark:text-slate-100">
+                            {e.customer_name || e.customer_email || 'Cliente sin nombre'}
+                          </span>
+                          {src && (
+                            <span
+                              className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm"
+                              style={{ backgroundColor: src.color }}
+                            >
+                              {src.label}
+                            </span>
+                          )}
+                          <span
+                            className={cn(
+                              'inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold',
+                              e.is_success
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300',
+                            )}
+                          >
+                            {e.is_success ? '✓ COBRADO' : '✗ FALLIDO'}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{e.customer_email || '—'}</p>
+                        {e.failure_reason && (
+                          <div className="mt-2 flex items-start gap-2 rounded-lg border border-rose-200/70 bg-rose-50 px-2.5 py-1.5 text-xs dark:border-rose-900/50 dark:bg-rose-950/30">
+                            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-500" />
+                            <span className="line-clamp-2 text-rose-700 dark:text-rose-300">{e.failure_reason}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Amount + time stack */}
+                      <div className="shrink-0 text-right">
+                        <p
+                          className={cn(
+                            'text-2xl font-extrabold tabular-nums tracking-tight',
+                            e.is_success
+                              ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 bg-clip-text text-transparent'
+                              : 'text-slate-400',
+                          )}
+                        >
+                          {formatEur(e.amount)}
+                        </p>
+                        <div className="mt-1 flex flex-col items-end gap-0.5 text-[10px] text-muted-foreground">
+                          <span className="font-mono font-medium" suppressHydrationWarning>
+                            {toMadridTime(e.created_at, 'time')}
+                          </span>
+                          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                            {relativeTime(e.created_at, now)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
                 </div>
-              </button>
-            );
-          })}
+              );
+            })}
+        </div>
       </div>
 
       <ChargesDialog event={selected} onClose={() => setSelected(null)} />
