@@ -258,135 +258,116 @@ export default function LogPage() {
         </CardContent>
       </Card>
 
-      {/* Events feed — timeline style */}
-      <div className="relative">
-        {/* Vertical timeline line */}
-        <div className="absolute left-[27px] top-2 bottom-2 w-px bg-gradient-to-b from-slate-200 via-slate-200 to-transparent dark:from-slate-800 dark:via-slate-800" />
+      {/* Events feed — terminal/log style */}
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-950 shadow-2xl dark:border-slate-800">
+        {/* Terminal header bar */}
+        <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-2">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-slate-500">
+              ~/payments.log · {events.length} entries
+            </span>
+          </div>
+          <span className="font-mono text-[10px] text-slate-500">live</span>
+        </div>
 
-        <div className="space-y-3">
+        <div className="max-h-[80vh] overflow-y-auto font-mono text-[13px] leading-relaxed">
           {loading &&
-            Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={`sk-${i}`} className="ml-12 h-20 w-[calc(100%-3rem)] rounded-2xl" />
+            Array.from({ length: 8 }).map((_, i) => (
+              <div key={`sk-${i}`} className="border-b border-slate-900 px-4 py-2">
+                <Skeleton className="h-4 w-full bg-slate-800" />
+              </div>
             ))}
 
           {!loading && events.length === 0 && (
-            <Card>
-              <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                <Search className="mx-auto mb-2 h-8 w-8 text-slate-300" />
-                Sin eventos con esos filtros.
-              </CardContent>
-            </Card>
+            <div className="py-16 text-center text-sm text-slate-500">
+              <Search className="mx-auto mb-2 h-8 w-8 text-slate-700" />
+              <span className="font-mono text-xs">// no events match filters</span>
+            </div>
           )}
 
           {!loading &&
-            events.map((e) => {
+            events.map((e, idx) => {
               const src = SOURCES.find((s) => s.id === e.source);
               const platformIcon = e.source === 'stripe' ? '💳' : e.source === 'whop' ? '⚡' : '📦';
               return (
-                <div key={e.id} className="relative flex items-start gap-4">
-                  {/* Timeline dot with platform icon */}
-                  <div
+                <button
+                  key={e.id}
+                  type="button"
+                  onClick={() => setSelected(e)}
+                  className={cn(
+                    'group relative flex w-full items-center gap-3 border-b border-slate-900 px-4 py-2 text-left transition-colors hover:bg-slate-900',
+                    !e.is_success && 'bg-rose-950/10',
+                  )}
+                >
+                  {/* Line number */}
+                  <span className="w-8 shrink-0 select-none text-right text-[10px] text-slate-700 group-hover:text-slate-500">
+                    {String(idx + 1).padStart(3, '0')}
+                  </span>
+
+                  {/* Status indicator (colored vertical bar) */}
+                  <span
                     className={cn(
-                      'relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-2xl shadow-md ring-4 ring-background transition-transform group-hover:scale-110',
-                      e.is_success
-                        ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900'
-                        : 'bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950 dark:to-rose-900',
+                      'h-8 w-1 shrink-0 rounded-full',
+                      e.is_success ? 'bg-emerald-500' : 'bg-rose-500',
+                    )}
+                  />
+
+                  {/* Time */}
+                  <span
+                    className="w-16 shrink-0 text-[11px] font-medium text-slate-400 tabular-nums"
+                    suppressHydrationWarning
+                  >
+                    {toMadridTime(e.created_at, 'time')}
+                  </span>
+
+                  {/* Platform icon */}
+                  <span
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-sm"
+                    style={{ backgroundColor: `${src?.color}25` }}
+                    title={src?.label}
+                  >
+                    {platformIcon}
+                  </span>
+
+                  {/* Status text */}
+                  <span
+                    className={cn(
+                      'w-[72px] shrink-0 text-[10px] font-bold uppercase tracking-wider',
+                      e.is_success ? 'text-emerald-400' : 'text-rose-400',
                     )}
                   >
-                    <span>{platformIcon}</span>
-                    {/* Status badge bottom-right */}
-                    <span
-                      className={cn(
-                        'absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white shadow',
-                        e.is_success ? 'bg-emerald-500' : 'bg-rose-500',
-                      )}
-                    >
-                      {e.is_success ? '✓' : '✗'}
-                    </span>
-                  </div>
+                    {e.is_success ? 'SUCCESS' : 'FAILED'}
+                  </span>
 
-                  {/* Card */}
-                  <button
-                    type="button"
-                    onClick={() => setSelected(e)}
+                  {/* Customer + reason */}
+                  <span className="min-w-0 flex-1 truncate">
+                    <span className="text-slate-100">{e.customer_email || '—'}</span>
+                    {e.customer_name && (
+                      <span className="ml-2 text-slate-500">// {e.customer_name}</span>
+                    )}
+                    {e.failure_reason && (
+                      <span className="ml-2 text-rose-400/80">→ {e.failure_reason}</span>
+                    )}
+                  </span>
+
+                  {/* Amount */}
+                  <span
                     className={cn(
-                      'group relative flex-1 overflow-hidden rounded-2xl border bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg dark:bg-slate-900',
-                      e.is_success
-                        ? 'border-emerald-200/60 dark:border-emerald-900/40'
-                        : 'border-rose-200/60 dark:border-rose-900/40',
+                      'shrink-0 text-right font-bold tabular-nums tracking-tight',
+                      e.is_success ? 'text-emerald-400' : 'text-slate-600',
                     )}
                   >
-                    {/* Decorative gradient accent */}
-                    <div
-                      className={cn(
-                        'absolute inset-y-0 left-0 w-1',
-                        e.is_success ? 'bg-emerald-500' : 'bg-rose-500',
-                      )}
-                    />
-                    <div
-                      className="absolute inset-y-0 left-1 w-px opacity-50"
-                      style={{ backgroundColor: src?.color }}
-                    />
+                    {formatEur(e.amount)}
+                  </span>
 
-                    <div className="flex items-start gap-3">
-                      {/* Customer info */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="truncate text-base font-bold text-slate-900 dark:text-slate-100">
-                            {e.customer_name || e.customer_email || 'Cliente sin nombre'}
-                          </span>
-                          {src && (
-                            <span
-                              className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm"
-                              style={{ backgroundColor: src.color }}
-                            >
-                              {src.label}
-                            </span>
-                          )}
-                          <span
-                            className={cn(
-                              'inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold',
-                              e.is_success
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-                                : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300',
-                            )}
-                          >
-                            {e.is_success ? '✓ COBRADO' : '✗ FALLIDO'}
-                          </span>
-                        </div>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{e.customer_email || '—'}</p>
-                        {e.failure_reason && (
-                          <div className="mt-2 flex items-start gap-2 rounded-lg border border-rose-200/70 bg-rose-50 px-2.5 py-1.5 text-xs dark:border-rose-900/50 dark:bg-rose-950/30">
-                            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-500" />
-                            <span className="line-clamp-2 text-rose-700 dark:text-rose-300">{e.failure_reason}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Amount + time stack */}
-                      <div className="shrink-0 text-right">
-                        <p
-                          className={cn(
-                            'text-2xl font-extrabold tabular-nums tracking-tight',
-                            e.is_success
-                              ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 bg-clip-text text-transparent'
-                              : 'text-slate-400',
-                          )}
-                        >
-                          {formatEur(e.amount)}
-                        </p>
-                        <div className="mt-1 flex flex-col items-end gap-0.5 text-[10px] text-muted-foreground">
-                          <span className="font-mono font-medium" suppressHydrationWarning>
-                            {toMadridTime(e.created_at, 'time')}
-                          </span>
-                          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                            {relativeTime(e.created_at, now)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                </div>
+                  {/* Relative time */}
+                  <span className="w-14 shrink-0 text-right text-[10px] text-slate-600">
+                    {relativeTime(e.created_at, now)}
+                  </span>
+                </button>
               );
             })}
         </div>
