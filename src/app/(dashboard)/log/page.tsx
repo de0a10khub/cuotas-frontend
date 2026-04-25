@@ -130,56 +130,101 @@ export default function LogPage() {
     [events],
   );
 
+  // Total cobrado (solo eventos exitosos)
+  const totalSuccessAmount = useMemo(
+    () => events.filter((e) => e.is_success).reduce((s, e) => s + (e.amount || 0), 0),
+    [events],
+  );
+  const successRate = counts.total > 0 ? Math.round((counts.success / counts.total) * 100) : 0;
+
   return (
-    <div className="mx-auto max-w-[1400px] space-y-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <span
-              className={cn(
-                'h-2 w-2 rounded-full',
-                isLive ? 'animate-pulse bg-emerald-500' : 'bg-slate-400',
+    <div className="mx-auto max-w-[1500px] space-y-5">
+      {/* HERO header with live indicator */}
+      <header className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-white p-5 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div
+                className={cn(
+                  'flex h-12 w-12 items-center justify-center rounded-xl',
+                  isLive
+                    ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/30 shadow-lg'
+                    : 'bg-slate-200 dark:bg-slate-800',
+                )}
+              >
+                <span className={cn('text-xl', isLive && 'animate-pulse')}>⚡</span>
+              </div>
+              {isLive && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
+                </span>
               )}
-            />
-            Activity Log
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            Feed en vivo de webhooks de pago · {counts.total} eventos ·{' '}
-            <span className="text-emerald-600">{counts.success} éxito</span> ·{' '}
-            <span className="text-rose-600">{counts.failure} fallo</span>
-          </p>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Activity Log</h1>
+              <p className="text-xs text-muted-foreground">
+                {isLive ? 'Feed en vivo' : 'Pausado'} · webhooks de pago en tiempo real
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant={isLive ? 'outline' : 'default'}
+            onClick={() => setIsLive((v) => !v)}
+            className="gap-1.5"
+          >
+            {isLive ? <Square className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+            {isLive ? 'Pausar' : 'Reanudar'}
+          </Button>
         </div>
-        <Button
-          size="sm"
-          variant={isLive ? 'default' : 'outline'}
-          onClick={() => setIsLive((v) => !v)}
-        >
-          {isLive ? <Square className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-          {isLive ? 'Pausar' : 'Reanudar'}
-        </Button>
+
+        {/* KPIs row */}
+        <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="rounded-xl border border-slate-200 bg-white/60 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Eventos</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums">{counts.total}</p>
+          </div>
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Éxito</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
+              {counts.success}
+              <span className="ml-1 text-xs font-normal text-emerald-600/70">({successRate}%)</span>
+            </p>
+          </div>
+          <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-3 dark:border-rose-900/40 dark:bg-rose-950/30">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-300">Fallo</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-rose-700 dark:text-rose-300">{counts.failure}</p>
+          </div>
+          <div className="rounded-xl border border-violet-200 bg-violet-50/50 p-3 dark:border-violet-900/40 dark:bg-violet-950/30">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300">Cobrado</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-violet-700 dark:text-violet-300">{formatEur(totalSuccessAmount)}</p>
+          </div>
+        </div>
       </header>
 
-      <Card>
-        <CardContent className="flex flex-wrap items-center gap-2 p-3">
-          <div className="inline-flex rounded-md border border-slate-200 bg-background p-0.5 dark:border-slate-800">
+      {/* Filters */}
+      <Card className="border-slate-200 dark:border-slate-800">
+        <CardContent className="flex flex-wrap items-center gap-3 p-3">
+          <div className="inline-flex rounded-lg bg-slate-100 p-0.5 dark:bg-slate-900">
             {(['all', 'success', 'failure'] as const).map((f) => (
               <button
                 key={f}
                 type="button"
                 onClick={() => setFilter(f)}
                 className={cn(
-                  'rounded px-2.5 py-1 text-xs font-medium transition-colors',
+                  'rounded-md px-3 py-1 text-xs font-medium transition-all',
                   filter === f
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
+                    ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100',
                 )}
               >
-                {f === 'all' ? 'Todos' : f === 'success' ? 'Éxito' : 'Fallo'}
+                {f === 'all' ? 'Todos' : f === 'success' ? '✓ Éxito' : '✗ Fallo'}
               </button>
             ))}
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             {SOURCES.map((s) => {
               const active = source === s.id;
               return (
@@ -188,10 +233,10 @@ export default function LogPage() {
                   type="button"
                   onClick={() => setSource((cur) => (cur === s.id ? 'all' : s.id))}
                   className={cn(
-                    'rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-all',
+                    'rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition-all',
                     active
-                      ? 'border-transparent text-white'
-                      : 'border-slate-200 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900',
+                      ? 'border-transparent text-white shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400',
                   )}
                   style={active ? { backgroundColor: s.color } : undefined}
                 >
@@ -201,90 +246,117 @@ export default function LogPage() {
             })}
           </div>
 
-          <div className="relative min-w-60 flex-1">
-            <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+          <div className="relative min-w-64 flex-1">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar cliente, email..."
-              className="h-8 pl-7"
+              className="h-9 pl-8"
             />
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="p-0">
-          <ul className="divide-y divide-slate-200 dark:divide-slate-800">
-            {loading &&
-              Array.from({ length: 6 }).map((_, i) => (
-                <li key={`sk-${i}`} className="p-3">
-                  <Skeleton className="h-6 w-full" />
-                </li>
-              ))}
+      {/* Events feed */}
+      <div className="space-y-2">
+        {loading &&
+          Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={`sk-${i}`} className="h-16 w-full rounded-xl" />
+          ))}
 
-            {!loading && events.length === 0 && (
-              <li className="py-10 text-center text-sm text-muted-foreground">
-                Sin eventos con esos filtros.
-              </li>
-            )}
+        {!loading && events.length === 0 && (
+          <Card>
+            <CardContent className="py-12 text-center text-sm text-muted-foreground">
+              <Search className="mx-auto mb-2 h-8 w-8 text-slate-300" />
+              Sin eventos con esos filtros.
+            </CardContent>
+          </Card>
+        )}
 
-            {!loading &&
-              events.map((e) => {
-                const src = SOURCES.find((s) => s.id === e.source);
-                return (
-                  <li
-                    key={e.id}
-                    onClick={() => setSelected(e)}
-                    className={cn(
-                      'flex cursor-pointer items-center gap-3 px-3 py-2 text-sm transition-colors hover:bg-muted/40',
-                      !e.is_success && 'bg-rose-50/30 dark:bg-rose-950/20',
-                    )}
-                  >
-                    <span
-                      className="w-20 shrink-0 font-mono text-[10px] text-muted-foreground"
-                      suppressHydrationWarning
-                    >
-                      {toMadridTime(e.created_at, 'time')}
-                    </span>
+        {!loading &&
+          events.map((e) => {
+            const src = SOURCES.find((s) => s.id === e.source);
+            const initial = (e.customer_name || e.customer_email || '?').trim()[0]?.toUpperCase() || '?';
+            return (
+              <button
+                key={e.id}
+                type="button"
+                onClick={() => setSelected(e)}
+                className={cn(
+                  'group flex w-full items-center gap-4 rounded-xl border bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900',
+                  e.is_success
+                    ? 'border-l-4 border-slate-200 border-l-emerald-500 dark:border-slate-800 dark:border-l-emerald-500'
+                    : 'border-l-4 border-slate-200 border-l-rose-500 bg-rose-50/20 dark:border-slate-800 dark:bg-rose-950/10',
+                )}
+              >
+                {/* Avatar with initial */}
+                <div
+                  className={cn(
+                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white',
+                    e.is_success
+                      ? 'bg-gradient-to-br from-emerald-400 to-emerald-600'
+                      : 'bg-gradient-to-br from-rose-400 to-rose-600',
+                  )}
+                >
+                  {initial}
+                </div>
+
+                {/* Customer info */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-semibold">{e.customer_name || e.customer_email || 'Cliente sin nombre'}</span>
                     {src && (
                       <span
-                        className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white"
+                        className="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white"
                         style={{ backgroundColor: src.color }}
                       >
                         {src.label}
                       </span>
                     )}
-                    <span className="shrink-0 w-6 text-center">
-                      {e.is_success ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                      ) : (
-                        <AlertCircle className="h-3.5 w-3.5 text-rose-600" />
-                      )}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate">
-                      <span className="font-medium">{e.customer_name}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {e.customer_email}
-                      </span>
-                    </span>
-                    <span className="shrink-0 font-mono text-sm tabular-nums">
-                      {formatEur(e.amount)}
-                    </span>
-                    {e.failure_reason && (
-                      <span className="shrink-0 max-w-[200px] truncate text-xs text-rose-600">
-                        {e.failure_reason}
-                      </span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <span className="truncate">{e.customer_email || '—'}</span>
+                  </div>
+                  {e.failure_reason && (
+                    <p className="mt-1 text-xs text-rose-600 dark:text-rose-400 line-clamp-1">
+                      <AlertCircle className="mr-1 inline h-3 w-3" />
+                      {e.failure_reason}
+                    </p>
+                  )}
+                </div>
+
+                {/* Amount + time */}
+                <div className="shrink-0 text-right">
+                  <p
+                    className={cn(
+                      'text-lg font-bold tabular-nums',
+                      e.is_success
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-slate-900 dark:text-slate-100',
                     )}
-                    <span className="shrink-0 w-16 text-right text-[10px] text-muted-foreground">
-                      {relativeTime(e.created_at, now)}
-                    </span>
-                  </li>
-                );
-              })}
-          </ul>
-        </CardContent>
-      </Card>
+                  >
+                    {formatEur(e.amount)}
+                  </p>
+                  <div className="mt-0.5 flex items-center justify-end gap-1.5 text-[10px] text-muted-foreground">
+                    <span suppressHydrationWarning>{toMadridTime(e.created_at, 'time')}</span>
+                    <span>·</span>
+                    <span>{relativeTime(e.created_at, now)}</span>
+                  </div>
+                </div>
+
+                {/* Status icon */}
+                <div className="shrink-0">
+                  {e.is_success ? (
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500 transition-transform group-hover:scale-110" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5 text-rose-500 transition-transform group-hover:scale-110" />
+                  )}
+                </div>
+              </button>
+            );
+          })}
+      </div>
 
       <ChargesDialog event={selected} onClose={() => setSelected(null)} />
     </div>
