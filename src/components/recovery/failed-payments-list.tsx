@@ -39,11 +39,12 @@ interface Props {
   onRetryResult?: (success: boolean) => void;
 }
 
-type StatusTone = 'paid' | 'open' | 'draft' | 'failed';
+type StatusTone = 'paid' | 'open' | 'draft' | 'failed' | 'refunded';
 
 function classifyStatus(status: string): StatusTone {
   const s = status.toLowerCase();
   if (s === 'paid' || s === 'succeeded' || s === 'completed') return 'paid';
+  if (s === 'refunded' || s === 'partially_refunded') return 'refunded';
   if (s === 'draft' || s === 'void' || s === 'canceled' || s === 'cancelled') return 'draft';
   if (s === 'open' || s === 'pending' || s === 'scheduled') return 'open';
   return 'failed';
@@ -406,19 +407,24 @@ export function FailedPaymentsList({
 }
 
 function StatusBadge({ status, tone }: { status: string; tone: StatusTone }) {
+  const s = status.toLowerCase();
   const label =
-    status.toLowerCase() === 'paid' || status.toLowerCase() === 'succeeded' || status.toLowerCase() === 'completed'
+    s === 'paid' || s === 'succeeded' || s === 'completed'
       ? 'Pagado'
-      : status.toLowerCase() === 'open' || status.toLowerCase() === 'pending'
+      : s === 'open' || s === 'pending'
       ? 'Pendiente'
-      : status.toLowerCase() === 'failed'
+      : s === 'failed'
       ? 'Fallido'
-      : status.toLowerCase() === 'refunded'
+      : s === 'refunded'
       ? 'Reembolsado'
+      : s === 'partially_refunded'
+      ? 'Reemb. parcial'
       : status;
   const classes =
     tone === 'paid'
       ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-800/50'
+      : tone === 'refunded'
+      ? 'bg-amber-50 text-amber-800 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-800/50'
       : tone === 'open'
       ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-200 dark:ring-rose-800/50'
       : tone === 'failed'
