@@ -18,6 +18,13 @@ export interface RefundsKpis {
   suscripciones_canceladas: number;
 }
 
+export type RefundOrigin =
+  | 'chargeback_lost'    // cliente ganó disputa (Stripe forzó refund)
+  | 'chargeback_won'     // ganamos disputa (cliente NO recibió refund)
+  | 'chargeback_pending' // disputa abierta, pendiente
+  | 'voluntary'          // nosotros emitimos refund desde la web
+  | 'unknown';           // Whop refund (origen no rastreado)
+
 export interface DisputeRow {
   id: string;
   created_at: string;
@@ -26,6 +33,7 @@ export interface DisputeRow {
   platform: string;
   dispute_id: string;
   dispute_status: string;
+  refund_origin: RefundOrigin;
   customer_id: string;
   customer_name: string;
   customer_email: string;

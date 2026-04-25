@@ -39,6 +39,29 @@ import {
   type RefundsKpis,
 } from '@/lib/disputes-api';
 
+const REFUND_ORIGIN_LABELS: Record<string, { label: string; cls: string }> = {
+  chargeback_lost: {
+    label: '💸 Chargeback (perdido)',
+    cls: 'bg-red-100 text-red-700 font-medium',
+  },
+  chargeback_won: {
+    label: '🛡️ Chargeback (ganado)',
+    cls: 'bg-emerald-100 text-emerald-700 font-medium',
+  },
+  chargeback_pending: {
+    label: '⏳ Chargeback (abierto)',
+    cls: 'bg-orange-100 text-orange-700 font-medium',
+  },
+  voluntary: {
+    label: '✋ Manual (nosotros)',
+    cls: 'bg-blue-100 text-blue-700 font-medium',
+  },
+  unknown: {
+    label: '❓ Sin rastrear',
+    cls: 'bg-slate-100 text-slate-600',
+  },
+};
+
 const DISPUTE_STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   none: { label: 'Sin Disputa', cls: 'bg-slate-100 text-slate-500' },
   under_review: {
@@ -331,6 +354,7 @@ export default function DisputasPage() {
                 <TableHead>Cliente</TableHead>
                 <TableHead className="text-right">Importe</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead>Origen</TableHead>
                 <TableHead>Plataforma</TableHead>
                 <TableHead>IDs Internos</TableHead>
               </TableRow>
@@ -349,7 +373,7 @@ export default function DisputasPage() {
 
               {!loading && rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
                     Sin incidencias en este período.
                   </TableCell>
                 </TableRow>
@@ -359,6 +383,10 @@ export default function DisputasPage() {
                 rows.map((r) => {
                   const st = DISPUTE_STATUS_LABELS[r.dispute_status] || {
                     label: r.dispute_status,
+                    cls: 'bg-slate-100 text-slate-600',
+                  };
+                  const origin = REFUND_ORIGIN_LABELS[r.refund_origin] || {
+                    label: r.refund_origin,
                     cls: 'bg-slate-100 text-slate-600',
                   };
                   return (
@@ -376,6 +404,11 @@ export default function DisputasPage() {
                       <TableCell>
                         <Badge className={cn('border-0 px-2 py-0 text-[10px] uppercase', st.cls)}>
                           {st.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={cn('border-0 px-2 py-0 text-[10px]', origin.cls)}>
+                          {origin.label}
                         </Badge>
                       </TableCell>
                       <TableCell>

@@ -195,6 +195,15 @@ export interface FailedPayment {
    */
   status: string;
   dispute_status: string | null;
+  /**
+   * Origen del refund cuando hay reembolso o disputa:
+   *  - 'chargeback_lost'    cliente ganó disputa (Stripe forzó refund)
+   *  - 'chargeback_won'     ganamos disputa (cliente NO recibió refund)
+   *  - 'chargeback_pending' disputa abierta, pendiente
+   *  - 'voluntary'          nosotros emitimos refund desde la web
+   *  - 'unknown'            Whop refund (origen no rastreado)
+   */
+  refund_origin?: string | null;
   attempt_count: number;
   assigned_operator_id: string | null;
 
