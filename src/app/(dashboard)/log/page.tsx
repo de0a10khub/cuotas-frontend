@@ -258,119 +258,140 @@ export default function LogPage() {
         </CardContent>
       </Card>
 
-      {/* Events feed — terminal/log style */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-950 shadow-2xl dark:border-slate-800">
-        {/* Terminal header bar */}
-        <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-2">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-            <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-slate-500">
-              ~/payments.log · {events.length} entries
-            </span>
-          </div>
-          <span className="font-mono text-[10px] text-slate-500">live</span>
-        </div>
+      {/* Events feed — banking/transactions style: agrupado por hora, minimalista */}
+      <div className="space-y-1">
+        {loading &&
+          Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={`sk-${i}`} className="h-14 w-full rounded-lg" />
+          ))}
 
-        <div className="max-h-[80vh] overflow-y-auto font-mono text-[13px] leading-relaxed">
-          {loading &&
-            Array.from({ length: 8 }).map((_, i) => (
-              <div key={`sk-${i}`} className="border-b border-slate-900 px-4 py-2">
-                <Skeleton className="h-4 w-full bg-slate-800" />
-              </div>
-            ))}
+        {!loading && events.length === 0 && (
+          <Card>
+            <CardContent className="py-12 text-center text-sm text-muted-foreground">
+              <Search className="mx-auto mb-2 h-8 w-8 text-slate-300" />
+              Sin eventos con esos filtros.
+            </CardContent>
+          </Card>
+        )}
 
-          {!loading && events.length === 0 && (
-            <div className="py-16 text-center text-sm text-slate-500">
-              <Search className="mx-auto mb-2 h-8 w-8 text-slate-700" />
-              <span className="font-mono text-xs">// no events match filters</span>
-            </div>
-          )}
-
-          {!loading &&
-            events.map((e, idx) => {
-              const src = SOURCES.find((s) => s.id === e.source);
-              const platformIcon = e.source === 'stripe' ? '💳' : e.source === 'whop' ? '⚡' : '📦';
-              return (
+        {!loading &&
+          events.map((e, idx) => {
+            const src = SOURCES.find((s) => s.id === e.source);
+            const initial =
+              (e.customer_name || e.customer_email || '?').trim()[0]?.toUpperCase() || '?';
+            const platformIcon = e.source === 'stripe' ? '💳' : e.source === 'whop' ? '⚡' : '📦';
+            // Header de fecha cuando cambia (UX bancario)
+            const prevDate = idx > 0 ? new Date(events[idx - 1].created_at).toDateString() : '';
+            const curDate = new Date(e.created_at).toDateString();
+            const showDateHeader = idx === 0 || prevDate !== curDate;
+            const dateLabel = new Date(e.created_at).toLocaleDateString('es-ES', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+            });
+            return (
+              <div key={e.id}>
+                {showDateHeader && (
+                  <div className="sticky top-0 z-10 mt-3 mb-1 flex items-center gap-3 bg-background/80 px-1 py-1 backdrop-blur-sm">
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                      {dateLabel}
+                    </span>
+                    <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+                  </div>
+                )}
                 <button
-                  key={e.id}
                   type="button"
                   onClick={() => setSelected(e)}
-                  className={cn(
-                    'group relative flex w-full items-center gap-3 border-b border-slate-900 px-4 py-2 text-left transition-colors hover:bg-slate-900',
-                    !e.is_success && 'bg-rose-950/10',
-                  )}
+                  className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all hover:bg-slate-50 dark:hover:bg-slate-900/50"
                 >
-                  {/* Line number */}
-                  <span className="w-8 shrink-0 select-none text-right text-[10px] text-slate-700 group-hover:text-slate-500">
-                    {String(idx + 1).padStart(3, '0')}
-                  </span>
+                  {/* Big amount with sign — visualmente el centro */}
+                  <div className="w-28 shrink-0 text-right">
+                    <p
+                      className={cn(
+                        'font-bold tabular-nums tracking-tight',
+                        e.is_success
+                          ? 'text-base text-emerald-600 dark:text-emerald-400'
+                          : 'text-base text-slate-500 line-through decoration-rose-500/50 dark:text-slate-500',
+                      )}
+                    >
+                      {e.is_success ? '+' : '−'} {formatEur(Math.abs(e.amount || 0))}
+                    </p>
+                    <p
+                      className="font-mono text-[10px] text-muted-foreground tabular-nums"
+                      suppressHydrationWarning
+                    >
+                      {toMadridTime(e.created_at, 'time')}
+                    </p>
+                  </div>
 
-                  {/* Status indicator (colored vertical bar) */}
-                  <span
+                  {/* Vertical separator */}
+                  <div
                     className={cn(
-                      'h-8 w-1 shrink-0 rounded-full',
-                      e.is_success ? 'bg-emerald-500' : 'bg-rose-500',
+                      'h-10 w-0.5 rounded-full',
+                      e.is_success ? 'bg-emerald-500' : 'bg-rose-400',
                     )}
                   />
 
-                  {/* Time */}
-                  <span
-                    className="w-16 shrink-0 text-[11px] font-medium text-slate-400 tabular-nums"
-                    suppressHydrationWarning
-                  >
-                    {toMadridTime(e.created_at, 'time')}
-                  </span>
-
-                  {/* Platform icon */}
-                  <span
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-sm"
-                    style={{ backgroundColor: `${src?.color}25` }}
+                  {/* Platform avatar (subtle) */}
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg ring-1 ring-slate-200 dark:ring-slate-800"
+                    style={{ backgroundColor: `${src?.color}15` }}
                     title={src?.label}
                   >
-                    {platformIcon}
-                  </span>
+                    <span>{platformIcon}</span>
+                  </div>
 
-                  {/* Status text */}
+                  {/* Customer info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline gap-2">
+                      <span className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {e.customer_name || e.customer_email || 'Cliente'}
+                      </span>
+                      <span
+                        className="shrink-0 text-[10px] font-medium uppercase tracking-wide"
+                        style={{ color: src?.color }}
+                      >
+                        · {src?.label}
+                      </span>
+                    </div>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {e.failure_reason ? (
+                        <span className="text-rose-600/90 dark:text-rose-400/90">
+                          {e.failure_reason}
+                        </span>
+                      ) : (
+                        e.customer_email || '—'
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Status pill micro */}
                   <span
                     className={cn(
-                      'w-[72px] shrink-0 text-[10px] font-bold uppercase tracking-wider',
-                      e.is_success ? 'text-emerald-400' : 'text-rose-400',
+                      'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                      e.is_success
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                        : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400',
                     )}
                   >
-                    {e.is_success ? 'SUCCESS' : 'FAILED'}
+                    {e.is_success ? 'OK' : 'KO'}
                   </span>
 
-                  {/* Customer + reason */}
-                  <span className="min-w-0 flex-1 truncate">
-                    <span className="text-slate-100">{e.customer_email || '—'}</span>
-                    {e.customer_name && (
-                      <span className="ml-2 text-slate-500">// {e.customer_name}</span>
-                    )}
-                    {e.failure_reason && (
-                      <span className="ml-2 text-rose-400/80">→ {e.failure_reason}</span>
-                    )}
-                  </span>
-
-                  {/* Amount */}
-                  <span
+                  {/* Initial bubble (compact) */}
+                  <div
                     className={cn(
-                      'shrink-0 text-right font-bold tabular-nums tracking-tight',
-                      e.is_success ? 'text-emerald-400' : 'text-slate-600',
+                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100',
+                      e.is_success
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                        : 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
                     )}
                   >
-                    {formatEur(e.amount)}
-                  </span>
-
-                  {/* Relative time */}
-                  <span className="w-14 shrink-0 text-right text-[10px] text-slate-600">
-                    {relativeTime(e.created_at, now)}
-                  </span>
+                    {initial}
+                  </div>
                 </button>
-              );
-            })}
-        </div>
+              </div>
+            );
+          })}
       </div>
 
       <ChargesDialog event={selected} onClose={() => setSelected(null)} />
