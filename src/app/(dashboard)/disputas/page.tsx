@@ -55,6 +55,14 @@ const DISPUTE_STATUS_LABELS: Record<string, { label: string; cls: string }> = {
     label: 'Aviso previo',
     cls: 'bg-amber-100 text-amber-700 font-bold',
   },
+  refunded: {
+    label: 'Reembolsado',
+    cls: 'bg-amber-50 text-amber-800 font-medium',
+  },
+  partially_refunded: {
+    label: 'Reemb. parcial',
+    cls: 'bg-amber-50 text-amber-700 font-medium',
+  },
 };
 
 function formatEur(cents: number): string {
