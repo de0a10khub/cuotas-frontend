@@ -12,6 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { formatEuros } from '@/lib/format';
 import { toast } from 'sonner';
 import {
@@ -25,6 +33,8 @@ import {
   CalendarDays,
   ArrowRight,
   UserCog,
+  StickyNote,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RecoveryDrawerApi } from './types';
@@ -49,6 +59,29 @@ function classifyStatus(status: string): StatusTone {
   if (s === 'open' || s === 'pending' || s === 'scheduled') return 'open';
   return 'failed';
 }
+
+const REFUND_ORIGIN_LABELS: Record<string, { label: string; cls: string }> = {
+  chargeback_lost: {
+    label: '💸 Chargeback (perdido)',
+    cls: 'border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200',
+  },
+  chargeback_won: {
+    label: '🛡️ Chargeback (ganado)',
+    cls: 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200',
+  },
+  chargeback_pending: {
+    label: '⏳ Chargeback (abierto)',
+    cls: 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-200',
+  },
+  voluntary: {
+    label: '✋ Refund manual',
+    cls: 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200',
+  },
+  unknown: {
+    label: '❓ Origen no rastreado',
+    cls: 'border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400',
+  },
+};
 
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—';
@@ -124,6 +157,43 @@ export function FailedPaymentsList({
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Modal de nota: pago seleccionado + draft text + saving flag.
+  const [noteEditing, setNoteEditing] = useState<FailedPayment | null>(null);
+  const [noteDraft, setNoteDraft] = useState('');
+  const [noteSaving, setNoteSaving] = useState(false);
+
+  function openNote(item: FailedPayment) {
+    setNoteEditing(item);
+    setNoteDraft(item.note || '');
+  }
+
+  async function saveNote() {
+    if (!api.paymentNote || !noteEditing) return;
+    setNoteSaving(true);
+    try {
+      const res = await api.paymentNote({
+        platform: noteEditing.platform,
+        payment_id: noteEditing.id,
+        note: noteDraft,
+      });
+      setItems((prev) =>
+        prev
+          ? prev.map((p) =>
+              p.id === noteEditing.id && p.platform === noteEditing.platform
+                ? { ...p, note: res.note, note_updated_at: res.updated_at || null }
+                : p,
+            )
+          : prev,
+      );
+      toast.success(res.note ? 'Nota guardada' : 'Nota eliminada');
+      setNoteEditing(null);
+    } catch {
+      toast.error('Error guardando nota');
+    } finally {
+      setNoteSaving(false);
+    }
+  }
 
   async function assign(item: FailedPayment, operatorId: string | null) {
     if (!api.assignPaymentOperator) return;
@@ -219,6 +289,39 @@ export function FailedPaymentsList({
   }
 
   return (
+    <>
+    <Dialog open={!!noteEditing} onOpenChange={(open) => !open && setNoteEditing(null)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            Nota del pago — {noteEditing && formatEuros(noteEditing.amount, { decimals: 2 })}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Textarea
+            value={noteDraft}
+            onChange={(e) => setNoteDraft(e.target.value)}
+            placeholder="¿Qué pasó con este pago? (motivo del fallo, contexto, próximo paso…)"
+            rows={5}
+            autoFocus
+          />
+          {noteEditing?.note_updated_at && (
+            <p className="text-[11px] text-slate-500">
+              Última edición: {formatDate(noteEditing.note_updated_at)}
+              {noteEditing.note_author && ` por ${noteEditing.note_author}`}
+            </p>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setNoteEditing(null)}>
+            Cancelar
+          </Button>
+          <Button onClick={saveNote} disabled={noteSaving}>
+            {noteSaving ? 'Guardando…' : 'Guardar'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     <ul className="space-y-2.5">
       {items.map((p) => {
         const tone = classifyStatus(p.status);
@@ -259,7 +362,15 @@ export function FailedPaymentsList({
                   {ps.label}
                 </span>
                 <StatusBadge status={p.status} tone={tone} />
-                {p.dispute_status && (
+                {p.refund_origin && REFUND_ORIGIN_LABELS[p.refund_origin] && (
+                  <Badge
+                    variant="outline"
+                    className={cn('text-[10px] font-semibold', REFUND_ORIGIN_LABELS[p.refund_origin].cls)}
+                  >
+                    {REFUND_ORIGIN_LABELS[p.refund_origin].label}
+                  </Badge>
+                )}
+                {p.dispute_status && !p.refund_origin && (
                   <Badge
                     variant="outline"
                     className="border-amber-400 bg-amber-50 text-[10px] font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
@@ -397,12 +508,32 @@ export function FailedPaymentsList({
                     Reintentar
                   </Button>
                 )}
+                {api.paymentNote && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    title={p.note || 'Añadir nota'}
+                    onClick={() => openNote(p)}
+                    className={cn(
+                      p.note &&
+                        'border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-950/60',
+                    )}
+                  >
+                    {p.note ? (
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                    ) : (
+                      <StickyNote className="h-3.5 w-3.5" />
+                    )}
+                    {p.note ? 'Con nota' : 'Nota'}
+                  </Button>
+                )}
               </div>
             </div>
           </li>
         );
       })}
     </ul>
+    </>
   );
 }
 

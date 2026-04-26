@@ -219,6 +219,11 @@ export interface FailedPayment {
   installment_number?: number;
   whop_payment_id?: string | null;
   checkout_session_id?: string | null;
+
+  // Nota libre del operario para este pago (motivo del fallo, contexto…)
+  note?: string | null;
+  note_updated_at?: string | null;
+  note_author?: string | null;
 }
 
 export interface LockResult {

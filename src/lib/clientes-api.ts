@@ -97,6 +97,12 @@ export const clientesApi = {
       payload,
     ),
 
+  paymentNote: (payload: { platform: string; payment_id: string; note: string }) =>
+    api.post<{ ok: boolean; note: string | null; updated_at?: string }>(
+      `${BASE}/payment-note/`,
+      payload,
+    ),
+
   paymentUpdateLink: (payload: {
     subscription_id: string;
     customer_id: string;

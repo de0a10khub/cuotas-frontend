@@ -50,6 +50,11 @@ export interface RecoveryDrawerApi {
     item_id: string;
     operator_id: string | null;
   }) => Promise<{ ok: boolean; assigned_operator_id: string | null }>;
+  paymentNote?: (payload: {
+    platform: string;
+    payment_id: string;
+    note: string;
+  }) => Promise<{ ok: boolean; note: string | null; updated_at?: string }>;
   history: (subscription_id: string) => Promise<{ results: ActionLogEntry[] }>;
   // Opcionales: solo /mora los implementa.
   interactions?: (subscription_id: string) => Promise<{ results: InteractionSnapshot[] }>;
