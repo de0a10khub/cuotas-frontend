@@ -139,40 +139,44 @@ export default function LogPage() {
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5">
-      {/* HERO header with live indicator */}
-      <header className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-white p-5 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* HERO header with live indicator — premium navy + electric blue */}
+      <header className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#1a2c52] p-5 shadow-[0_0_60px_rgba(59,130,246,0.15)]">
+        {/* Glow orbs */}
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-cyan-500/15 blur-3xl" />
+
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="relative">
               <div
                 className={cn(
                   'flex h-12 w-12 items-center justify-center rounded-xl',
                   isLive
-                    ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/30 shadow-lg'
-                    : 'bg-slate-200 dark:bg-slate-800',
+                    ? 'bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 shadow-[0_0_30px_rgba(56,189,248,0.5)]'
+                    : 'bg-slate-700',
                 )}
               >
                 <span className={cn('text-xl', isLive && 'animate-pulse')}>⚡</span>
               </div>
               {isLive && (
                 <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-cyan-300"></span>
                 </span>
               )}
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Activity Log</h1>
-              <p className="text-xs text-muted-foreground">
+              <h1 className="text-2xl font-bold tracking-tight text-white">Activity Log</h1>
+              <p className="text-xs text-blue-200/70">
                 {isLive ? 'Feed en vivo' : 'Pausado'} · webhooks de pago en tiempo real
               </p>
             </div>
           </div>
           <Button
             size="sm"
-            variant={isLive ? 'outline' : 'default'}
+            variant="outline"
             onClick={() => setIsLive((v) => !v)}
-            className="gap-1.5"
+            className="gap-1.5 border-blue-400/40 bg-blue-500/10 text-blue-100 hover:bg-blue-500/20 hover:text-white"
           >
             {isLive ? <Square className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
             {isLive ? 'Pausar' : 'Reanudar'}
@@ -180,33 +184,33 @@ export default function LogPage() {
         </div>
 
         {/* KPIs row */}
-        <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <div className="rounded-xl border border-slate-200 bg-white/60 p-3 dark:border-slate-800 dark:bg-slate-900/40">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Eventos</p>
-            <p className="mt-1 text-2xl font-bold tabular-nums">{counts.total}</p>
+        <div className="relative mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="group rounded-xl border border-blue-400/20 bg-white/5 p-3 backdrop-blur-sm transition-all hover:border-blue-400/40 hover:bg-white/10">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-200/60">Eventos</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-white">{counts.total}</p>
           </div>
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/30">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Éxito</p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
+          <div className="group rounded-xl border border-cyan-400/30 bg-cyan-500/10 p-3 backdrop-blur-sm shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all hover:border-cyan-400/50 hover:shadow-[0_0_30px_rgba(34,211,238,0.25)]">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-300">Éxito</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-cyan-300">
               {counts.success}
-              <span className="ml-1 text-xs font-normal text-emerald-600/70">({successRate}%)</span>
+              <span className="ml-1 text-xs font-normal text-cyan-400/70">({successRate}%)</span>
             </p>
           </div>
-          <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-3 dark:border-rose-900/40 dark:bg-rose-950/30">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-300">Fallo</p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-rose-700 dark:text-rose-300">{counts.failure}</p>
+          <div className="group rounded-xl border border-orange-400/30 bg-orange-500/10 p-3 backdrop-blur-sm shadow-[0_0_20px_rgba(251,146,60,0.1)] transition-all hover:border-orange-400/50 hover:shadow-[0_0_30px_rgba(251,146,60,0.25)]">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-orange-300">Fallo</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-orange-300">{counts.failure}</p>
           </div>
-          <div className="rounded-xl border border-violet-200 bg-violet-50/50 p-3 dark:border-violet-900/40 dark:bg-violet-950/30">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300">Cobrado</p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-violet-700 dark:text-violet-300">{formatEur(totalSuccessAmount)}</p>
+          <div className="group rounded-xl border border-violet-400/30 bg-violet-500/10 p-3 backdrop-blur-sm shadow-[0_0_20px_rgba(167,139,250,0.1)] transition-all hover:border-violet-400/50 hover:shadow-[0_0_30px_rgba(167,139,250,0.25)]">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-300">Cobrado</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-violet-300">{formatEur(totalSuccessAmount)}</p>
           </div>
         </div>
       </header>
 
-      {/* Filters */}
-      <Card className="border-slate-200 dark:border-slate-800">
-        <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <div className="inline-flex rounded-lg bg-slate-100 p-0.5 dark:bg-slate-900">
+      {/* Filters — navy premium */}
+      <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-[#0d1f3a]/80 to-[#1a2c52]/60 p-3 backdrop-blur-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex rounded-lg border border-blue-400/20 bg-blue-950/40 p-0.5">
             {(['all', 'success', 'failure'] as const).map((f) => (
               <button
                 key={f}
@@ -215,8 +219,8 @@ export default function LogPage() {
                 className={cn(
                   'rounded-md px-3 py-1 text-xs font-medium transition-all',
                   filter === f
-                    ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100',
+                    ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]'
+                    : 'text-blue-200/70 hover:text-white',
                 )}
               >
                 {f === 'all' ? 'Todos' : f === 'success' ? '✓ Éxito' : '✗ Fallo'}
@@ -235,8 +239,8 @@ export default function LogPage() {
                   className={cn(
                     'rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition-all',
                     active
-                      ? 'border-transparent text-white shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400',
+                      ? 'border-transparent text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]'
+                      : 'border-blue-400/30 bg-blue-950/40 text-blue-200/70 hover:border-blue-400/50 hover:text-white',
                   )}
                   style={active ? { backgroundColor: s.color } : undefined}
                 >
@@ -247,188 +251,166 @@ export default function LogPage() {
           </div>
 
           <div className="relative min-w-64 flex-1">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-blue-300/60" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar cliente, email..."
-              className="h-9 pl-8"
+              className="h-9 border-blue-400/20 bg-blue-950/30 pl-8 text-blue-100 placeholder:text-blue-300/40 focus-visible:border-blue-400/60 focus-visible:ring-blue-400/30"
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Events feed — NASA Mission Control style */}
+      {/* Events feed — premium navy glow style */}
       <div
-        className="relative overflow-hidden rounded-sm border border-cyan-500/30 bg-[#0a1628] shadow-[0_0_40px_rgba(0,200,255,0.15)]"
+        className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#1a2c52] shadow-[0_0_60px_rgba(59,130,246,0.15)]"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(0,255,200,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,200,0.03) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
+            'radial-gradient(circle at 20% 0%, rgba(59,130,246,0.08), transparent 50%), radial-gradient(circle at 80% 100%, rgba(34,211,238,0.06), transparent 50%)',
         }}
       >
-        {/* Corner brackets — NASA frame */}
-        <span className="pointer-events-none absolute left-0 top-0 h-3 w-3 border-l-2 border-t-2 border-cyan-400" />
-        <span className="pointer-events-none absolute right-0 top-0 h-3 w-3 border-r-2 border-t-2 border-cyan-400" />
-        <span className="pointer-events-none absolute left-0 bottom-0 h-3 w-3 border-l-2 border-b-2 border-cyan-400" />
-        <span className="pointer-events-none absolute right-0 bottom-0 h-3 w-3 border-r-2 border-b-2 border-cyan-400" />
-
-        {/* Mission control bar */}
-        <div className="flex items-center justify-between border-b border-cyan-500/30 bg-cyan-950/30 px-4 py-1.5">
-          <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-300">
-            <span className="flex items-center gap-1.5">
+        {/* Top status bar */}
+        <div className="flex items-center justify-between border-b border-blue-400/20 bg-blue-950/30 px-4 py-2 backdrop-blur-sm">
+          <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-200">
+            <span className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-400" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
               </span>
-              TLM-FEED · ACTIVE
+              Live Feed
             </span>
-            <span className="text-cyan-500/60">|</span>
-            <span>CH-01</span>
-            <span className="text-cyan-500/60">|</span>
-            <span>{events.length} pkts</span>
+            <span className="text-blue-500/60">·</span>
+            <span className="text-cyan-300">{events.length} events</span>
           </div>
-          <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-cyan-300/70">
-            <span>↑↓ TX/RX</span>
-            <span className="text-cyan-500/60">|</span>
-            <span>UTC {new Date().toUTCString().slice(17, 22)}</span>
-          </div>
+          <span className="text-[10px] font-medium uppercase tracking-widest text-blue-300/60">
+            UTC {new Date().toUTCString().slice(17, 22)}
+          </span>
         </div>
 
-        {/* Column headers */}
-        <div className="grid grid-cols-[60px_80px_60px_72px_1fr_120px_70px] gap-3 border-b border-cyan-500/20 bg-cyan-950/20 px-4 py-1 font-mono text-[9px] uppercase tracking-widest text-cyan-500/80">
-          <span>Pkt#</span>
-          <span>T+TIME</span>
-          <span>Sys</span>
-          <span>Status</span>
-          <span>Subject</span>
-          <span className="text-right">Amount</span>
-          <span className="text-right">Δt</span>
-        </div>
-
-        <div className="max-h-[78vh] overflow-y-auto font-mono text-[12px]">
+        <div className="max-h-[78vh] overflow-y-auto">
           {loading &&
             Array.from({ length: 8 }).map((_, i) => (
-              <div key={`sk-${i}`} className="border-b border-cyan-500/10 px-4 py-2">
-                <Skeleton className="h-3 w-full bg-cyan-900/30" />
+              <div key={`sk-${i}`} className="border-b border-blue-400/10 px-4 py-3">
+                <Skeleton className="h-10 w-full bg-blue-900/30" />
               </div>
             ))}
 
           {!loading && events.length === 0 && (
-            <div className="py-16 text-center font-mono text-sm text-cyan-500/60">
-              <Search className="mx-auto mb-2 h-8 w-8 text-cyan-700" />
-              <span className="uppercase tracking-widest">// no telemetry packets</span>
+            <div className="py-16 text-center text-blue-300/60">
+              <Search className="mx-auto mb-2 h-8 w-8 text-blue-500/40" />
+              <span className="text-sm">Sin eventos con esos filtros.</span>
             </div>
           )}
 
           {!loading &&
-            events.map((e, idx) => {
+            events.map((e) => {
               const src = SOURCES.find((s) => s.id === e.source);
-              const sysCode = e.source === 'stripe' ? 'STR' : e.source === 'whop' ? 'WHP' : 'WERP';
+              const platformIcon = e.source === 'stripe' ? '💳' : e.source === 'whop' ? '⚡' : '📦';
               return (
                 <button
                   key={e.id}
                   type="button"
                   onClick={() => setSelected(e)}
-                  className={cn(
-                    'group relative grid w-full grid-cols-[60px_80px_60px_72px_1fr_120px_70px] items-center gap-3 border-b border-cyan-500/10 px-4 py-2 text-left transition-all hover:bg-cyan-500/5',
-                    !e.is_success && 'bg-rose-950/10',
-                  )}
+                  className="group relative flex w-full items-center gap-4 border-b border-blue-400/10 px-4 py-3 text-left transition-all hover:bg-gradient-to-r hover:from-blue-500/10 hover:to-transparent"
                 >
-                  {/* Glow line on hover left */}
+                  {/* Glowing left bar on hover */}
                   <span
                     className={cn(
-                      'absolute left-0 top-0 h-full w-0.5 transition-all',
-                      e.is_success ? 'bg-emerald-400' : 'bg-rose-400',
-                      'opacity-0 group-hover:opacity-100',
+                      'absolute left-0 top-0 h-full w-1 opacity-0 transition-opacity group-hover:opacity-100',
+                      e.is_success
+                        ? 'bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8)]'
+                        : 'bg-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.8)]',
                     )}
                   />
 
-                  {/* Packet number */}
-                  <span className="select-none font-mono text-[10px] tracking-wider text-cyan-700 group-hover:text-cyan-400">
-                    [{String(idx + 1).padStart(4, '0')}]
-                  </span>
-
-                  {/* Time */}
-                  <span
-                    className="font-mono text-[11px] font-medium tabular-nums text-cyan-200"
-                    suppressHydrationWarning
-                  >
-                    {toMadridTime(e.created_at, 'time')}
-                  </span>
-
-                  {/* System code */}
-                  <span
-                    className="rounded-sm border px-1.5 py-0.5 text-center text-[10px] font-bold uppercase tracking-widest"
-                    style={{
-                      borderColor: `${src?.color}80`,
-                      color: src?.color,
-                      backgroundColor: `${src?.color}15`,
-                    }}
-                  >
-                    {sysCode}
-                  </span>
-
-                  {/* Status with blinking dot for failures */}
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className={cn(
-                        'relative h-1.5 w-1.5 rounded-full',
-                        e.is_success ? 'bg-emerald-400' : 'bg-rose-400 animate-pulse',
-                      )}
-                    >
-                      {e.is_success && (
-                        <span className="absolute inset-0 rounded-full bg-emerald-400/60 blur-sm" />
-                      )}
-                    </span>
-                    <span
-                      className={cn(
-                        'text-[10px] font-bold uppercase tracking-widest',
-                        e.is_success ? 'text-emerald-400' : 'text-rose-400',
-                      )}
-                    >
-                      {e.is_success ? 'OK' : 'ERR'}
-                    </span>
-                  </span>
-
-                  {/* Subject (customer + reason) */}
-                  <span className="min-w-0 truncate">
-                    <span className="text-cyan-100">{e.customer_email || '—'}</span>
-                    {e.customer_name && (
-                      <span className="ml-2 text-cyan-500/70">› {e.customer_name}</span>
-                    )}
-                    {e.failure_reason && (
-                      <span className="ml-2 text-rose-400/80">⚠ {e.failure_reason}</span>
-                    )}
-                  </span>
-
-                  {/* Amount */}
-                  <span
+                  {/* Platform orb with glow */}
+                  <div
                     className={cn(
-                      'text-right font-mono font-bold tabular-nums tracking-tight',
-                      e.is_success ? 'text-emerald-400' : 'text-cyan-700',
+                      'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg ring-1 transition-all',
+                      e.is_success
+                        ? 'bg-gradient-to-br from-cyan-500/20 to-blue-600/20 ring-cyan-400/40 group-hover:shadow-[0_0_20px_rgba(34,211,238,0.4)]'
+                        : 'bg-gradient-to-br from-orange-500/20 to-rose-600/20 ring-orange-400/40 group-hover:shadow-[0_0_20px_rgba(251,146,60,0.4)]',
                     )}
                   >
-                    {formatEur(e.amount)}
-                  </span>
+                    <span>{platformIcon}</span>
+                    {/* Status micro dot */}
+                    <span
+                      className={cn(
+                        'absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full ring-2 ring-[#0a1628]',
+                        e.is_success
+                          ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)]'
+                          : 'bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.9)]',
+                      )}
+                    />
+                  </div>
 
-                  {/* Delta time */}
-                  <span className="text-right font-mono text-[10px] uppercase tracking-wider text-cyan-600">
-                    {relativeTime(e.created_at, now)}
-                  </span>
+                  {/* Customer info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="truncate text-sm font-semibold text-white">
+                        {e.customer_name || e.customer_email || 'Cliente sin nombre'}
+                      </span>
+                      {src && (
+                        <span
+                          className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest"
+                          style={{
+                            backgroundColor: `${src.color}20`,
+                            color: src.color,
+                            border: `1px solid ${src.color}40`,
+                          }}
+                        >
+                          {src.label}
+                        </span>
+                      )}
+                      <span
+                        className={cn(
+                          'shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest',
+                          e.is_success
+                            ? 'bg-cyan-500/15 text-cyan-300 ring-1 ring-cyan-400/40'
+                            : 'bg-orange-500/15 text-orange-300 ring-1 ring-orange-400/40',
+                        )}
+                      >
+                        {e.is_success ? '◆ Cobrado' : '◆ Fallido'}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-xs text-blue-200/60">
+                      {e.customer_email || '—'}
+                    </p>
+                    {e.failure_reason && (
+                      <p className="mt-1 truncate text-xs text-orange-300/90">
+                        ⚠ {e.failure_reason}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Amount with glow on success */}
+                  <div className="shrink-0 text-right">
+                    <p
+                      className={cn(
+                        'text-xl font-bold tabular-nums tracking-tight',
+                        e.is_success
+                          ? 'bg-gradient-to-br from-cyan-300 via-cyan-400 to-blue-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]'
+                          : 'text-blue-300/40 line-through decoration-orange-400/60',
+                      )}
+                    >
+                      {formatEur(e.amount)}
+                    </p>
+                    <div className="mt-0.5 flex items-center justify-end gap-1.5 text-[10px] text-blue-300/50">
+                      <span className="font-mono tabular-nums" suppressHydrationWarning>
+                        {toMadridTime(e.created_at, 'time')}
+                      </span>
+                      <span>·</span>
+                      <span>{relativeTime(e.created_at, now)}</span>
+                    </div>
+                  </div>
                 </button>
               );
             })}
         </div>
 
-        {/* Bottom status bar */}
-        <div className="flex items-center justify-between border-t border-cyan-500/30 bg-cyan-950/30 px-4 py-1 font-mono text-[9px] uppercase tracking-[0.25em] text-cyan-500/70">
-          <span>END_OF_FEED // CONNECTED</span>
-          <span className="flex items-center gap-2">
-            <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
-            SIGNAL_STRONG
-          </span>
-        </div>
+        {/* Bottom subtle gradient */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#0a1628] to-transparent" />
       </div>
 
       <ChargesDialog event={selected} onClose={() => setSelected(null)} />
