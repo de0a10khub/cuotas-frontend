@@ -181,6 +181,11 @@ export default function LogPage() {
     () => filteredEvents.filter((e) => e.is_success).reduce((s, e) => s + (e.amount || 0), 0),
     [filteredEvents],
   );
+  // Total NO cobrado (eventos fallidos)
+  const totalFailureAmount = useMemo(
+    () => filteredEvents.filter((e) => !e.is_success).reduce((s, e) => s + (e.amount || 0), 0),
+    [filteredEvents],
+  );
   const successRate = counts.total > 0 ? Math.round((counts.success / counts.total) * 100) : 0;
 
   return (
@@ -261,7 +266,7 @@ export default function LogPage() {
         </div>
 
         {/* KPIs row */}
-        <div className="relative mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="relative mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
           <div className="group rounded-xl border border-blue-400/20 bg-white/5 p-3 backdrop-blur-sm transition-all hover:border-blue-400/40 hover:bg-white/10">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-200/60">Eventos</p>
             <p className="mt-1 text-2xl font-bold tabular-nums text-white">{counts.total}</p>
@@ -280,6 +285,10 @@ export default function LogPage() {
           <div className="group rounded-xl border border-violet-400/30 bg-violet-500/10 p-3 backdrop-blur-sm shadow-[0_0_20px_rgba(167,139,250,0.1)] transition-all hover:border-violet-400/50 hover:shadow-[0_0_30px_rgba(167,139,250,0.25)]">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-300">Cobrado</p>
             <p className="mt-1 text-2xl font-bold tabular-nums text-violet-300">{formatEur(totalSuccessAmount)}</p>
+          </div>
+          <div className="group rounded-xl border border-rose-400/30 bg-rose-500/10 p-3 backdrop-blur-sm shadow-[0_0_20px_rgba(244,63,94,0.1)] transition-all hover:border-rose-400/50 hover:shadow-[0_0_30px_rgba(244,63,94,0.25)]">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-rose-300">No cobrado</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-rose-300">{formatEur(totalFailureAmount)}</p>
           </div>
         </div>
       </header>
