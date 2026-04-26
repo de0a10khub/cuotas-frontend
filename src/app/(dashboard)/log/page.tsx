@@ -262,37 +262,22 @@ export default function LogPage() {
         </div>
       </div>
 
-      {/* Events feed — premium navy glow style */}
-      <div
-        className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#1a2c52] shadow-[0_0_60px_rgba(59,130,246,0.15)]"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at 20% 0%, rgba(59,130,246,0.08), transparent 50%), radial-gradient(circle at 80% 100%, rgba(34,211,238,0.06), transparent 50%)',
-        }}
-      >
-        {/* Top status bar */}
-        <div className="flex items-center justify-between border-b border-blue-400/20 bg-blue-950/30 px-4 py-2 backdrop-blur-sm">
-          <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-200">
-            <span className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-              </span>
-              Live Feed
-            </span>
-            <span className="text-blue-500/60">·</span>
-            <span className="text-cyan-300">{events.length} events</span>
-          </div>
-          <span className="text-[10px] font-medium uppercase tracking-widest text-blue-300/60">
-            UTC {new Date().toUTCString().slice(17, 22)}
-          </span>
+      {/* Events feed — compact data table (Stripe-style en navy) */}
+      <div className="overflow-hidden rounded-2xl border border-blue-500/20 bg-[#0a1628]">
+        {/* Table header */}
+        <div className="grid grid-cols-[110px_120px_1fr_140px_90px] items-center gap-4 border-b border-blue-400/20 bg-blue-950/40 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-300/60">
+          <span>Fecha</span>
+          <span>Plataforma</span>
+          <span>Cliente</span>
+          <span className="text-right">Importe</span>
+          <span className="text-center">Estado</span>
         </div>
 
         <div className="max-h-[78vh] overflow-y-auto">
           {loading &&
             Array.from({ length: 8 }).map((_, i) => (
               <div key={`sk-${i}`} className="border-b border-blue-400/10 px-4 py-3">
-                <Skeleton className="h-10 w-full bg-blue-900/30" />
+                <Skeleton className="h-5 w-full bg-blue-900/30" />
               </div>
             ))}
 
@@ -306,111 +291,86 @@ export default function LogPage() {
           {!loading &&
             events.map((e) => {
               const src = SOURCES.find((s) => s.id === e.source);
-              const platformIcon = e.source === 'stripe' ? '💳' : e.source === 'whop' ? '⚡' : '📦';
               return (
                 <button
                   key={e.id}
                   type="button"
                   onClick={() => setSelected(e)}
-                  className="group relative flex w-full items-center gap-4 border-b border-blue-400/10 px-4 py-3 text-left transition-all hover:bg-gradient-to-r hover:from-blue-500/10 hover:to-transparent"
+                  className={cn(
+                    'group grid w-full grid-cols-[110px_120px_1fr_140px_90px] items-center gap-4 border-b border-blue-400/10 px-4 py-2.5 text-left transition-all hover:bg-blue-500/5',
+                    !e.is_success && 'bg-orange-500/[0.02]',
+                  )}
                 >
-                  {/* Glowing left bar on hover */}
-                  <span
-                    className={cn(
-                      'absolute left-0 top-0 h-full w-1 opacity-0 transition-opacity group-hover:opacity-100',
-                      e.is_success
-                        ? 'bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8)]'
-                        : 'bg-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.8)]',
-                    )}
-                  />
-
-                  {/* Platform orb with glow */}
-                  <div
-                    className={cn(
-                      'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg ring-1 transition-all',
-                      e.is_success
-                        ? 'bg-gradient-to-br from-cyan-500/20 to-blue-600/20 ring-cyan-400/40 group-hover:shadow-[0_0_20px_rgba(34,211,238,0.4)]'
-                        : 'bg-gradient-to-br from-orange-500/20 to-rose-600/20 ring-orange-400/40 group-hover:shadow-[0_0_20px_rgba(251,146,60,0.4)]',
-                    )}
-                  >
-                    <span>{platformIcon}</span>
-                    {/* Status micro dot */}
-                    <span
-                      className={cn(
-                        'absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full ring-2 ring-[#0a1628]',
-                        e.is_success
-                          ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)]'
-                          : 'bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.9)]',
-                      )}
-                    />
-                  </div>
-
-                  {/* Customer info */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate text-sm font-semibold text-white">
-                        {e.customer_name || e.customer_email || 'Cliente sin nombre'}
-                      </span>
-                      {src && (
-                        <span
-                          className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest"
-                          style={{
-                            backgroundColor: `${src.color}20`,
-                            color: src.color,
-                            border: `1px solid ${src.color}40`,
-                          }}
-                        >
-                          {src.label}
-                        </span>
-                      )}
-                      <span
-                        className={cn(
-                          'shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest',
-                          e.is_success
-                            ? 'bg-cyan-500/15 text-cyan-300 ring-1 ring-cyan-400/40'
-                            : 'bg-orange-500/15 text-orange-300 ring-1 ring-orange-400/40',
-                        )}
-                      >
-                        {e.is_success ? '◆ Cobrado' : '◆ Fallido'}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 truncate text-xs text-blue-200/60">
-                      {e.customer_email || '—'}
+                  {/* Fecha + tiempo */}
+                  <div className="text-xs">
+                    <p
+                      className="font-mono font-medium tabular-nums text-blue-100"
+                      suppressHydrationWarning
+                    >
+                      {toMadridTime(e.created_at, 'time')}
                     </p>
-                    {e.failure_reason && (
-                      <p className="mt-1 truncate text-xs text-orange-300/90">
-                        ⚠ {e.failure_reason}
-                      </p>
-                    )}
+                    <p className="text-[10px] text-blue-300/50">
+                      {relativeTime(e.created_at, now)}
+                    </p>
                   </div>
 
-                  {/* Amount with glow on success */}
-                  <div className="shrink-0 text-right">
+                  {/* Plataforma badge */}
+                  <span
+                    className="inline-flex w-fit items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider"
+                    style={{
+                      backgroundColor: `${src?.color}15`,
+                      color: src?.color,
+                      border: `1px solid ${src?.color}40`,
+                    }}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: src?.color }} />
+                    {src?.label}
+                  </span>
+
+                  {/* Cliente + razón */}
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-white">
+                      {e.customer_name || e.customer_email || 'Cliente'}
+                    </p>
+                    <p className="truncate text-xs">
+                      {e.failure_reason ? (
+                        <span className="text-orange-300/80">{e.failure_reason}</span>
+                      ) : (
+                        <span className="text-blue-300/50">{e.customer_email || '—'}</span>
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Importe */}
+                  <div className="text-right">
                     <p
                       className={cn(
-                        'text-xl font-bold tabular-nums tracking-tight',
-                        e.is_success
-                          ? 'bg-gradient-to-br from-cyan-300 via-cyan-400 to-blue-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]'
-                          : 'text-blue-300/40 line-through decoration-orange-400/60',
+                        'text-base font-bold tabular-nums tracking-tight',
+                        e.is_success ? 'text-cyan-300' : 'text-blue-300/40 line-through decoration-orange-400/60',
                       )}
                     >
                       {formatEur(e.amount)}
                     </p>
-                    <div className="mt-0.5 flex items-center justify-end gap-1.5 text-[10px] text-blue-300/50">
-                      <span className="font-mono tabular-nums" suppressHydrationWarning>
-                        {toMadridTime(e.created_at, 'time')}
+                  </div>
+
+                  {/* Estado */}
+                  <div className="flex justify-center">
+                    {e.is_success ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-cyan-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300 ring-1 ring-cyan-400/30">
+                        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.9)]" />
+                        OK
                       </span>
-                      <span>·</span>
-                      <span>{relativeTime(e.created_at, now)}</span>
-                    </div>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-300 ring-1 ring-orange-400/30">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-400 shadow-[0_0_6px_rgba(251,146,60,0.9)]" />
+                        FAIL
+                      </span>
+                    )}
                   </div>
                 </button>
               );
             })}
         </div>
-
-        {/* Bottom subtle gradient */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#0a1628] to-transparent" />
       </div>
 
       <ChargesDialog event={selected} onClose={() => setSelected(null)} />
