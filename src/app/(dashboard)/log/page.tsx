@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -60,6 +60,31 @@ function formatEur(eur: number): string {
   }).format(eur || 0);
 }
 
+// YYYY-MM-DD del evento en zona Madrid (para agrupar y filtrar)
+function dayKey(iso: string): string {
+  const d = new Date(iso);
+  // toLocaleString to Madrid then build YYYY-MM-DD manually
+  const yyyy = d.toLocaleString('en-CA', { timeZone: 'Europe/Madrid', year: 'numeric' });
+  const mm = d.toLocaleString('en-CA', { timeZone: 'Europe/Madrid', month: '2-digit' });
+  const dd = d.toLocaleString('en-CA', { timeZone: 'Europe/Madrid', day: '2-digit' });
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function dayLabel(iso: string): string {
+  const today = dayKey(new Date().toISOString());
+  const yesterday = dayKey(new Date(Date.now() - 86400000).toISOString());
+  const k = dayKey(iso);
+  if (k === today) return 'Hoy';
+  if (k === yesterday) return 'Ayer';
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-ES', {
+    timeZone: 'Europe/Madrid',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+}
+
 export default function LogPage() {
   const [events, setEvents] = useState<LogEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +92,7 @@ export default function LogPage() {
   const [filter, setFilter] = useState<'all' | 'success' | 'failure'>('all');
   const [source, setSource] = useState<'all' | 'stripe' | 'whop' | 'whop-erp'>('all');
   const [search, setSearch] = useState('');
+  const [dayFilter, setDayFilter] = useState<string>('all'); // 'all' | YYYY-MM-DD
   const [now, setNow] = useState(Date.now());
   const [selected, setSelected] = useState<LogEvent | null>(null);
 
@@ -121,19 +147,39 @@ export default function LogPage() {
     return () => clearInterval(interval);
   }, [isLive, source, filter, search]);
 
+  // Días únicos (en orden, más reciente primero) para el selector
+  const availableDays = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const e of events) {
+      const k = dayKey(e.created_at);
+      if (!seen.has(k)) {
+        seen.add(k);
+        out.push(k);
+      }
+    }
+    return out;
+  }, [events]);
+
+  // Eventos filtrados por día (si dayFilter != 'all')
+  const filteredEvents = useMemo(() => {
+    if (dayFilter === 'all') return events;
+    return events.filter((e) => dayKey(e.created_at) === dayFilter);
+  }, [events, dayFilter]);
+
   const counts = useMemo(
     () => ({
-      total: events.length,
-      success: events.filter((e) => e.is_success).length,
-      failure: events.filter((e) => !e.is_success).length,
+      total: filteredEvents.length,
+      success: filteredEvents.filter((e) => e.is_success).length,
+      failure: filteredEvents.filter((e) => !e.is_success).length,
     }),
-    [events],
+    [filteredEvents],
   );
 
   // Total cobrado (solo eventos exitosos)
   const totalSuccessAmount = useMemo(
-    () => events.filter((e) => e.is_success).reduce((s, e) => s + (e.amount || 0), 0),
-    [events],
+    () => filteredEvents.filter((e) => e.is_success).reduce((s, e) => s + (e.amount || 0), 0),
+    [filteredEvents],
   );
   const successRate = counts.total > 0 ? Math.round((counts.success / counts.total) * 100) : 0;
 
@@ -172,15 +218,46 @@ export default function LogPage() {
               </p>
             </div>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsLive((v) => !v)}
-            className="gap-1.5 border-blue-400/40 bg-blue-500/10 text-blue-100 hover:bg-blue-500/20 hover:text-white"
-          >
-            {isLive ? <Square className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-            {isLive ? 'Pausar' : 'Reanudar'}
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Día filter */}
+            {availableDays.length > 0 && (
+              <select
+                value={dayFilter}
+                onChange={(e) => setDayFilter(e.target.value)}
+                className="h-9 rounded-md border border-blue-400/40 bg-blue-500/10 px-2.5 text-xs font-medium text-blue-100 transition-colors hover:bg-blue-500/20 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+              >
+                <option value="all" className="bg-[#0a1628]">Todos los días</option>
+                {availableDays.map((d) => {
+                  const today = dayKey(new Date().toISOString());
+                  const yesterday = dayKey(new Date(Date.now() - 86400000).toISOString());
+                  const label =
+                    d === today
+                      ? 'Hoy'
+                      : d === yesterday
+                      ? 'Ayer'
+                      : new Date(d + 'T12:00:00').toLocaleDateString('es-ES', {
+                          weekday: 'short',
+                          day: 'numeric',
+                          month: 'short',
+                        });
+                  return (
+                    <option key={d} value={d} className="bg-[#0a1628]">
+                      {label}
+                    </option>
+                  );
+                })}
+              </select>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsLive((v) => !v)}
+              className="gap-1.5 border-blue-400/40 bg-blue-500/10 text-blue-100 hover:bg-blue-500/20 hover:text-white"
+            >
+              {isLive ? <Square className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+              {isLive ? 'Pausar' : 'Reanudar'}
+            </Button>
+          </div>
         </div>
 
         {/* KPIs row */}
@@ -281,7 +358,7 @@ export default function LogPage() {
               </div>
             ))}
 
-          {!loading && events.length === 0 && (
+          {!loading && filteredEvents.length === 0 && (
             <div className="py-16 text-center text-blue-300/60">
               <Search className="mx-auto mb-2 h-8 w-8 text-blue-500/40" />
               <span className="text-sm">Sin eventos con esos filtros.</span>
@@ -289,11 +366,23 @@ export default function LogPage() {
           )}
 
           {!loading &&
-            events.map((e) => {
+            filteredEvents.map((e, idx) => {
               const src = SOURCES.find((s) => s.id === e.source);
+              const prevDay = idx > 0 ? dayKey(filteredEvents[idx - 1].created_at) : null;
+              const curDay = dayKey(e.created_at);
+              const showDivider = idx === 0 || prevDay !== curDay;
               return (
+                <React.Fragment key={e.id}>
+                  {showDivider && (
+                    <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-blue-400/20 bg-gradient-to-r from-blue-950/95 via-[#0a1628]/90 to-blue-950/95 px-4 py-2 backdrop-blur-md">
+                      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
+                      <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-0.5 text-[10px] font-bold uppercase tracking-[0.25em] text-cyan-300">
+                        {dayLabel(e.created_at)}
+                      </span>
+                      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
+                    </div>
+                  )}
                 <button
-                  key={e.id}
                   type="button"
                   onClick={() => setSelected(e)}
                   className={cn(
@@ -368,6 +457,7 @@ export default function LogPage() {
                     )}
                   </div>
                 </button>
+                </React.Fragment>
               );
             })}
         </div>
