@@ -43,6 +43,7 @@ export interface NavItem {
 export const navigation: NavItem[] = [
   { label: 'Inicio', href: '/', icon: LayoutDashboard, section: 'General' },
   { label: 'Board KPIs', href: '/board2', icon: BarChart3, section: 'General' },
+  { label: 'Notificaciones', href: '/notificaciones', icon: Bell, section: 'General' },
 
   { label: 'Clientes', href: '/clientes', icon: Users, section: 'Gestión' },
   { label: 'Cobros', href: '/cobros', icon: Receipt, section: 'Gestión' },

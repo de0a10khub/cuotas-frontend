@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { navigation, groupBySection } from './nav-config';
 import { Wallet } from 'lucide-react';
+import { api } from '@/lib/api';
 
 // Sidebar colapsable por hover (mismo feel que la web vieja de Conciliación).
 // Default colapsada a w-16 (solo iconos), expande a w-64 al pasar el raton.
@@ -13,6 +14,20 @@ export function Sidebar() {
   const pathname = usePathname();
   const grouped = groupBySection(navigation);
   const [collapsed, setCollapsed] = React.useState(true);
+  const [notifTotal, setNotifTotal] = React.useState(0);
+
+  // Polling cada 60s para mantener el contador fresco.
+  React.useEffect(() => {
+    const fetchCount = () => {
+      api
+        .get<{ total_count: number }>('/api/v1/notifications/system/summary/')
+        .then((d) => setNotifTotal(d.total_count || 0))
+        .catch(() => {});
+    };
+    fetchCount();
+    const t = setInterval(fetchCount, 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   return (
     <aside
@@ -87,6 +102,16 @@ export function Sidebar() {
                       >
                         {item.label}
                       </span>
+                      {item.href === '/notificaciones' && notifTotal > 0 && (
+                        <span
+                          className={cn(
+                            'ml-auto inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white shadow-[0_0_10px_rgba(244,63,94,0.5)]',
+                            collapsed && 'absolute right-1 top-1 h-4 min-w-[16px] text-[9px]',
+                          )}
+                        >
+                          {notifTotal > 99 ? '99+' : notifTotal}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 );
