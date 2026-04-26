@@ -24,7 +24,13 @@ function personToRow(p: PersonRow): ClienteRow {
     customer_phone: p.customer_phone,
     platform: platformLabel,
     subscription_status: primary?.subscription_status || 'unknown',
-    subscription_created_at: primary?.subscription_created_at || '',
+    // Alta = fecha más antigua entre todos los contratos del cliente
+    // (cuándo apareció por primera vez en el sistema). Backend la calcula
+    // como first_seen_at; fallback al contrato representativo si no llega.
+    subscription_created_at:
+      (p as PersonRow & { first_seen_at?: string }).first_seen_at ||
+      primary?.subscription_created_at ||
+      '',
     pause_collection: null,
     days_overdue: p.days_overdue,
     paid_invoices_count: p.paid_count,
