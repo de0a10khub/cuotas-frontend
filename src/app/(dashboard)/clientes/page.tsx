@@ -5,7 +5,58 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { clientesApi } from '@/lib/clientes-api';
-import type { ClienteRow, Operator } from '@/lib/clientes-types';
+import type { ClienteRow, Operator, PersonRow, Platform } from '@/lib/clientes-types';
+
+// Adaptador modo persona → shape ClienteRow para reutilizar ClientesTable.
+// Modo persona agrupa por unified_customer: 1 fila con N contratos sumados.
+// El "platform" mostrado se queda como el del primer contrato real (no acceso),
+// con un fallback a 'multi' visual si hay más de uno.
+function personToRow(p: PersonRow): ClienteRow {
+  const realContracts = p.contracts.filter((c) => !c.is_access_only);
+  const primary = realContracts[0] || p.contracts[0];
+  const platforms = (p.platforms as string[]).filter((x) => x !== 'whop' || !p.platforms.includes('whop-erp'));
+  const platformLabel = (platforms.length > 1 ? 'multi' : platforms[0]) as Platform;
+  return {
+    subscription_id: p.person_key,
+    customer_id: p.unified_customer_id || primary?.external_customer_id || p.person_key,
+    customer_name: p.customer_name,
+    customer_email: p.customer_email,
+    customer_phone: p.customer_phone,
+    platform: platformLabel,
+    subscription_status: primary?.subscription_status || 'unknown',
+    subscription_created_at: primary?.subscription_created_at || '',
+    pause_collection: null,
+    days_overdue: p.days_overdue,
+    paid_invoices_count: p.paid_count,
+    unpaid_invoices_count: p.unpaid_count,
+    unpaid_invoices_total: p.unpaid_total,
+    category: p.category,
+    open_disputes: p.open_disputes,
+    won_disputes: p.won_disputes,
+    lost_disputes: p.lost_disputes,
+    recovery_status: p.recovery_status,
+    recovery_contacted_by: p.recovery_contacted_by || '',
+    recovery_comment_1: p.recovery_comment_1 || '',
+    recovery_comment_2: p.recovery_comment_2 || '',
+    recovery_continue_with: p.recovery_continue_with || '',
+    recovery_locked_by: null,
+    recovery_lock_expires_at: null,
+    retry_count: 0,
+    last_retry_status: null,
+    is_refinanced: false,
+    original_subscription_id: null,
+    refinance_status: null,
+    total_count: p.n_contracts,
+    product_name: p.product_name,
+    paid_count: p.paid_count,
+    paid_total: p.paid_total,
+    unpaid_total: p.unpaid_total,
+    total_contract_value: p.total_contract_value,
+    remaining_contract: p.remaining_contract,
+    objeciones_tags: p.objeciones_tags,
+    recovery_updated_at: p.recovery_updated_at,
+  };
+}
 import { Card, CardContent } from '@/components/ui/card';
 import { FilterHeader, type HardFilters } from '@/components/clientes/filter-header';
 import { ClientesTable } from '@/components/clientes/clientes-table';
@@ -72,15 +123,17 @@ export default function ClientesPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await clientesApi.list({
+      // Modo persona: 1 fila por unified_customer (todas sus cuentas sumadas).
+      // Antes usábamos `list` (1 fila por contrato) — un cliente con cuentas en
+      // varias plataformas salía duplicado.
+      const data = await clientesApi.listGrouped({
         search,
         platform: filters.platform,
         category: filters.category,
-        dispute_state: filters.dispute_state,
         page,
         page_size: pageSize,
       });
-      setRows(data.results);
+      setRows(data.results.map(personToRow));
       setTotal(data.total_count);
     } catch {
       toast.error('Error cargando clientes');
@@ -89,7 +142,7 @@ export default function ClientesPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, filters.platform, filters.category, filters.dispute_state, page, pageSize]);
+  }, [search, filters.platform, filters.category, page, pageSize]);
 
   useEffect(() => {
     load();
