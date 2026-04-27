@@ -26,9 +26,6 @@ export function DailyCyclesTable({ rows, loading }: Props) {
               <th className="bg-blue-500/10 px-3 py-2.5 text-right text-[11px] font-bold uppercase tracking-[0.12em] text-blue-300">
                 Facturado
               </th>
-              <th className="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-300/70">
-                Previsión
-              </th>
               <th className="bg-emerald-500/10 px-3 py-2.5 text-right text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-300">
                 Cobrado
               </th>
@@ -50,7 +47,7 @@ export function DailyCyclesTable({ rows, loading }: Props) {
             {loading &&
               Array.from({ length: 7 }).map((_, i) => (
                 <tr key={`sk-${i}`} className="border-b border-blue-500/10">
-                  {Array.from({ length: 8 }).map((_, j) => (
+                  {Array.from({ length: 7 }).map((_, j) => (
                     <td key={j} className="px-3 py-2.5">
                       <Skeleton className="h-4 w-full bg-blue-900/30" />
                     </td>
@@ -60,7 +57,7 @@ export function DailyCyclesTable({ rows, loading }: Props) {
 
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-12 text-center text-sm text-blue-300/40">
+                <td colSpan={7} className="py-12 text-center text-sm text-blue-300/40">
                   Sin datos en el rango seleccionado
                 </td>
               </tr>
@@ -88,9 +85,6 @@ export function DailyCyclesTable({ rows, loading }: Props) {
                       {formatDayLabel(r.invoice_date)}
                     </td>
                     <td className="bg-blue-500/5 px-3 py-2.5 text-right font-bold tabular-nums text-blue-200">
-                      {r.contract_value_eur > 0 ? formatEurExact(r.contract_value_eur) : <span className="text-blue-300/30">—</span>}
-                    </td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-blue-200/70">
                       {formatEurExact(r.paid_eur + r.open_eur)}
                     </td>
                     <td className="bg-emerald-500/5 px-3 py-2.5 text-right font-bold tabular-nums text-emerald-200">
