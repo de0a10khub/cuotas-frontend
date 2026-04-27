@@ -166,13 +166,15 @@ export function ClientesTable({
       });
       return arr;
     }
-    // Auto-sort por defecto (como la web vieja)
+    // Auto-sort por defecto: por fecha de alta DESC (clientes nuevos arriba).
+    // Renovaciones de cuotas NO mueven al cliente arriba — la fecha alta es
+    // la primera vez que apareció en el sistema, no la última cuota cobrada.
     if (!category || category === 'all') {
-      arr.sort(
-        (a, b) =>
-          a.days_overdue - b.days_overdue ||
-          (a.customer_name || '').localeCompare(b.customer_name || ''),
-      );
+      arr.sort((a, b) => {
+        const at = new Date(a.subscription_created_at || 0).getTime();
+        const bt = new Date(b.subscription_created_at || 0).getTime();
+        return bt - at || (a.customer_name || '').localeCompare(b.customer_name || '');
+      });
     } else {
       arr.sort(
         (a, b) =>
