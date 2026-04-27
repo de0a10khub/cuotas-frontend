@@ -225,11 +225,18 @@ export default function CobrosPage() {
   const rK = rangeKpis ? buildKpis(rangeKpis, 'range') : null;
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-6">
+    <div className="relative mx-auto max-w-[1400px] space-y-8 p-4">
+      {/* Orbs de glow ambient */}
+      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
+      <div className="pointer-events-none fixed left-1/3 top-2/3 -z-10 h-72 w-72 rounded-full bg-indigo-500/8 blur-3xl" />
+
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Cobros</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <h1 className="bg-gradient-to-r from-cyan-200 via-blue-100 to-cyan-200 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
+            Cobros
+          </h1>
+          <p className="mt-1 text-sm text-blue-300/60">
             Análisis de facturación y cobros consolidados de todas las plataformas.
           </p>
         </div>
@@ -239,6 +246,7 @@ export default function CobrosPage() {
             variant="outline"
             onClick={() => fetchAll(true)}
             disabled={isRefreshing}
+            className="border-blue-500/30 bg-blue-950/40 text-blue-200 hover:bg-blue-900/40 hover:text-cyan-200"
           >
             <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
             Actualizar
@@ -275,7 +283,7 @@ export default function CobrosPage() {
             Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="h-48 animate-pulse rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
+                className="h-48 animate-pulse rounded-xl border border-blue-500/15 bg-gradient-to-br from-[#0a1628] to-[#0d1f3a]"
               />
             ))
           )}
@@ -299,7 +307,7 @@ export default function CobrosPage() {
             Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="h-48 animate-pulse rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
+                className="h-48 animate-pulse rounded-xl border border-blue-500/15 bg-gradient-to-br from-[#0a1628] to-[#0d1f3a]"
               />
             ))
           )}
