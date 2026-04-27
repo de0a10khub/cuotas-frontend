@@ -14,7 +14,6 @@ import type {
   CycleDays,
   DailyCycleRow,
   GlobalRange,
-  SubscriptionMonthRow,
 } from '@/lib/cobros-types';
 import { formatEuros } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -23,8 +22,6 @@ import { Section } from '@/components/cobros/section';
 import { GlobalKpiCard, type KpiSubIndicator } from '@/components/cobros/global-kpi-card';
 import { CycleDaysSelector } from '@/components/cobros/cycle-days-selector';
 import { DailyCyclesTable } from '@/components/cobros/daily-cycles-table';
-import { StatusStackedChart } from '@/components/cobros/status-stacked-chart';
-import { SubscriptionMonthChart } from '@/components/cobros/subscription-month-chart';
 import { CobrosFilterBar, type CobrosFilters } from '@/components/cobros/filter-bar';
 import { ExportCiclosButton } from '@/components/cobros/export-button';
 import { resolveRange } from '@/components/cobros/date-ranges';
@@ -171,7 +168,6 @@ export default function CobrosPage() {
   const [globalKpis, setGlobalKpis] = useState<CobrosKpis | null>(null);
   const [rangeKpis, setRangeKpis] = useState<CobrosKpis | null>(null);
   const [cycles, setCycles] = useState<DailyCycleRow[]>([]);
-  const [subMonths, setSubMonths] = useState<SubscriptionMonthRow[]>([]);
   const [globalRange, setGlobalRange] = useState<GlobalRange | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -195,17 +191,15 @@ export default function CobrosPage() {
       if (!silent) setLoading(true);
       else setIsRefreshing(true);
       try {
-        const [g, r, c, sm, gr] = await Promise.all([
+        const [g, r, c, gr] = await Promise.all([
           cobrosApi.globalKpis(filters.platform),
           cobrosApi.rangeKpis({ ...range, platform: filters.platform }),
           cobrosApi.dailyCycles({ ...cycleRange, platform: filters.platform }),
-          cobrosApi.bySubscriptionMonth({ ...cycleRange, platform: filters.platform }),
           cobrosApi.globalRange(),
         ]);
         setGlobalKpis(g);
         setRangeKpis(r);
         setCycles(c.results);
-        setSubMonths(sm.results);
         setGlobalRange(gr);
       } catch {
         toast.error('Error cargando cobros');
@@ -262,16 +256,38 @@ export default function CobrosPage() {
 
       <CobrosFilterBar value={filters} onChange={pushFilters} />
 
-      <Section
-        title="Indicadores Globales"
-        icon="🌍"
-        subtitle={
-          globalRange?.from && globalRange?.to
-            ? `${globalRange.from} a ${globalRange.to}`
-            : 'Todos los datos'
-        }
-      >
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+      {/* GLOBAL — total histórico de toda Conciliación. Sección destacada */}
+      <section className="relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-indigo-950/30 to-cyan-950/40 p-5 shadow-[0_0_40px_rgba(34,211,238,0.12)]">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
+
+        <div className="relative mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400/30 to-blue-500/30 text-base ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
+                🌍
+              </span>
+              <div>
+                <h2 className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+                  Total Histórico
+                </h2>
+                <span className="inline-block rounded-md bg-cyan-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300 ring-1 ring-cyan-400/30">
+                  Toda la Conciliación
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-cyan-300/60">Rango</div>
+            <div className="text-sm font-medium text-cyan-200">
+              {globalRange?.from && globalRange?.to
+                ? `${globalRange.from} → ${globalRange.to}`
+                : 'Todos los datos'}
+            </div>
+          </div>
+        </div>
+
+        <div className="relative grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           {g ? (
             <>
               {g.facturado}
@@ -288,12 +304,13 @@ export default function CobrosPage() {
             ))
           )}
         </div>
-      </Section>
+      </section>
 
+      {/* PERIODO — KPIs filtrados por fecha (más sutil que el global) */}
       <Section
-        title="Indicadores del Período"
+        title="Filtro por Período"
         icon="📅"
-        subtitle={`${range.from} a ${range.to}`}
+        subtitle={`${range.from} → ${range.to}`}
       >
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           {rK ? (
@@ -320,15 +337,7 @@ export default function CobrosPage() {
         subtitle={`${cycleRange.from} a ${cycleRange.to}`}
         actions={<CycleDaysSelector value={cycleDays} onChange={setCycleDays} />}
       >
-        <div className="space-y-4">
-          <DailyCyclesTable rows={cycles} loading={loading} />
-          {cycles.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <StatusStackedChart rows={cycles} />
-              <SubscriptionMonthChart rows={subMonths} />
-            </div>
-          )}
-        </div>
+        <DailyCyclesTable rows={cycles} loading={loading} />
       </Section>
     </div>
   );
