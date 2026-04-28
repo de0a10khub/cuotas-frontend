@@ -9,7 +9,7 @@ function toIso(d: Date): string {
 export function resolveRange(
   period: CobrosPeriod,
   custom: { from?: string; to?: string } | undefined,
-  anchor: Date = new Date('2026-04-18'),
+  anchor: Date = new Date(),
 ): { from: string; to: string } {
   const now = new Date(anchor);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
