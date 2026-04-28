@@ -17,8 +17,12 @@ function personToRow(p: PersonRow): ClienteRow {
   const platforms = (p.platforms as string[]).filter((x) => x !== 'whop' || !p.platforms.includes('whop-erp'));
   const platformLabel = (platforms.length > 1 ? 'multi' : platforms[0]) as Platform;
   return {
-    subscription_id: p.person_key,
-    customer_id: p.unified_customer_id || primary?.external_customer_id || p.person_key,
+    // Usa el sub_id REAL del contrato representativo (lo manda el backend).
+    // Antes se mandaba person_key (UUID/'platform:sub') -> el upsert creaba
+    // un row huerfano en op_mora_recovery_tracking que el JOIN del listado
+    // no encontraba -> notas no aparecian al recargar.
+    subscription_id: (p as PersonRow & { subscription_id?: string }).subscription_id || primary?.subscription_id || p.person_key,
+    customer_id: (p as PersonRow & { customer_id?: string }).customer_id || p.unified_customer_id || primary?.external_customer_id || p.person_key,
     customer_name: p.customer_name,
     customer_email: p.customer_email,
     customer_phone: p.customer_phone,
@@ -178,8 +182,13 @@ export default function ClientesPage() {
 
   const handleRowOpen = (row: ClienteRow) => setSelected(row);
   const handleUpdated = (row: ClienteRow) => {
-    setRows((prev) => prev.map((r) => (r.subscription_id === row.subscription_id ? row : r)));
-    // Si se vació la deuda, no recargamos la página entera; el total no cambia.
+    // MERGE en vez de REPLACE: el backend devuelve solo los campos del
+    // tracking (status/comments/etc.) o un stub minimo si esta filtrado.
+    // Si reemplazaramos el row entero, perderiamos customer_name/paid_count/
+    // etc. y la fila apareceria "vacia" en la lista (parece que desaparecio).
+    setRows((prev) =>
+      prev.map((r) => (r.subscription_id === row.subscription_id ? { ...r, ...row } : r)),
+    );
   };
 
   const hasFilters = useMemo(
