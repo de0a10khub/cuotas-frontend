@@ -161,11 +161,22 @@ export default function RegistroAccionesPage() {
     });
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-4">
+    <div className="relative mx-auto max-w-[1600px] space-y-5 p-4">
+      {/* Orbs ambient */}
+      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
+
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Registro de Acciones</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Auditoría unificada de todas las operaciones realizadas en la plataforma.
+        <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-400/30 ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
+            📜
+          </span>
+          <span className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
+            Registro de Acciones
+          </span>
+        </h1>
+        <p className="mt-1 ml-12 text-sm text-blue-300/60">
+          Auditoría unificada de todas las operaciones realizadas en la plataforma
         </p>
       </header>
 

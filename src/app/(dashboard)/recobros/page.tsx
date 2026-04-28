@@ -8,7 +8,6 @@ import { recobrosApi } from '@/lib/recobros-api';
 import { moraApi } from '@/lib/mora-api';
 import type { MoraRow, Operator } from '@/lib/mora-types';
 import type { ObjecionTag } from '@/lib/clientes-types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MoraFilterHeader, type MoraHardFilters } from '@/components/mora/filter-header';
 import { MoraTable } from '@/components/mora/mora-table';
 import { RecoveryDrawer } from '@/components/recovery/recovery-drawer';
@@ -115,28 +114,40 @@ export default function RecobrosPage() {
     setRows((prev) => prev.map((r) => (r.subscription_id === row.subscription_id ? row : r)));
 
   return (
-    <div className="mx-auto max-w-[1800px] space-y-4">
+    <div className="relative mx-auto max-w-[1800px] space-y-5 p-4">
+      {/* Orbs ambient */}
+      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
+
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold italic tracking-tight">
-            <span className="text-rose-600">🔴</span>
-            Gestión de Recobros
+          <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-400/30 ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
+              ⚖️
+            </span>
+            <span className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
+              Gestión de Recobros
+            </span>
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Seguimiento de clientes críticos y deuda incobrable.
+          <p className="mt-1 ml-12 text-sm text-blue-300/60">
+            Seguimiento de clientes críticos y deuda incobrable
+          </p>
+          <p className="mt-1 ml-12 text-xs text-blue-300/40">
+            Mostrando <b className="text-cyan-300">{rows.length}</b> de{' '}
+            <b className="text-cyan-300">{total}</b> casos
           </p>
         </div>
         <MoraFilterHeader value={filters} onChange={handleFilterChange} hideCategory />
       </header>
 
-      <Card className="border-t-4 border-t-rose-500 bg-white/60 shadow-2xl backdrop-blur-xl dark:bg-slate-950/40">
-        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 bg-rose-500/5">
-          <CardTitle className="text-rose-700 dark:text-rose-400">
-            ⚖️ Casos para Departamento de Recobros
-          </CardTitle>
+      <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(59,130,246,0.10)]">
+        <div className="flex items-center justify-between border-b border-blue-500/15 bg-gradient-to-r from-blue-950/40 via-blue-900/30 to-blue-950/40 px-4 py-2.5">
+          <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300">
+            🔴 Casos para Departamento de Recobros
+          </h2>
           <RecobrosSyncSheetsButton />
-        </CardHeader>
-        <CardContent className="p-4">
+        </div>
+        <div className="p-4">
           <MoraTable
             rows={rows}
             total={total}
@@ -159,8 +170,8 @@ export default function RecobrosPage() {
             onClearFilters={clearFilters}
             mode="recobros"
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <RecoveryDrawer
         mode="mora"
