@@ -3,26 +3,35 @@
 import { useEffect, useState } from 'react';
 
 const PHRASES = [
-  '¡Vamos campeón!',
-  'Hoy es tu día 💪',
-  'Otro café y al lío',
-  'Pequeños pasos, grandes resultados',
-  'Sigue así, no pares',
-  'Brilla, que es lo tuyo',
-  'Cada cobro cuenta',
-  'Dale como si no hubiera mañana',
-  'El mejor del equipo',
-  'Pa\' lante siempre',
-  'Tu actitud lo es todo',
-  'Hoy más que ayer, menos que mañana',
-  'Un día menos para el éxito',
-  'Estás haciendo magia',
-  'Eres imparable',
-  'No te rindas, ya casi',
-  'Un cliente más, un paso más',
-  'Tranqui, lo tienes',
-  'Confía en el proceso',
-  'Eres el motor del equipo',
+  // Currito español random
+  'Otro café y a por ello',
+  'Enga, pa\' arriba que es viernes (mentira)',
+  'Cojonudo, otro lunes',
+  'Hoy no me como ni una rosca',
+  'Dios qué pereza todo',
+  'Vamos a darle un meneo',
+  'Hala, a trabajar',
+  // Memes / internet
+  'Stonks 📈',
+  'Modo gigachad ON',
+  'Loading... loading... loading...',
+  'Plot twist: hay que currar',
+  'POV: tú cobrando',
+  // Pelis
+  'Houston, tenemos un cliente',
+  // Madre / jefe pesado
+  'Niño, espabila',
+  'Tu jefe te está mirando 👀',
+  // Auto-bullying motivacional
+  'Mientras lees esto, alguien debe pasta',
+  'Fingiendo productividad desde 2026',
+  'Tú no eres persona, eres un cobrador',
+  'El dinero no se cobra solo, ojalá',
+  // España-España
+  'Hagan juego, señores',
+  'Vamos a por todas, equipo 💪',
+  'Aplausos para el del fondo',
+  'Mr. Worldwide del cobro',
 ];
 
 const pick = () => PHRASES[Math.floor(Math.random() * PHRASES.length)];
