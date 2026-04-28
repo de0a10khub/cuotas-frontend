@@ -3,22 +3,22 @@
 import { useEffect, useRef, useState } from 'react';
 
 interface Props {
-  /** Cuando true, los brazos suben y le tapan los ojos. */
+  /** Cuando true, las patas suben y le tapan los ojos. */
   hideEyes: boolean;
   /** Punto al que tienen que mirar los ojos (coords de pantalla). Si null, sigue al mouse. */
   lookTarget?: { x: number; y: number } | null;
-  /** Tamano del mono en px. */
+  /** Tamano del personaje en px. */
   size?: number;
   className?: string;
 }
 
 const VB_W = 220;
-const VB_H = 260;
+const VB_H = 240;
 
 /**
- * Mono peek-a-boo. Cara + cuerpo hasta los hombros con brazos visibles.
- * Pupilas siguen al cursor (o a lookTarget si se pasa).
- * Cuando hideEyes=true, los brazos rotan desde el hombro y se tapa los ojos.
+ * Gato kawaii peek-a-boo. Cara redonda blanca con orejas, ojos grandes,
+ * bigotes y patitas rosadas que se levantan para tapar los ojos.
+ * Mas cute y limpio que el monkey anterior.
  */
 export function PeekingMonkey({ hideEyes, lookTarget, size = 200, className = '' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -38,18 +38,18 @@ export function PeekingMonkey({ hideEyes, lookTarget, size = 200, className = ''
     if (!el) return;
     const r = el.getBoundingClientRect();
     const scale = r.width / VB_W;
-    // Centros de ojos en viewBox: (78, 90) y (142, 90)
-    const leftEyeCx = r.left + 78 * scale;
-    const leftEyeCy = r.top + 90 * scale;
-    const rightEyeCx = r.left + 142 * scale;
-    const rightEyeCy = r.top + 90 * scale;
+    // Centros de ojos en viewBox: (82, 110) y (138, 110)
+    const leftEyeCx = r.left + 82 * scale;
+    const leftEyeCy = r.top + 110 * scale;
+    const rightEyeCx = r.left + 138 * scale;
+    const rightEyeCy = r.top + 110 * scale;
 
     const calc = (cx: number, cy: number) => {
       const dx = target.x - cx;
       const dy = target.y - cy;
       const dist = Math.hypot(dx, dy);
       if (dist === 0) return { x: 0, y: 0 };
-      const max = 5;
+      const max = 4.5;
       const k = max / Math.max(dist, max * 4);
       return { x: dx * k, y: dy * k };
     };
@@ -67,170 +67,187 @@ export function PeekingMonkey({ hideEyes, lookTarget, size = 200, className = ''
     >
       <svg viewBox={`0 0 ${VB_W} ${VB_H}`} width={size} height={size * (VB_H / VB_W)}>
         <defs>
-          <radialGradient id="m_face_grad" cx="50%" cy="35%" r="65%">
-            <stop offset="0%" stopColor="#E8C9A0" />
-            <stop offset="100%" stopColor="#B8956F" />
+          <radialGradient id="cat_face" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="100%" stopColor="#E0E8F5" />
           </radialGradient>
-          <radialGradient id="m_head_grad" cx="50%" cy="35%" r="70%">
-            <stop offset="0%" stopColor="#A87850" />
-            <stop offset="100%" stopColor="#704028" />
-          </radialGradient>
-          <radialGradient id="m_body_grad" cx="50%" cy="30%" r="75%">
-            <stop offset="0%" stopColor="#8B5E3C" />
-            <stop offset="100%" stopColor="#5C3520" />
-          </radialGradient>
-          <radialGradient id="m_glow" cx="50%" cy="40%" r="50%">
-            <stop offset="0%" stopColor="rgba(34,211,238,0.30)" />
+          <radialGradient id="cat_glow" cx="50%" cy="50%" r="55%">
+            <stop offset="0%" stopColor="rgba(34,211,238,0.40)" />
             <stop offset="100%" stopColor="rgba(34,211,238,0)" />
+          </radialGradient>
+          <linearGradient id="cat_paw" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="100%" stopColor="#E0E8F5" />
+          </linearGradient>
+          <radialGradient id="cat_pad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#FFB5C5" />
+            <stop offset="100%" stopColor="#FF8FAA" />
           </radialGradient>
         </defs>
 
         {/* Glow de fondo */}
-        <ellipse cx="110" cy="120" rx="105" ry="120" fill="url(#m_glow)" />
+        <ellipse cx="110" cy="125" rx="110" ry="115" fill="url(#cat_glow)" />
 
-        {/* ===== CUERPO (hombros + torso) ===== */}
+        {/* ===== OREJAS (atras) ===== */}
         <g>
-          {/* Torso */}
+          {/* Oreja izq */}
           <path
-            d="M 60 200 Q 110 180 160 200 L 175 260 L 45 260 Z"
-            fill="url(#m_body_grad)"
+            d="M 50 90 L 30 35 L 75 70 Z"
+            fill="url(#cat_face)"
+            stroke="#0a1628"
+            strokeWidth="2"
           />
-          {/* Pecho mas claro */}
+          <path d="M 50 80 L 38 50 L 62 68 Z" fill="#FFB5C5" opacity="0.7" />
+          {/* Oreja der */}
           <path
-            d="M 80 215 Q 110 200 140 215 L 145 260 L 75 260 Z"
-            fill="url(#m_face_grad)"
-            opacity="0.5"
+            d="M 170 90 L 190 35 L 145 70 Z"
+            fill="url(#cat_face)"
+            stroke="#0a1628"
+            strokeWidth="2"
           />
+          <path d="M 170 80 L 182 50 L 158 68 Z" fill="#FFB5C5" opacity="0.7" />
         </g>
 
-        {/* ===== BRAZOS ABAJO (visibles cuando hideEyes=false) ===== */}
-        <g
-          style={{
-            transition: 'opacity 0.25s',
-            opacity: hideEyes ? 0 : 1,
-          }}
-        >
-          {/* Brazo izquierdo colgando */}
-          <ellipse cx="55" cy="225" rx="14" ry="32" fill="url(#m_head_grad)" />
-          <circle cx="55" cy="252" r="14" fill="url(#m_head_grad)" />
-          <circle cx="55" cy="252" r="9" fill="#D4A574" opacity="0.6" />
-          {/* Brazo derecho colgando */}
-          <ellipse cx="165" cy="225" rx="14" ry="32" fill="url(#m_head_grad)" />
-          <circle cx="165" cy="252" r="14" fill="url(#m_head_grad)" />
-          <circle cx="165" cy="252" r="9" fill="#D4A574" opacity="0.6" />
-        </g>
-
-        {/* ===== CABEZA ===== */}
-        {/* Orejas (atras) */}
-        <g>
-          <circle cx="48" cy="78" r="22" fill="url(#m_head_grad)" />
-          <circle cx="48" cy="78" r="13" fill="#D4A574" />
-          <circle cx="172" cy="78" r="22" fill="url(#m_head_grad)" />
-          <circle cx="172" cy="78" r="13" fill="#D4A574" />
-        </g>
-
-        {/* Cabeza */}
-        <ellipse cx="110" cy="100" rx="65" ry="62" fill="url(#m_head_grad)" />
-
-        {/* Cara mas clara */}
-        <ellipse cx="110" cy="115" rx="50" ry="42" fill="url(#m_face_grad)" />
-
-        {/* Frente */}
-        <path
-          d="M 60 75 Q 110 48 160 75 Q 160 95 110 88 Q 60 95 60 75 Z"
-          fill="url(#m_head_grad)"
-          opacity="0.7"
+        {/* ===== CABEZA (cara redonda) ===== */}
+        <ellipse
+          cx="110"
+          cy="115"
+          rx="78"
+          ry="72"
+          fill="url(#cat_face)"
+          stroke="#0a1628"
+          strokeWidth="2.5"
         />
 
-        {/* Ojos sclera */}
+        {/* ===== OJOS ===== */}
+        {/* Sclera (forma de almendra) */}
         <g>
-          <circle cx="78" cy="90" r="13" fill="white" />
-          <circle cx="142" cy="90" r="13" fill="white" />
+          <ellipse cx="82" cy="110" rx="14" ry="16" fill="#0a1628" />
+          <ellipse cx="138" cy="110" rx="14" ry="16" fill="#0a1628" />
         </g>
 
-        {/* Pupilas */}
+        {/* Pupilas grandes que siguen al cursor */}
         <g style={{ transition: 'opacity 0.18s', opacity: hideEyes ? 0 : 1 }}>
-          <circle cx={78 + pupilOffset.lx} cy={90 + pupilOffset.ly} r="5.5" fill="#1a1a1a" />
-          <circle
-            cx={78 + pupilOffset.lx + 1.5}
-            cy={90 + pupilOffset.ly - 1.5}
-            r="1.5"
-            fill="white"
-            opacity="0.85"
+          {/* Iris cyan */}
+          <ellipse
+            cx={82 + pupilOffset.lx}
+            cy={110 + pupilOffset.ly}
+            rx="9"
+            ry="11"
+            fill="#22d3ee"
           />
-          <circle cx={142 + pupilOffset.rx} cy={90 + pupilOffset.ry} r="5.5" fill="#1a1a1a" />
+          <ellipse
+            cx={138 + pupilOffset.rx}
+            cy={110 + pupilOffset.ry}
+            rx="9"
+            ry="11"
+            fill="#22d3ee"
+          />
+          {/* Pupila vertical estilo gato */}
+          <ellipse
+            cx={82 + pupilOffset.lx}
+            cy={110 + pupilOffset.ly}
+            rx="2.5"
+            ry="9"
+            fill="#0a1628"
+          />
+          <ellipse
+            cx={138 + pupilOffset.rx}
+            cy={110 + pupilOffset.ry}
+            rx="2.5"
+            ry="9"
+            fill="#0a1628"
+          />
+          {/* Brillo */}
           <circle
-            cx={142 + pupilOffset.rx + 1.5}
-            cy={90 + pupilOffset.ry - 1.5}
-            r="1.5"
+            cx={82 + pupilOffset.lx + 3}
+            cy={110 + pupilOffset.ly - 4}
+            r="2"
             fill="white"
-            opacity="0.85"
+          />
+          <circle
+            cx={138 + pupilOffset.rx + 3}
+            cy={110 + pupilOffset.ry - 4}
+            r="2"
+            fill="white"
           />
         </g>
 
-        {/* Cejas */}
-        <path d="M 65 76 Q 78 71 91 76" stroke="#5C3520" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-        <path d="M 129 76 Q 142 71 155 76" stroke="#5C3520" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        {/* Cejitas sutiles (puntos arriba de los ojos) */}
+        <circle cx="82" cy="86" r="1.5" fill="#0a1628" opacity="0.4" />
+        <circle cx="138" cy="86" r="1.5" fill="#0a1628" opacity="0.4" />
 
-        {/* Nariz */}
-        <ellipse cx="103" cy="118" rx="2" ry="2.5" fill="#5C3520" />
-        <ellipse cx="117" cy="118" rx="2" ry="2.5" fill="#5C3520" />
+        {/* Mejillas rosadas */}
+        <ellipse cx="58" cy="135" rx="10" ry="6" fill="#FFB5C5" opacity="0.6" />
+        <ellipse cx="162" cy="135" rx="10" ry="6" fill="#FFB5C5" opacity="0.6" />
 
-        {/* Sonrisa */}
+        {/* Nariz triangular */}
         <path
-          d="M 95 132 Q 110 142 125 132"
-          stroke="#5C3520"
-          strokeWidth="2.5"
+          d="M 105 132 L 115 132 L 110 140 Z"
+          fill="#FF8FAA"
+          stroke="#0a1628"
+          strokeWidth="1"
+        />
+
+        {/* Boca: w shape (uwu) */}
+        <path
+          d="M 110 140 L 110 145 M 110 145 Q 102 152 96 148 M 110 145 Q 118 152 124 148"
+          stroke="#0a1628"
+          strokeWidth="2"
           fill="none"
           strokeLinecap="round"
         />
 
-        {/* ===== BRAZOS ARRIBA TAPANDO LOS OJOS (visibles cuando hideEyes=true) ===== */}
+        {/* Bigotes */}
+        <g stroke="#0a1628" strokeWidth="1.3" strokeLinecap="round" opacity="0.8">
+          <line x1="40" y1="135" x2="65" y2="138" />
+          <line x1="40" y1="145" x2="65" y2="143" />
+          <line x1="180" y1="135" x2="155" y2="138" />
+          <line x1="180" y1="145" x2="155" y2="143" />
+        </g>
+
+        {/* ===== PATITAS LEVANTADAS (visibles cuando hideEyes=true) ===== */}
         <g
           style={{
             transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s',
-            transform: hideEyes ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.85)',
+            transform: hideEyes ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.7)',
             transformOrigin: '110px 200px',
             opacity: hideEyes ? 1 : 0,
           }}
         >
-          {/* Brazo izquierdo levantado: del hombro (60,195) sube a la cara */}
-          <path
-            d="M 60 200
-               Q 50 160 70 120
-               Q 75 105 95 95
-               L 100 105
-               Q 80 115 75 125
-               Q 65 165 75 200 Z"
-            fill="url(#m_head_grad)"
+          {/* Patita izquierda tapando ojo izq */}
+          <ellipse
+            cx="82"
+            cy="110"
+            rx="22"
+            ry="20"
+            fill="url(#cat_paw)"
+            stroke="#0a1628"
+            strokeWidth="2"
           />
-          {/* Mano izquierda */}
-          <ellipse cx="83" cy="92" rx="18" ry="17" fill="url(#m_head_grad)" />
-          <ellipse cx="83" cy="94" rx="13" ry="13" fill="#D4A574" />
-          {/* Dedos izq */}
-          <circle cx="72" cy="79" r="3.5" fill="url(#m_head_grad)" />
-          <circle cx="78" cy="76" r="3.5" fill="url(#m_head_grad)" />
-          <circle cx="85" cy="75" r="3.5" fill="url(#m_head_grad)" />
-          <circle cx="92" cy="77" r="3.5" fill="url(#m_head_grad)" />
+          {/* Almohadilla rosada */}
+          <ellipse cx="82" cy="113" rx="10" ry="8" fill="url(#cat_pad)" />
+          {/* Deditos */}
+          <circle cx="68" cy="103" r="3.5" fill="url(#cat_pad)" />
+          <circle cx="76" cy="98" r="3.5" fill="url(#cat_pad)" />
+          <circle cx="85" cy="98" r="3.5" fill="url(#cat_pad)" />
+          <circle cx="93" cy="103" r="3.5" fill="url(#cat_pad)" />
 
-          {/* Brazo derecho levantado */}
-          <path
-            d="M 160 200
-               Q 170 160 150 120
-               Q 145 105 125 95
-               L 120 105
-               Q 140 115 145 125
-               Q 155 165 145 200 Z"
-            fill="url(#m_head_grad)"
+          {/* Patita derecha tapando ojo der */}
+          <ellipse
+            cx="138"
+            cy="110"
+            rx="22"
+            ry="20"
+            fill="url(#cat_paw)"
+            stroke="#0a1628"
+            strokeWidth="2"
           />
-          {/* Mano derecha */}
-          <ellipse cx="137" cy="92" rx="18" ry="17" fill="url(#m_head_grad)" />
-          <ellipse cx="137" cy="94" rx="13" ry="13" fill="#D4A574" />
-          {/* Dedos der */}
-          <circle cx="128" cy="77" r="3.5" fill="url(#m_head_grad)" />
-          <circle cx="135" cy="75" r="3.5" fill="url(#m_head_grad)" />
-          <circle cx="142" cy="76" r="3.5" fill="url(#m_head_grad)" />
-          <circle cx="148" cy="79" r="3.5" fill="url(#m_head_grad)" />
+          <ellipse cx="138" cy="113" rx="10" ry="8" fill="url(#cat_pad)" />
+          <circle cx="127" cy="103" r="3.5" fill="url(#cat_pad)" />
+          <circle cx="135" cy="98" r="3.5" fill="url(#cat_pad)" />
+          <circle cx="144" cy="98" r="3.5" fill="url(#cat_pad)" />
+          <circle cx="152" cy="103" r="3.5" fill="url(#cat_pad)" />
         </g>
       </svg>
     </div>
