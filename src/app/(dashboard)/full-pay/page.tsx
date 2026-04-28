@@ -84,18 +84,27 @@ export default function FullPayPage() {
     setRows((prev) => prev.map((r) => (r.subscription_id === row.subscription_id ? row : r)));
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-4">
+    <div className="relative mx-auto max-w-[1600px] space-y-5 p-4">
+      {/* Orbs ambient */}
+      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
+
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-black italic uppercase tracking-tighter">
-            <PhoneCall className="h-6 w-6 text-primary" />
-            Call Full Pay
+          <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-400/30 ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
+              <PhoneCall className="h-5 w-5 text-cyan-300" />
+            </span>
+            <span className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
+              Call Full Pay
+            </span>
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 ml-12 text-sm text-blue-300/60">
             Conversión de clientes al día a pagos completos
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Mostrando <b>{rows.length}</b> de <b>{total}</b> leads
+          <p className="mt-1 ml-12 text-xs text-blue-300/40">
+            Mostrando <b className="text-cyan-300">{rows.length}</b> de{' '}
+            <b className="text-cyan-300">{total}</b> leads
           </p>
         </div>
         <FullPayFilter value={filters} operators={operators} onChange={handleFilterChange} />

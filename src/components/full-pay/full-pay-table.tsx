@@ -59,7 +59,7 @@ export function FullPayTable({
 }: Props) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-background dark:border-slate-800">
+      <div className="overflow-x-auto rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(59,130,246,0.10)]">
         <Table>
           <TableHeader>
             <TableRow>

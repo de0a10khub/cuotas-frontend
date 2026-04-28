@@ -29,8 +29,8 @@ export function FullPayFilter({ value, operators, onChange }: Props) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-muted/20 px-2 py-1 dark:border-slate-800">
-        <Database className="h-3.5 w-3.5 text-muted-foreground" />
+      <div className="inline-flex items-center gap-1 rounded-lg border border-blue-500/25 bg-blue-950/40 px-2 py-1 backdrop-blur-sm">
+        <Database className="h-3.5 w-3.5 text-cyan-400" />
         <Select
           value={value.platform}
           onValueChange={(v) => onChange({ ...value, platform: v || 'all' })}
@@ -48,8 +48,8 @@ export function FullPayFilter({ value, operators, onChange }: Props) {
         </Select>
       </div>
 
-      <div className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-muted/20 px-2 py-1 dark:border-slate-800">
-        <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+      <div className="inline-flex items-center gap-1 rounded-lg border border-blue-500/25 bg-blue-950/40 px-2 py-1 backdrop-blur-sm">
+        <Filter className="h-3.5 w-3.5 text-cyan-400" />
         <Select
           value={value.status}
           onValueChange={(v) => onChange({ ...value, status: v || 'all' })}
@@ -68,8 +68,8 @@ export function FullPayFilter({ value, operators, onChange }: Props) {
         </Select>
       </div>
 
-      <div className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-muted/20 px-2 py-1 dark:border-slate-800">
-        <User className="h-3.5 w-3.5 text-muted-foreground" />
+      <div className="inline-flex items-center gap-1 rounded-lg border border-blue-500/25 bg-blue-950/40 px-2 py-1 backdrop-blur-sm">
+        <User className="h-3.5 w-3.5 text-cyan-400" />
         <Select
           value={value.operator}
           onValueChange={(v) => onChange({ ...value, operator: v || 'all' })}
