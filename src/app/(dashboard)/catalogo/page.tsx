@@ -167,7 +167,7 @@ export default function CatalogoPage() {
       title: 'Eliminar producto',
       description: (
         <>
-          Vas a eliminar <b className="text-cyan-300">{p.name || p.id}</b> del
+          Vas a eliminar <b className="text-cyan-300">{p.external_name || p.external_identifier}</b> del
           catálogo.
         </>
       ),
