@@ -6,7 +6,9 @@
 const UPPER = 'ABCDEFGHIJKLMNPQRSTUVWXYZ';
 const LOWER = 'abcdefghijkmnpqrstuvwxyz';
 const DIGITS = '23456789';
-const SYMBOLS = '!@#$%&*+=?_-';
+// Sin '+', '=', '/' — esos chars se mangean al copiar/pegar via formularios
+// y URLs (+ se vuelve espacio en form-encoded, = es padding base64, / es path).
+const SYMBOLS = '!@#$%&*?_-';
 const ALL = UPPER + LOWER + DIGITS + SYMBOLS;
 
 function pick(set: string): string {
