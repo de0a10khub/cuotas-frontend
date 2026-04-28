@@ -18,11 +18,9 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Check,
   KeyRound,
   MoreHorizontal,
   Pencil,
@@ -39,6 +37,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { ResetPasswordDialog } from '@/components/empleados/reset-password-dialog';
+import { EditRolesDialog } from '@/components/empleados/edit-roles-dialog';
 import type { EmpleadoUser } from '@/lib/empleados-types';
 import { empleadosApi } from '@/lib/empleados-api';
 
@@ -54,6 +53,7 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
   const [draft, setDraft] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [resettingPwd, setResettingPwd] = useState<EmpleadoUser | null>(null);
+  const [editingRoles, setEditingRoles] = useState<EmpleadoUser | null>(null);
 
   const startEdit = (u: EmpleadoUser) => {
     setEditingId(u.id);
@@ -73,19 +73,6 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
       toast.error('Error actualizando nombre');
     } finally {
       setEditingId(null);
-    }
-  };
-
-  const toggleRole = async (u: EmpleadoUser, role: string) => {
-    const nextRoles = u.roles.includes(role)
-      ? u.roles.filter((r) => r !== role)
-      : [...u.roles, role];
-    try {
-      await empleadosApi.updateUser(u.id, { roles: nextRoles });
-      toast.success('Roles actualizados');
-      onChanged();
-    } catch {
-      toast.error('Error actualizando roles');
     }
   };
 
@@ -253,30 +240,11 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuGroup>
-                          <DropdownMenuLabel>Asignar roles</DropdownMenuLabel>
-                          {availableRoles.map((r) => {
-                            const has = u.roles.includes(r);
-                            return (
-                              <DropdownMenuItem
-                                key={r}
-                                closeOnClick={false}
-                                onClick={() => toggleRole(u, r)}
-                              >
-                                <Shield
-                                  className={cn(
-                                    'mr-2 h-4 w-4',
-                                    r === 'Admin' ? 'text-destructive' : 'text-primary',
-                                  )}
-                                />
-                                <span className="flex-1">{r}</span>
-                                {has && <Check className="h-3 w-3" />}
-                              </DropdownMenuItem>
-                            );
-                          })}
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
                           <DropdownMenuLabel>Gestión de usuario</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => setEditingRoles(u)} className="text-cyan-600">
+                            <Shield className="mr-2 h-4 w-4" />
+                            Editar roles
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setResettingPwd(u)} className="text-cyan-600">
                             <KeyRound className="mr-2 h-4 w-4" />
                             Cambiar contraseña
@@ -318,6 +286,13 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
       <ResetPasswordDialog
         user={resettingPwd}
         onClose={() => setResettingPwd(null)}
+        onSaved={onChanged}
+      />
+
+      <EditRolesDialog
+        user={editingRoles}
+        availableRoles={availableRoles}
+        onClose={() => setEditingRoles(null)}
         onSaved={onChanged}
       />
     </div>
