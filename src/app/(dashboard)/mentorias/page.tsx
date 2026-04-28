@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -97,10 +96,22 @@ export default function MentoriasPage() {
   }, [pendingSearch]);
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-4">
+    <div className="relative mx-auto max-w-[1500px] space-y-5 p-4">
+      {/* Orbs ambient navy */}
+      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
+      <div className="pointer-events-none fixed left-1/3 top-2/3 -z-10 h-72 w-72 rounded-full bg-indigo-500/8 blur-3xl" />
+
       <header>
-        <h1 className="text-2xl font-bold italic tracking-tight">Gestión de Mentorías</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-400/30 ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
+            <GraduationCap className="h-5 w-5 text-cyan-300" />
+          </span>
+          <span className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
+            Gestión de Mentorías
+          </span>
+        </h1>
+        <p className="mt-1 ml-12 text-sm text-blue-300/60">
           Alumnos con productos de mentoría activos.
         </p>
       </header>
@@ -111,12 +122,19 @@ export default function MentoriasPage() {
         {!loading && kpis.map((k) => <MentorKpiCard key={k.mentor_name} kpi={k} />)}
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
-          <CardTitle className="text-base">🎓 Alumnos en Mentoría</CardTitle>
-          <span className="text-xs text-muted-foreground">{total} alumnos</span>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(59,130,246,0.10)]">
+        <div className="flex flex-row items-center justify-between gap-3 border-b border-blue-500/15 bg-gradient-to-r from-blue-950/40 via-blue-900/30 to-blue-950/40 px-5 py-3">
+          <h2 className="flex items-center gap-2 text-base font-bold text-white">
+            <span className="text-cyan-300">🎓</span>
+            <span className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
+              Alumnos en Mentoría
+            </span>
+          </h2>
+          <span className="rounded-md bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-cyan-300 ring-1 ring-cyan-400/30">
+            {total} alumnos
+          </span>
+        </div>
+        <div className="space-y-3 p-4">
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative min-w-60 flex-1">
               <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
@@ -223,55 +241,58 @@ export default function MentoriasPage() {
                 ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
 
 function MentorKpiCard({ kpi }: { kpi: MentorshipKpi }) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="mb-2 flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="rounded-md bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300">
-              <Users className="h-4 w-4" />
+    <div className="group relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#1a2c52] p-4 shadow-[0_0_25px_rgba(59,130,246,0.10)] transition-all hover:border-cyan-400/40 hover:shadow-[0_0_40px_rgba(34,211,238,0.18)]">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-500/15 blur-3xl opacity-40 transition-opacity group-hover:opacity-70" />
+      <div className="relative">
+        <div className="mb-3 flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="rounded-lg bg-gradient-to-br from-cyan-400/30 to-blue-500/30 p-2 ring-1 ring-cyan-400/40 shadow-[0_0_10px_rgba(34,211,238,0.3)]">
+              <Users className="h-4 w-4 text-cyan-200" />
             </div>
             <div>
-              <p className="font-bold">{kpi.mentor_name}</p>
-              <p className="text-xs text-muted-foreground">Mentor asignado</p>
+              <p className="text-base font-bold text-white">{kpi.mentor_name}</p>
+              <p className="text-[10px] uppercase tracking-[0.15em] text-cyan-300/60">
+                Mentor asignado
+              </p>
             </div>
           </div>
-          <Badge variant="outline" className="text-[10px]">
+          <span className="rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-200">
             {kpi.total_students} Alumnos
-          </Badge>
+          </span>
         </div>
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-emerald-600">✓ Activos</span>
-            <span className="font-bold">{kpi.active_percentage}%</span>
+            <span className="text-emerald-300/80">✓ Activos</span>
+            <span className="font-bold text-emerald-200">{kpi.active_percentage}%</span>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <div className="h-1.5 overflow-hidden rounded-full bg-blue-950/60">
             <div
-              className="h-full bg-emerald-500 transition-all"
+              className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400 shadow-[0_0_8px_rgba(52,211,153,0.6)] transition-all"
               style={{ width: `${Math.max(0, Math.min(100, kpi.active_percentage))}%` }}
             />
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-200 pt-2 dark:border-slate-800">
+        <div className="mt-3 grid grid-cols-2 gap-2 border-t border-blue-500/15 pt-2">
           <div className="text-xs">
-            <p className="text-amber-600">% Impago</p>
-            <p className="font-bold text-amber-600">{kpi.unpaid_percentage}%</p>
+            <p className="text-amber-300/70 text-[10px] uppercase tracking-wider">% Impago</p>
+            <p className="font-bold text-amber-200">{kpi.unpaid_percentage}%</p>
           </div>
           <div className="text-xs">
-            <p className="text-sky-600">% Reactiv.</p>
-            <p className="font-bold text-sky-600">0%</p>
+            <p className="text-sky-300/70 text-[10px] uppercase tracking-wider">% Reactiv.</p>
+            <p className="font-bold text-sky-200">0%</p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
