@@ -52,13 +52,17 @@ export function TeamTable({ teams, users, onChanged }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <Button size="sm" onClick={() => setCreating(true)}>
+        <Button
+          size="sm"
+          onClick={() => setCreating(true)}
+          className="border-0 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:from-blue-500 hover:to-cyan-400"
+        >
           <Plus className="h-4 w-4" />
           Nuevo Equipo
         </Button>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-background dark:border-slate-800">
+      <div className="rounded-lg border border-blue-500/20 bg-blue-950/20 [&_th]:text-cyan-300/80 [&_th]:font-semibold [&_th]:text-[11px] [&_th]:uppercase [&_th]:tracking-wider [&_tr]:border-blue-500/10 [&_td]:text-blue-50">
         <Table>
           <TableHeader>
             <TableRow>

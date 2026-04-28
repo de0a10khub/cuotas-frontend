@@ -74,35 +74,42 @@ export function ObjecionesEditor({ tags, onChanged }: Props) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px,1fr]">
       {/* Form nueva etiqueta */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Nueva etiqueta</CardTitle>
+      <Card className="border-blue-500/20 bg-blue-950/30 shadow-[0_0_15px_rgba(59,130,246,0.08)]">
+        <CardHeader className="border-b border-blue-500/15">
+          <CardTitle className="text-sm text-cyan-200">Nueva etiqueta</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 pt-3">
           <div className="space-y-1.5">
-            <Label>Nombre</Label>
+            <Label className="text-blue-200">Nombre</Label>
             <Input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Ej: Llamará luego"
+              className="border-blue-500/30 bg-blue-950/40 text-blue-50 placeholder:text-blue-300/30 focus-visible:border-cyan-400/60 focus-visible:ring-cyan-400/30"
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1.5">
-              <Label>Fondo</Label>
-              <Input type="color" value={newBg} onChange={(e) => setNewBg(e.target.value)} />
+              <Label className="text-blue-200">Fondo</Label>
+              <Input
+                type="color"
+                value={newBg}
+                onChange={(e) => setNewBg(e.target.value)}
+                className="h-9 cursor-pointer border-blue-500/30 bg-blue-950/40 p-1"
+              />
             </div>
             <div className="space-y-1.5">
-              <Label>Texto</Label>
+              <Label className="text-blue-200">Texto</Label>
               <Input
                 type="color"
                 value={newText}
                 onChange={(e) => setNewText(e.target.value)}
+                className="h-9 cursor-pointer border-blue-500/30 bg-blue-950/40 p-1"
               />
             </div>
           </div>
-          <div className="rounded border border-slate-200 p-3 text-center dark:border-slate-800">
-            <p className="mb-1 text-xs text-slate-500">Preview</p>
+          <div className="rounded border border-blue-500/20 bg-blue-950/30 p-3 text-center">
+            <p className="mb-1 text-xs text-blue-300/60">Preview</p>
             <span
               className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
               style={{ backgroundColor: newBg, color: newText }}
@@ -110,7 +117,11 @@ export function ObjecionesEditor({ tags, onChanged }: Props) {
               {newName || 'Etiqueta'}
             </span>
           </div>
-          <Button onClick={create} disabled={saving} className="w-full">
+          <Button
+            onClick={create}
+            disabled={saving}
+            className="w-full border-0 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:from-blue-500 hover:to-cyan-400 disabled:opacity-50"
+          >
             <Plus className="h-4 w-4" />
             {saving ? 'Creando...' : 'Crear etiqueta'}
           </Button>
@@ -118,13 +129,15 @@ export function ObjecionesEditor({ tags, onChanged }: Props) {
       </Card>
 
       {/* Grid de etiquetas existentes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Catálogo ({tags.length})</CardTitle>
+      <Card className="border-blue-500/20 bg-blue-950/30 shadow-[0_0_15px_rgba(59,130,246,0.08)]">
+        <CardHeader className="border-b border-blue-500/15">
+          <CardTitle className="text-sm text-cyan-200">
+            Catálogo (<span className="text-cyan-300">{tags.length}</span>)
+          </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-2 md:grid-cols-2">
+        <CardContent className="grid grid-cols-1 gap-2 pt-3 md:grid-cols-2">
           {tags.length === 0 && (
-            <p className="text-sm text-slate-500">Sin etiquetas.</p>
+            <p className="text-sm text-blue-300/60">Sin etiquetas.</p>
           )}
           {tags.map((t) =>
             editing?.id === t.id ? (
@@ -138,7 +151,7 @@ export function ObjecionesEditor({ tags, onChanged }: Props) {
             ) : (
               <div
                 key={t.id}
-                className="flex items-center justify-between gap-2 rounded-md border border-slate-200 p-2 dark:border-slate-800"
+                className="flex items-center justify-between gap-2 rounded-md border border-blue-500/15 bg-blue-950/20 p-2 transition-colors hover:bg-blue-950/40"
               >
                 <span
                   className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
@@ -147,14 +160,19 @@ export function ObjecionesEditor({ tags, onChanged }: Props) {
                   {t.name}
                 </span>
                 <div className="flex gap-1">
-                  <Button size="icon-sm" variant="ghost" onClick={() => setEditing({ ...t })}>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    onClick={() => setEditing({ ...t })}
+                    className="text-blue-200 hover:bg-blue-500/10 hover:text-cyan-200"
+                  >
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     size="icon-sm"
                     variant="ghost"
                     onClick={() => remove(t)}
-                    className="text-destructive"
+                    className="text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>

@@ -82,22 +82,25 @@ export function PermissionsEditor({ roles, permissions, availablePaths, onChange
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {roles.map((r) => (
-          <Card key={r}>
-            <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
+          <Card
+            key={r}
+            className="border-blue-500/20 bg-blue-950/30 shadow-[0_0_15px_rgba(59,130,246,0.08)]"
+          >
+            <CardHeader className="flex-row items-center justify-between gap-2 space-y-0 border-b border-blue-500/15">
               <CardTitle className="flex items-center gap-2 text-sm">
-                <Shield className="h-4 w-4 text-primary" />
-                {r}
+                <Shield className="h-4 w-4 text-cyan-300" />
+                <span className="text-cyan-100">{r}</span>
               </CardTitle>
               <Button
                 size="icon-sm"
                 variant="ghost"
                 onClick={() => removeRole(r)}
-                className="text-destructive"
+                className="text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </CardHeader>
-            <CardContent className="max-h-72 space-y-0.5 overflow-y-auto">
+            <CardContent className="max-h-72 space-y-0.5 overflow-y-auto pt-3">
               {availablePaths.map((p) => {
                 const key = `${r}::${p.path}`;
                 const allowed = permIndex.has(key);
@@ -111,17 +114,17 @@ export function PermissionsEditor({ roles, permissions, availablePaths, onChange
                     className={cn(
                       'flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
                       allowed
-                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-200'
-                        : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800',
+                        ? 'bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                        : 'text-blue-200/60 hover:bg-blue-500/10 hover:text-blue-100',
                     )}
                   >
                     <span className="truncate">
-                      <span className="font-mono text-[10px] text-slate-400">{p.path}</span>
+                      <span className="font-mono text-[10px] text-blue-300/40">{p.path}</span>
                       <br />
                       {p.label}
                     </span>
                     {allowed ? (
-                      <Check className="h-4 w-4 shrink-0 text-emerald-600" />
+                      <Check className="h-4 w-4 shrink-0 text-emerald-400" />
                     ) : (
                       <span className="h-4 w-4" />
                     )}
@@ -164,7 +167,10 @@ function NewRoleDialog({ onCreated }: { onCreated: () => void }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button size="sm">
+          <Button
+            size="sm"
+            className="border-0 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:from-blue-500 hover:to-cyan-400"
+          >
             <Plus className="h-4 w-4" />
             Nuevo Rol
           </Button>

@@ -142,13 +142,19 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <Button size="sm" variant="outline" onClick={sync} disabled={syncing}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={sync}
+          disabled={syncing}
+          className="border-blue-500/30 bg-blue-950/40 text-blue-100 hover:bg-blue-900/50 hover:text-cyan-100"
+        >
           <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
           Sincronizar Perfiles
         </Button>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-background dark:border-slate-800">
+      <div className="rounded-lg border border-blue-500/20 bg-blue-950/20 [&_th]:text-cyan-300/80 [&_th]:font-semibold [&_th]:text-[11px] [&_th]:uppercase [&_th]:tracking-wider [&_tr]:border-blue-500/10 [&_td]:text-blue-50">
         <Table>
           <TableHeader>
             <TableRow>
