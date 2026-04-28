@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -52,23 +53,35 @@ export function Topbar() {
             )}
           </div>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium">{displayName}</span>
-              <span className="text-xs text-slate-500">{email}</span>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem disabled>
-            <User className="mr-2 h-4 w-4" />
-            Mi perfil
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600">
-            <LogOut className="mr-2 h-4 w-4" />
-            Cerrar sesión
-          </DropdownMenuItem>
+        <DropdownMenuContent
+          align="end"
+          className="w-64 border border-cyan-400/30 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] p-1 text-blue-100 shadow-[0_0_30px_rgba(34,211,238,0.20)]"
+        >
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>
+              <div className="flex flex-col gap-0.5 px-1 py-1">
+                <span className="text-sm font-semibold text-cyan-100">{displayName}</span>
+                <span className="text-xs text-blue-300/60">{email}</span>
+              </div>
+            </DropdownMenuLabel>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator className="bg-blue-500/20" />
+          <DropdownMenuGroup>
+            <DropdownMenuItem disabled className="text-blue-300/40">
+              <User className="mr-2 h-4 w-4" />
+              Mi perfil
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator className="bg-blue-500/20" />
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              onClick={logout}
+              className="text-rose-400 focus:bg-rose-500/15 focus:text-rose-300"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Cerrar sesión
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
       </div>
