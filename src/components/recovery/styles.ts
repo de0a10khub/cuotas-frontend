@@ -26,6 +26,7 @@ export const RECOVERY_STATUS_OPTIONS_MORA: string[] = [
   'No responde',
   'Abogado',
   'Seguimiento',
+  'Recobrame',
 ];
 
 export const CATEGORY_STYLES: Record<string, { className: string; label: string }> = {
@@ -103,6 +104,10 @@ export const RECOVERY_STATUS_STYLES: Record<string, { className: string; label: 
   Seguimiento: {
     className: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-200',
     label: '🔍 Seguimiento',
+  },
+  Recobrame: {
+    className: 'bg-fuchsia-600 text-white dark:bg-fuchsia-700 dark:text-white',
+    label: '⚖️ Recobrame',
   },
 };
 

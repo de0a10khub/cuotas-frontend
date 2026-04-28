@@ -44,9 +44,10 @@ export const navigation: NavItem[] = [
 
   { label: 'Duplicados', href: '/admin/duplicados', icon: MergeIcon, section: 'Admin Datos' },
 
-  { label: 'Mora', href: '/mora', icon: AlertTriangle, section: 'Mora' },
+  { label: 'Mora N1', href: '/mora', icon: AlertTriangle, section: 'Mora' },
+  { label: 'Mora N2', href: '/mora-n2', icon: ShieldAlert, section: 'Mora' },
   { label: 'Mora stats', href: '/mora-stats', icon: BarChart3, section: 'Mora' },
-  { label: 'Recobros', href: '/recobros', icon: RefreshCcw, section: 'Mora' },
+  { label: 'Recobrame', href: '/recobros', icon: RefreshCcw, section: 'Mora' },
   { label: 'Registro acciones', href: '/registro-acciones', icon: History, section: 'Mora' },
 
   { label: 'Datos', href: '/datos', icon: FileText, section: 'Reportes' },

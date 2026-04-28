@@ -145,11 +145,11 @@ export default function MoraPage() {
               ⚠️
             </span>
             <span className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
-              Mora — Clientes con Deuda
+              Mora N1 — Clientes con Deuda
             </span>
           </h1>
           <p className="mt-1 ml-12 text-sm text-blue-300/60">
-            Investigación de deuda y comportamiento de pago por cliente
+            Casos activos. Los marcados como Incobrable o Abogado pasan a Mora N2.
           </p>
           <p className="mt-1 ml-12 text-xs text-blue-300/40">
             Mostrando <b className="text-cyan-300">{rows.length}</b> de{' '}

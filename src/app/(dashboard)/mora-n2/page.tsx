@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
-import { recobrosApi } from '@/lib/recobros-api';
+import { moraN2Api } from '@/lib/mora-n2-api';
 import { moraApi } from '@/lib/mora-api';
 import type { MoraRow, Operator } from '@/lib/mora-types';
 import type { ObjecionTag } from '@/lib/clientes-types';
@@ -12,14 +12,12 @@ import { MoraFilterHeader, type MoraHardFilters } from '@/components/mora/filter
 import { MoraTable } from '@/components/mora/mora-table';
 import { RecoveryDrawer } from '@/components/recovery/recovery-drawer';
 import { RECOVERY_STATUS_OPTIONS_MORA } from '@/components/recovery/styles';
-import { RecobrosSyncSheetsButton } from '@/components/recobros/sync-sheets-button';
 
-export default function RecobrosPage() {
+export default function MoraN2Page() {
   const router = useRouter();
   const sp = useSearchParams();
 
-  // /recobros no tiene filtro de categoría — se fuerza a 'Incobrable' hardcoded
-  // en el MoraTable (aunque el dropdown esté oculto).
+  // Mora N2 fija category visualmente (categoría no se filtra desde aqui).
   const filters: MoraHardFilters = {
     category: 'Incobrable',
     platform: sp.get('platform') || 'all',
@@ -52,7 +50,7 @@ export default function RecobrosPage() {
         if (v === '' || v === 'all' || v === undefined || v === null) q.delete(k);
         else q.set(k, String(v));
       }
-      router.push(`/recobros${q.toString() ? `?${q}` : ''}`);
+      router.push(`/mora-n2${q.toString() ? `?${q}` : ''}`);
     },
     [router, sp, filters.platform, filters.dispute_state, search, page, pageSize],
   );
@@ -67,7 +65,7 @@ export default function RecobrosPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await recobrosApi.list({
+      const data = await moraN2Api.list({
         search,
         platform: filters.platform,
         dispute_state: filters.dispute_state,
@@ -77,7 +75,7 @@ export default function RecobrosPage() {
       setRows(data.results);
       setTotal(data.total_count);
     } catch {
-      toast.error('Error cargando recobros');
+      toast.error('Error cargando Mora N2');
       setRows([]);
       setTotal(0);
     } finally {
@@ -110,8 +108,18 @@ export default function RecobrosPage() {
     pushParams({ search: '', page: 1 });
   };
   const handleRowOpen = (row: MoraRow) => setSelected(row);
-  const handleUpdated = (row: MoraRow) =>
+  const handleUpdated = (row: MoraRow) => {
+    // Si el operario marca como 'Recobrame', el caso sale de N2 (al panel /recobros).
+    const newStatus = (row.recovery_status || '').trim().toLowerCase();
+    if (newStatus === 'recobrame') {
+      setRows((prev) => prev.filter((r) => r.subscription_id !== row.subscription_id));
+      setTotal((t) => Math.max(0, t - 1));
+      setSelected(null);
+      toast.success('Caso movido a Recobrame');
+      return;
+    }
     setRows((prev) => prev.map((r) => (r.subscription_id === row.subscription_id ? row : r)));
+  };
 
   return (
     <div className="relative mx-auto max-w-[1800px] space-y-5 p-4">
@@ -122,15 +130,15 @@ export default function RecobrosPage() {
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-400/30 ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
-              ⚖️
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500/30 to-rose-400/30 ring-1 ring-amber-400/40 shadow-[0_0_15px_rgba(251,191,36,0.3)]">
+              🛡️
             </span>
-            <span className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
-              Recobrame
+            <span className="bg-gradient-to-r from-amber-200 via-white to-amber-200 bg-clip-text text-transparent">
+              Gestión de Mora N2
             </span>
           </h1>
           <p className="mt-1 ml-12 text-sm text-blue-300/60">
-            Casos derivados a recobros externo (recovery_status = Recobrame)
+            Casos críticos: Incobrable o Abogado. Marca <b className="text-cyan-300">Recobrame</b> para pasarlos al panel de Recobrame.
           </p>
           <p className="mt-1 ml-12 text-xs text-blue-300/40">
             Mostrando <b className="text-cyan-300">{rows.length}</b> de{' '}
@@ -140,12 +148,11 @@ export default function RecobrosPage() {
         <MoraFilterHeader value={filters} onChange={handleFilterChange} hideCategory />
       </header>
 
-      <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(59,130,246,0.10)]">
-        <div className="flex items-center justify-between border-b border-blue-500/15 bg-gradient-to-r from-blue-950/40 via-blue-900/30 to-blue-950/40 px-4 py-2.5">
-          <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300">
-            🔴 Casos para Departamento de Recobros
+      <div className="relative overflow-hidden rounded-xl border border-amber-500/20 bg-gradient-to-br from-[#1a1208] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(251,191,36,0.10)]">
+        <div className="flex items-center justify-between border-b border-amber-500/15 bg-gradient-to-r from-amber-950/40 via-blue-900/30 to-blue-950/40 px-4 py-2.5">
+          <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-300">
+            ⚠️ Casos N2 — Incobrable / Abogado
           </h2>
-          <RecobrosSyncSheetsButton />
         </div>
         <div className="p-4">
           <MoraTable
