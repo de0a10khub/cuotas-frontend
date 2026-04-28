@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ShieldCheck, Tag, Users, Users2 } from 'lucide-react';
@@ -13,6 +13,7 @@ import type {
   ObjecionTag,
   RolePermission,
 } from '@/lib/empleados-types';
+import { navigation } from '@/components/nav-config';
 
 import { AddUserDialog } from '@/components/empleados/add-user-dialog';
 import { UserTable } from '@/components/empleados/user-table';
@@ -32,8 +33,15 @@ export default function EmpleadosPage() {
   const [roles, setRoles] = useState<string[]>([]);
   const [teams, setTeams] = useState<MentorTeam[]>([]);
   const [permissions, setPermissions] = useState<RolePermission[]>([]);
-  const [availablePaths, setAvailablePaths] = useState<AvailablePath[]>([]);
   const [tags, setTags] = useState<ObjecionTag[]>([]);
+
+  // availablePaths se deriva DIRECTO del nav-config del sidebar (fuente de
+  // verdad). Asi cuando se anade/quita un item del sidebar, los permisos
+  // por rol se actualizan automaticamente sin tocar nada en el backend.
+  const availablePaths = useMemo<AvailablePath[]>(
+    () => navigation.map((n) => ({ label: n.label, path: n.href })),
+    [],
+  );
 
   const load = useCallback(async () => {
     try {
@@ -48,7 +56,6 @@ export default function EmpleadosPage() {
       setRoles(r.results);
       setTeams(t.results);
       setPermissions(p.results);
-      setAvailablePaths(p.available_paths);
       setTags(g.results);
     } catch {
       toast.error('Error cargando empleados');
