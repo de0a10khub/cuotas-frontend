@@ -22,7 +22,6 @@ import {
   Headphones,
   Bell,
   GitMerge as MergeIcon,
-  AlertOctagon,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -44,7 +43,6 @@ export const navigation: NavItem[] = [
   { label: 'Mentorías', href: '/mentorias', icon: GraduationCap, section: 'Gestión' },
 
   { label: 'Duplicados', href: '/admin/duplicados', icon: MergeIcon, section: 'Admin Datos' },
-  { label: 'Discrepancias', href: '/admin/discrepancias', icon: AlertOctagon, section: 'Admin Datos' },
 
   { label: 'Mora', href: '/mora', icon: AlertTriangle, section: 'Mora' },
   { label: 'Mora stats', href: '/mora-stats', icon: BarChart3, section: 'Mora' },
