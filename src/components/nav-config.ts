@@ -40,10 +40,8 @@ export const navigation: NavItem[] = [
 
   { label: 'Clientes', href: '/clientes', icon: Users, section: 'Gestión' },
   { label: 'Cobros', href: '/cobros', icon: Receipt, section: 'Gestión' },
-  { label: 'Conciliación', href: '/conciliacion', icon: GitMerge, section: 'Gestión' },
   { label: 'Call Full Pay', href: '/full-pay', icon: PhoneCall, section: 'Gestión' },
   { label: 'Mentorías', href: '/mentorias', icon: GraduationCap, section: 'Gestión' },
-  { label: 'Closers', href: '/closers', icon: Headphones, section: 'Gestión' },
 
   { label: 'Duplicados', href: '/admin/duplicados', icon: MergeIcon, section: 'Admin Datos' },
   { label: 'Discrepancias', href: '/admin/discrepancias', icon: AlertOctagon, section: 'Admin Datos' },
