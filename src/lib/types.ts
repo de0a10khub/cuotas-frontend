@@ -31,6 +31,7 @@ export interface Profile {
   roles: Role[];
   is_active: boolean;
   allowed_paths: string[];
+  gender: 'M' | 'F' | '';
   created_at: string;
   updated_at: string;
 }

@@ -29,11 +29,13 @@ export function Topbar() {
   const displayName = profile?.full_name || profile?.user.username || '';
   const email = profile?.user.email || '';
   const mainRole = profile?.roles?.[0]?.name;
+  const gender = profile?.gender;
+  const greeting = gender === 'M' ? 'Bienvenido,' : gender === 'F' ? 'Bienvenida,' : 'Hola,';
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-background/80 px-6 backdrop-blur dark:border-slate-800">
       <div>
-        <h1 className="text-sm text-slate-500 dark:text-slate-400">Bienvenida,</h1>
+        <h1 className="text-sm text-slate-500 dark:text-slate-400">{greeting}</h1>
         <p className="text-base font-semibold">{displayName}</p>
       </div>
 

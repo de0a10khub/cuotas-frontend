@@ -4,6 +4,7 @@ export interface EmpleadoUser {
   id: string;
   email: string;
   display_name: string;
+  gender: 'M' | 'F' | '';
   roles: string[];
   is_blocked: boolean;
   created_at: string;

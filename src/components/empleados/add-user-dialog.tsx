@@ -37,6 +37,7 @@ export function AddUserDialog({ availableRoles, onCreated }: Props) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(true);
   const [role, setRole] = useState(availableRoles[0] || '');
+  const [gender, setGender] = useState<'M' | 'F' | ''>('');
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
@@ -45,6 +46,7 @@ export function AddUserDialog({ availableRoles, onCreated }: Props) {
     setPassword('');
     setShowPassword(true);
     setRole(availableRoles[0] || '');
+    setGender('');
   };
 
   const regen = () => {
@@ -71,6 +73,10 @@ export function AddUserDialog({ availableRoles, onCreated }: Props) {
       toast.error('Contraseña mínima 8 caracteres');
       return;
     }
+    if (!gender) {
+      toast.error('Selecciona si es Hombre o Mujer');
+      return;
+    }
     setSaving(true);
     try {
       await empleadosApi.createUser({
@@ -79,6 +85,7 @@ export function AddUserDialog({ availableRoles, onCreated }: Props) {
         role,
         method: 'password',
         password,
+        gender,
       });
       toast.success('Usuario creado — pasa la contraseña al empleado');
       onCreated();
@@ -187,20 +194,47 @@ export function AddUserDialog({ availableRoles, onCreated }: Props) {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-blue-200">Rol inicial</Label>
-            <Select value={role} onValueChange={(v) => setRole(v || availableRoles[0] || '')}>
-              <SelectTrigger className="w-full border-blue-500/30 bg-blue-950/40 text-blue-50 focus:border-cyan-400/60">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {availableRoles.map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {r}
-                  </SelectItem>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+              <Label className="text-blue-200">
+                Género <span className="text-rose-400">*</span>
+              </Label>
+              <div className="grid grid-cols-2 gap-1">
+                {([
+                  { v: 'M', l: 'Hombre' },
+                  { v: 'F', l: 'Mujer' },
+                ] as const).map(({ v, l }) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setGender(v)}
+                    className={`rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
+                      gender === v
+                        ? 'border-cyan-400/60 bg-gradient-to-r from-blue-600/40 to-cyan-500/40 text-cyan-100 shadow-[0_0_10px_rgba(34,211,238,0.25)]'
+                        : 'border-blue-500/30 bg-blue-950/40 text-blue-200 hover:bg-blue-900/50'
+                    }`}
+                  >
+                    {l}
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-blue-200">Rol inicial</Label>
+              <Select value={role} onValueChange={(v) => setRole(v || availableRoles[0] || '')}>
+                <SelectTrigger className="w-full border-blue-500/30 bg-blue-950/40 text-blue-50 focus:border-cyan-400/60">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableRoles.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 

@@ -15,10 +15,11 @@ export const empleadosApi = {
     email: string;
     display_name: string;
     role: string;
-    method: 'invitation' | 'password';
-    password?: string;
+    method: 'password';
+    password: string;
+    gender: 'M' | 'F';
   }) => api.post<EmpleadoUser>(`${BASE}/users/`, payload),
-  updateUser: (id: string, payload: Partial<{ display_name: string; is_blocked: boolean; roles: string[] }>) =>
+  updateUser: (id: string, payload: Partial<{ display_name: string; is_blocked: boolean; roles: string[]; gender: 'M' | 'F' | '' }>) =>
     api.patch<EmpleadoUser>(`${BASE}/users/${encodeURIComponent(id)}/`, payload),
   deleteUser: (id: string) => api.delete(`${BASE}/users/${encodeURIComponent(id)}/`),
   resetPassword: (id: string, password: string) =>
