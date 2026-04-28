@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { PhoneCall } from 'lucide-react';
+import { PhoneCall, Search, X } from 'lucide-react';
 
 import { fullpayApi } from '@/lib/fullpay-api';
 import type { FullPayLead } from '@/lib/fullpay-types';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { FullPayFilter, type FullPayFilters } from '@/components/full-pay/full-pay-filter';
 import { FullPayTable } from '@/components/full-pay/full-pay-table';
 import { FullPayDrawer } from '@/components/full-pay/full-pay-drawer';
@@ -20,16 +22,21 @@ export default function FullPayPage() {
     status: sp.get('status') || 'all',
     operator: sp.get('operator') || 'all',
   };
+  const search = sp.get('search') || '';
   const page = Math.max(1, Number(sp.get('page')) || 1);
   const pageSize = Math.max(10, Number(sp.get('limit')) || 50);
 
+  const [pendingSearch, setPendingSearch] = useState(search);
+  useEffect(() => setPendingSearch(search), [search]);
+
   const pushParams = useCallback(
-    (next: Partial<{ platform: string; status: string; operator: string; page: number; limit: number }>) => {
+    (next: Partial<{ platform: string; status: string; operator: string; search: string; page: number; limit: number }>) => {
       const q = new URLSearchParams(sp.toString());
       const merged = {
         platform: next.platform ?? filters.platform,
         status: next.status ?? filters.status,
         operator: next.operator ?? filters.operator,
+        search: next.search ?? search,
         page: next.page ?? page,
         limit: next.limit ?? pageSize,
       };
@@ -39,7 +46,7 @@ export default function FullPayPage() {
       }
       router.push(`/full-pay${q.toString() ? `?${q}` : ''}`);
     },
-    [router, sp, filters.platform, filters.status, filters.operator, page, pageSize],
+    [router, sp, filters.platform, filters.status, filters.operator, search, page, pageSize],
   );
 
   const [rows, setRows] = useState<FullPayLead[]>([]);
@@ -51,7 +58,7 @@ export default function FullPayPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fullpayApi.list({ ...filters, page, page_size: pageSize });
+      const data = await fullpayApi.list({ ...filters, search, page, page_size: pageSize });
       setRows(data.results);
       setTotal(data.total_count);
     } catch {
@@ -61,7 +68,7 @@ export default function FullPayPage() {
     } finally {
       setLoading(false);
     }
-  }, [filters.platform, filters.status, filters.operator, page, pageSize]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filters.platform, filters.status, filters.operator, search, page, pageSize]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     load();
@@ -79,6 +86,11 @@ export default function FullPayPage() {
       page: 1,
     });
 
+  const handleSearch = () => pushParams({ search: pendingSearch, page: 1 });
+  const handleClearSearch = () => {
+    setPendingSearch('');
+    pushParams({ search: '', page: 1 });
+  };
   const handleRowOpen = (row: FullPayLead) => setSelected(row);
   const handleUpdated = (row: FullPayLead) =>
     setRows((prev) => prev.map((r) => (r.subscription_id === row.subscription_id ? row : r)));
@@ -109,6 +121,39 @@ export default function FullPayPage() {
         </div>
         <FullPayFilter value={filters} operators={operators} onChange={handleFilterChange} />
       </header>
+
+      {/* Buscador con lupa */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 max-w-md">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-300/60" />
+          <Input
+            value={pendingSearch}
+            onChange={(e) => setPendingSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSearch();
+              if (e.key === 'Escape') handleClearSearch();
+            }}
+            placeholder="Buscar por nombre, email o teléfono..."
+            className="pl-9 pr-9 border-blue-500/30 bg-blue-950/40 text-cyan-50 placeholder:text-blue-300/40 focus-visible:border-cyan-400/60 focus-visible:ring-cyan-400/30"
+          />
+          {pendingSearch && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-300/60 hover:text-cyan-200"
+              aria-label="Limpiar"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <Button
+          onClick={handleSearch}
+          className="border-0 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:from-blue-500 hover:to-cyan-400"
+        >
+          Buscar
+        </Button>
+      </div>
 
       <FullPayTable
         rows={rows}

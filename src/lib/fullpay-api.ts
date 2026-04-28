@@ -8,6 +8,7 @@ export interface FullPayListParams {
   platform?: string;
   status?: string;
   operator?: string;
+  search?: string;
   page?: number;
   page_size?: number;
 }
