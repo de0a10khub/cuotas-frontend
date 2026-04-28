@@ -21,6 +21,8 @@ export const empleadosApi = {
   updateUser: (id: string, payload: Partial<{ display_name: string; is_blocked: boolean; roles: string[] }>) =>
     api.patch<EmpleadoUser>(`${BASE}/users/${encodeURIComponent(id)}/`, payload),
   deleteUser: (id: string) => api.delete(`${BASE}/users/${encodeURIComponent(id)}/`),
+  resetPassword: (id: string, password: string) =>
+    api.post<{ success: boolean }>(`${BASE}/users/${encodeURIComponent(id)}/reset-password/`, { password }),
   syncProfiles: () =>
     api.post<{ success: boolean; message: string }>(`${BASE}/users/sync-profiles/`),
 

@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Check,
+  KeyRound,
   MoreHorizontal,
   Pencil,
   RefreshCw,
@@ -37,6 +38,7 @@ import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
 import { useConfirm } from '@/components/ui/confirm-dialog';
+import { ResetPasswordDialog } from '@/components/empleados/reset-password-dialog';
 import type { EmpleadoUser } from '@/lib/empleados-types';
 import { empleadosApi } from '@/lib/empleados-api';
 
@@ -51,6 +53,7 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [syncing, setSyncing] = useState(false);
+  const [resettingPwd, setResettingPwd] = useState<EmpleadoUser | null>(null);
 
   const startEdit = (u: EmpleadoUser) => {
     setEditingId(u.id);
@@ -268,6 +271,10 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                           <DropdownMenuLabel>Gestión de usuario</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => setResettingPwd(u)} className="text-cyan-600">
+                            <KeyRound className="mr-2 h-4 w-4" />
+                            Cambiar contraseña
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => toggleBlock(u)}
                             className={u.is_blocked ? 'text-emerald-600' : 'text-orange-600'}
@@ -301,6 +308,12 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
           </TableBody>
         </Table>
       </div>
+
+      <ResetPasswordDialog
+        user={resettingPwd}
+        onClose={() => setResettingPwd(null)}
+        onSaved={onChanged}
+      />
     </div>
   );
 }

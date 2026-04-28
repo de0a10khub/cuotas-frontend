@@ -20,33 +20,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Mail, Lock, UserPlus } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Copy, Eye, EyeOff, RefreshCw, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { empleadosApi } from '@/lib/empleados-api';
+import { generatePassword } from '@/lib/password-generator';
 
 interface Props {
   availableRoles: string[];
   onCreated: () => void;
 }
 
-type Method = 'invitation' | 'password';
-
 export function AddUserDialog({ availableRoles, onCreated }: Props) {
   const [open, setOpen] = useState(false);
-  const [method, setMethod] = useState<Method>('invitation');
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(true);
   const [role, setRole] = useState(availableRoles[0] || '');
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
-    setMethod('invitation');
     setEmail('');
     setDisplayName('');
     setPassword('');
+    setShowPassword(true);
     setRole(availableRoles[0] || '');
+  };
+
+  const regen = () => {
+    setPassword(generatePassword(16));
+    setShowPassword(true);
+  };
+
+  const copy = async () => {
+    if (!password) return;
+    try {
+      await navigator.clipboard.writeText(password);
+      toast.success('Contraseña copiada');
+    } catch {
+      toast.error('No se pudo copiar');
+    }
   };
 
   const submit = async () => {
@@ -54,8 +67,8 @@ export function AddUserDialog({ availableRoles, onCreated }: Props) {
       toast.error('Email requerido');
       return;
     }
-    if (method === 'password' && password.length < 6) {
-      toast.error('Contraseña mínima 6 caracteres');
+    if (password.length < 8) {
+      toast.error('Contraseña mínima 8 caracteres');
       return;
     }
     setSaving(true);
@@ -64,10 +77,10 @@ export function AddUserDialog({ availableRoles, onCreated }: Props) {
         email: email.trim(),
         display_name: displayName.trim(),
         role,
-        method,
-        password: method === 'password' ? password : undefined,
+        method: 'password',
+        password,
       });
-      toast.success(method === 'invitation' ? 'Invitación enviada' : 'Usuario creado');
+      toast.success('Usuario creado — pasa la contraseña al empleado');
       onCreated();
       reset();
       setOpen(false);
@@ -79,7 +92,7 @@ export function AddUserDialog({ availableRoles, onCreated }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
       <DialogTrigger
         render={
           <Button>
@@ -88,72 +101,96 @@ export function AddUserDialog({ availableRoles, onCreated }: Props) {
           </Button>
         }
       />
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Nuevo Usuario</DialogTitle>
-          <DialogDescription>
-            Crea una cuenta nueva o envía una invitación por email.
+      <DialogContent className="sm:max-w-md border border-cyan-400/30 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] text-blue-100 shadow-[0_0_50px_rgba(34,211,238,0.25)]">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute -left-12 bottom-0 h-32 w-32 rounded-full bg-blue-500/15 blur-3xl" />
+
+        <DialogHeader className="relative">
+          <DialogTitle className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-lg font-bold tracking-tight text-transparent">
+            Nuevo Usuario
+          </DialogTitle>
+          <DialogDescription className="text-blue-100/70">
+            Crea una cuenta y entrégale la contraseña al empleado.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <MethodTile
-              icon={Mail}
-              label="Invitación"
-              hint="Email con enlace"
-              active={method === 'invitation'}
-              onClick={() => setMethod('invitation')}
-            />
-            <MethodTile
-              icon={Lock}
-              label="Contraseña"
-              hint="Temporal, cambiable"
-              active={method === 'password'}
-              onClick={() => setMethod('password')}
-            />
-          </div>
-
+        <div className="relative space-y-3">
           <div className="space-y-1.5">
-            <Label>Nombre para mostrar</Label>
+            <Label className="text-blue-200">Nombre para mostrar</Label>
             <Input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Ej: Laura Martín"
+              className="border-blue-500/30 bg-blue-950/40 text-blue-50 placeholder:text-blue-300/30 focus-visible:border-cyan-400/60 focus-visible:ring-cyan-400/30"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label>
-              Correo electrónico <span className="text-destructive">*</span>
+            <Label className="text-blue-200">
+              Correo electrónico <span className="text-rose-400">*</span>
             </Label>
             <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="persona@acme.com"
+              className="border-blue-500/30 bg-blue-950/40 text-blue-50 placeholder:text-blue-300/30 focus-visible:border-cyan-400/60 focus-visible:ring-cyan-400/30"
               required
             />
           </div>
 
-          {method === 'password' && (
-            <div className="space-y-1.5">
-              <Label>
-                Contraseña temporal <span className="text-destructive">*</span>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-blue-200">
+                Contraseña <span className="text-rose-400">*</span>
               </Label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-              />
+              <span className="text-[10px] uppercase tracking-wider text-cyan-300/60">
+                16 caracteres · mayús + minús + nº + signos
+              </span>
             </div>
-          )}
+            <div className="flex gap-1.5">
+              <div className="relative flex-1">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Pulsa Generar o escribe una"
+                  className="pr-9 font-mono border-blue-500/30 bg-blue-950/40 text-cyan-100 placeholder:text-blue-300/30 focus-visible:border-cyan-400/60 focus-visible:ring-cyan-400/30"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute inset-y-0 right-2 flex items-center text-blue-300/60 hover:text-cyan-200"
+                  aria-label={showPassword ? 'Ocultar' : 'Mostrar'}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={copy}
+                disabled={!password}
+                className="border border-blue-500/30 bg-blue-950/40 text-blue-100 hover:bg-blue-900/50 hover:text-white"
+                title="Copiar contraseña"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                onClick={regen}
+                className="border-0 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:from-blue-500 hover:to-cyan-400"
+              >
+                <RefreshCw className="mr-1 h-4 w-4" />
+                Generar
+              </Button>
+            </div>
+          </div>
 
           <div className="space-y-1.5">
-            <Label>Rol inicial</Label>
+            <Label className="text-blue-200">Rol inicial</Label>
             <Select value={role} onValueChange={(v) => setRole(v || availableRoles[0] || '')}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full border-blue-500/30 bg-blue-950/40 text-blue-50 focus:border-cyan-400/60">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -167,46 +204,23 @@ export function AddUserDialog({ availableRoles, onCreated }: Props) {
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+        <DialogFooter className="relative">
+          <Button
+            variant="ghost"
+            className="border border-blue-500/30 bg-blue-950/40 text-blue-100 hover:bg-blue-900/50 hover:text-white"
+            onClick={() => setOpen(false)}
+          >
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={saving}>
-            {saving ? 'Guardando...' : method === 'invitation' ? 'Enviar invitación' : 'Crear usuario'}
+          <Button
+            onClick={submit}
+            disabled={saving}
+            className="border-0 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:from-blue-500 hover:to-cyan-400 disabled:opacity-50"
+          >
+            {saving ? 'Guardando...' : 'Crear usuario'}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function MethodTile({
-  icon: Icon,
-  label,
-  hint,
-  active,
-  onClick,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  hint: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'flex flex-col items-start gap-1 rounded-md border p-3 text-left transition-colors',
-        active
-          ? 'border-primary bg-primary/5 text-primary'
-          : 'border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900',
-      )}
-    >
-      <Icon className="h-4 w-4" />
-      <span className="text-sm font-semibold">{label}</span>
-      <span className="text-xs text-slate-500">{hint}</span>
-    </button>
   );
 }
