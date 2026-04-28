@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,25 +10,71 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2, LogIn } from 'lucide-react';
 import { PeekingMonkey } from '@/components/login/peeking-monkey';
 
+/** Calcula la posicion (x,y en pantalla) del caret dentro del input. */
+function getCaretPosition(input: HTMLInputElement | null): { x: number; y: number } | null {
+  if (!input) return null;
+  const rect = input.getBoundingClientRect();
+  const style = window.getComputedStyle(input);
+  const span = document.createElement('span');
+  span.style.position = 'absolute';
+  span.style.visibility = 'hidden';
+  span.style.whiteSpace = 'pre';
+  span.style.font = style.font;
+  span.style.letterSpacing = style.letterSpacing;
+  span.textContent = input.value || '';
+  document.body.appendChild(span);
+  const textWidth = span.getBoundingClientRect().width;
+  document.body.removeChild(span);
+  const paddingLeft = parseFloat(style.paddingLeft) || 12;
+  const maxX = rect.right - 8;
+  return {
+    x: Math.min(rect.left + paddingLeft + textWidth, maxX),
+    y: rect.top + rect.height / 2,
+  };
+}
+
 export default function LoginPage() {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [usernameFocused, setUsernameFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
-  const [cursor, setCursor] = useState({ x: -500, y: -500 });
+  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
+  const [caret, setCaret] = useState<{ x: number; y: number } | null>(null);
+  const usernameRef = useRef<HTMLInputElement>(null);
 
-  // Luz que sigue al cursor
+  // Cursor seguidor
   useEffect(() => {
     const onMove = (e: MouseEvent) => setCursor({ x: e.clientX, y: e.clientY });
     window.addEventListener('mousemove', onMove);
     return () => window.removeEventListener('mousemove', onMove);
   }, []);
 
-  // El mono se tapa los ojos solo si la password está focused Y la pwd está visible (texto plano)
-  // Si la pwd está oculta (•••) no hace falta taparse — ya no se ve.
+  // Caret tracking en el input de username
+  useEffect(() => {
+    if (!usernameFocused) {
+      setCaret(null);
+      return;
+    }
+    setCaret(getCaretPosition(usernameRef.current));
+  }, [username, usernameFocused]);
+
+  // Re-calcular caret en resize/scroll para que el mono no mire mal
+  useEffect(() => {
+    if (!usernameFocused) return;
+    const recalc = () => setCaret(getCaretPosition(usernameRef.current));
+    window.addEventListener('resize', recalc);
+    window.addEventListener('scroll', recalc, true);
+    return () => {
+      window.removeEventListener('resize', recalc);
+      window.removeEventListener('scroll', recalc, true);
+    };
+  }, [usernameFocused]);
+
   const monkeyHides = passwordFocused && (showPassword || password.length > 0);
+  const lookTarget = usernameFocused ? caret : null; // null -> mono usa mouse
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +95,7 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#050b1a] p-4">
-      {/* Fondo: navy gradient */}
+      {/* Fondo navy gradient */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#050b1a] via-[#0a1628] to-[#050b1a]" />
 
       {/* Grid pattern sutil */}
@@ -68,25 +114,31 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/8 blur-[140px]" />
 
       {/* LUZ que sigue al cursor */}
-      <div
-        className="pointer-events-none fixed h-[400px] w-[400px] rounded-full blur-[80px] transition-transform duration-100 ease-out"
-        style={{
-          left: 0,
-          top: 0,
-          transform: `translate(${cursor.x - 200}px, ${cursor.y - 200}px)`,
-          background:
-            'radial-gradient(circle, rgba(34,211,238,0.18) 0%, rgba(59,130,246,0.10) 40%, rgba(0,0,0,0) 70%)',
-        }}
-      />
+      {cursor && (
+        <div
+          className="pointer-events-none fixed h-[400px] w-[400px] rounded-full blur-[80px] transition-transform duration-100 ease-out"
+          style={{
+            left: 0,
+            top: 0,
+            transform: `translate(${cursor.x - 200}px, ${cursor.y - 200}px)`,
+            background:
+              'radial-gradient(circle, rgba(34,211,238,0.18) 0%, rgba(59,130,246,0.10) 40%, rgba(0,0,0,0) 70%)',
+          }}
+        />
+      )}
 
       {/* Contenido */}
-      <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-4">
+      <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-2">
         {/* Mono peek-a-boo */}
-        <PeekingMonkey hideEyes={monkeyHides} size={170} className="drop-shadow-[0_0_30px_rgba(34,211,238,0.25)]" />
+        <PeekingMonkey
+          hideEyes={monkeyHides}
+          lookTarget={lookTarget}
+          size={200}
+          className="drop-shadow-[0_0_30px_rgba(34,211,238,0.25)]"
+        />
 
         {/* Card */}
         <div className="relative w-full overflow-hidden rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-[#0a1628]/95 via-[#0d1f3a]/95 to-[#0a1628]/95 p-8 shadow-[0_0_60px_rgba(34,211,238,0.15)] backdrop-blur-xl">
-          {/* Glow accent en el card */}
           <div className="pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-cyan-500/20 blur-3xl" />
           <div className="pointer-events-none absolute -left-20 -bottom-20 h-40 w-40 rounded-full bg-blue-500/20 blur-3xl" />
 
@@ -100,14 +152,17 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="relative mt-6 space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="username" className="text-blue-200">
-                Usuario
+                Usuario o email
               </Label>
               <Input
                 id="username"
+                ref={usernameRef}
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="laura"
+                onFocus={() => setUsernameFocused(true)}
+                onBlur={() => setUsernameFocused(false)}
+                placeholder="laura@empresa.com"
                 required
                 autoFocus
                 autoComplete="username"
