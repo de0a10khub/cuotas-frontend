@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 
 import type { EmpleadoUser, MentorTeam } from '@/lib/empleados-types';
 import { empleadosApi } from '@/lib/empleados-api';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import { TeamModal } from './team-modal';
 
 interface Props {
@@ -25,11 +26,18 @@ interface Props {
 }
 
 export function TeamTable({ teams, users, onChanged }: Props) {
+  const confirm = useConfirm();
   const [editing, setEditing] = useState<MentorTeam | null>(null);
   const [creating, setCreating] = useState(false);
 
   const remove = async (team: MentorTeam) => {
-    if (!confirm(`¿Eliminar el equipo "${team.name}"?`)) return;
+    const ok = await confirm({
+      title: 'Eliminar equipo',
+      description: <>Vas a eliminar el equipo <b className="text-cyan-300">{team.name}</b>.</>,
+      confirmText: 'Eliminar',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     try {
       await empleadosApi.deleteTeam(team.id);
       toast.success('Equipo eliminado');

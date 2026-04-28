@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 
 import type { AvailablePath, RolePermission } from '@/lib/empleados-types';
 import { empleadosApi } from '@/lib/empleados-api';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 
 interface Props {
   roles: string[];
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export function PermissionsEditor({ roles, permissions, availablePaths, onChanged }: Props) {
+  const confirm = useConfirm();
   const [savingPair, setSavingPair] = useState<string | null>(null);
 
   const permIndex = useMemo(() => {
@@ -51,9 +53,18 @@ export function PermissionsEditor({ roles, permissions, availablePaths, onChange
   };
 
   const removeRole = async (role: string) => {
-    if (!confirm(`¿Eliminar el rol "${role}"? Se revocarán todos sus permisos y asignaciones.`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Eliminar rol',
+      description: (
+        <>
+          Vas a eliminar el rol <b className="text-cyan-300">{role}</b>. Se revocarán
+          todos sus permisos y asignaciones.
+        </>
+      ),
+      confirmText: 'Eliminar',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     try {
       await empleadosApi.deleteRole(role);
       toast.success('Rol eliminado');

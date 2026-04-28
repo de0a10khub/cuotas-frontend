@@ -36,6 +36,7 @@ import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import type { EmpleadoUser } from '@/lib/empleados-types';
 import { empleadosApi } from '@/lib/empleados-api';
 
@@ -46,6 +47,7 @@ interface Props {
 }
 
 export function UserTable({ users, availableRoles, onChanged }: Props) {
+  const confirm = useConfirm();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [syncing, setSyncing] = useState(false);
@@ -95,13 +97,18 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
   };
 
   const remove = async (u: EmpleadoUser) => {
-    if (
-      !confirm(
-        '¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.',
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Eliminar usuario',
+      description: (
+        <>
+          Vas a eliminar a <b className="text-cyan-300">{u.display_name || u.email}</b>.
+          Esta acción no se puede deshacer.
+        </>
+      ),
+      confirmText: 'Eliminar',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     try {
       await empleadosApi.deleteUser(u.id);
       toast.success('Usuario eliminado');

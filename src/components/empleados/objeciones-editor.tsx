@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 
 import type { ObjecionTag } from '@/lib/empleados-types';
 import { empleadosApi } from '@/lib/empleados-api';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 
 interface Props {
   tags: ObjecionTag[];
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function ObjecionesEditor({ tags, onChanged }: Props) {
+  const confirm = useConfirm();
   const [newName, setNewName] = useState('');
   const [newBg, setNewBg] = useState('#FEF3C7');
   const [newText, setNewText] = useState('#92400E');
@@ -42,7 +44,13 @@ export function ObjecionesEditor({ tags, onChanged }: Props) {
   };
 
   const remove = async (tag: ObjecionTag) => {
-    if (!confirm(`¿Eliminar la etiqueta "${tag.name}"?`)) return;
+    const ok = await confirm({
+      title: 'Eliminar etiqueta',
+      description: <>Vas a eliminar la etiqueta <b className="text-cyan-300">{tag.name}</b>.</>,
+      confirmText: 'Eliminar',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     try {
       await empleadosApi.deleteTag(tag.id);
       toast.success('Etiqueta eliminada');

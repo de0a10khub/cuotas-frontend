@@ -33,8 +33,10 @@ import {
 import { AlertTriangle, KeyRound, Trash2, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { closersAdminApi, type Closer, type PendingOrganizer } from '@/lib/closers-api';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 
 export default function ClosersAdminPage() {
+  const confirm = useConfirm();
   const [closers, setClosers] = useState<Closer[]>([]);
   const [pending, setPending] = useState<PendingOrganizer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +64,13 @@ export default function ClosersAdminPage() {
   }, [load]);
 
   const remove = async (c: Closer) => {
-    if (!confirm(`¿Eliminar al closer ${c.full_name}?`)) return;
+    const ok = await confirm({
+      title: 'Eliminar closer',
+      description: <>Vas a eliminar al closer <b className="text-cyan-300">{c.full_name}</b>.</>,
+      confirmText: 'Eliminar',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     try {
       await closersAdminApi.delete(c.id);
       toast.success('Closer eliminado');

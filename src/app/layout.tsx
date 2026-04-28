@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist_Mono } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth-context';
 import { ThemeProvider } from '@/components/theme-provider';
+import { ConfirmProvider } from '@/components/ui/confirm-dialog';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
@@ -29,7 +30,9 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-background text-foreground">
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <ConfirmProvider>{children}</ConfirmProvider>
+          </AuthProvider>
           <Toaster richColors />
         </ThemeProvider>
       </body>

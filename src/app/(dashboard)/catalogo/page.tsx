@@ -49,6 +49,7 @@ import { catalogApi, type CatalogProduct } from '@/lib/catalog-api';
 import { empleadosApi } from '@/lib/empleados-api';
 import type { MentorTeam } from '@/lib/empleados-types';
 import { cn } from '@/lib/utils';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 
 const BILLING_OPTIONS = [
   { value: 'financing', label: 'Financiación' },
@@ -64,6 +65,7 @@ function formatCurrency(n: number): string {
 }
 
 export default function CatalogoPage() {
+  const confirm = useConfirm();
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [teams, setTeams] = useState<MentorTeam[]>([]);
   const [loading, setLoading] = useState(true);
@@ -161,7 +163,18 @@ export default function CatalogoPage() {
   };
 
   const remove = async (p: CatalogProduct) => {
-    if (!confirm('¿Estás seguro de eliminar este producto del catálogo?')) return;
+    const ok = await confirm({
+      title: 'Eliminar producto',
+      description: (
+        <>
+          Vas a eliminar <b className="text-cyan-300">{p.name || p.id}</b> del
+          catálogo.
+        </>
+      ),
+      confirmText: 'Eliminar',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     try {
       await catalogApi.remove(p.id);
       setProducts((prev) => prev.filter((x) => x.id !== p.id));
