@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -235,53 +236,55 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
                         <MoreHorizontal className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>Asignar roles</DropdownMenuLabel>
-                        {availableRoles.map((r) => {
-                          const has = u.roles.includes(r);
-                          return (
-                            <DropdownMenuItem
-                              key={r}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                toggleRole(u, r);
-                              }}
-                            >
-                              <Shield
-                                className={cn(
-                                  'mr-2 h-4 w-4',
-                                  r === 'Admin' ? 'text-destructive' : 'text-primary',
-                                )}
-                              />
-                              <span className="flex-1">{r}</span>
-                              {has && <Check className="h-3 w-3" />}
-                            </DropdownMenuItem>
-                          );
-                        })}
+                        <DropdownMenuGroup>
+                          <DropdownMenuLabel>Asignar roles</DropdownMenuLabel>
+                          {availableRoles.map((r) => {
+                            const has = u.roles.includes(r);
+                            return (
+                              <DropdownMenuItem
+                                key={r}
+                                closeOnClick={false}
+                                onClick={() => toggleRole(u, r)}
+                              >
+                                <Shield
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    r === 'Admin' ? 'text-destructive' : 'text-primary',
+                                  )}
+                                />
+                                <span className="flex-1">{r}</span>
+                                {has && <Check className="h-3 w-3" />}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </DropdownMenuGroup>
                         <DropdownMenuSeparator />
-                        <DropdownMenuLabel>Gestión de usuario</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => toggleBlock(u)}
-                          className={u.is_blocked ? 'text-emerald-600' : 'text-orange-600'}
-                        >
-                          {u.is_blocked ? (
-                            <>
-                              <UserCheck className="mr-2 h-4 w-4" />
-                              Desbloquear
-                            </>
-                          ) : (
-                            <>
-                              <UserX className="mr-2 h-4 w-4" />
-                              Bloquear Acceso
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => remove(u)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Eliminar Permanentemente
-                        </DropdownMenuItem>
+                        <DropdownMenuGroup>
+                          <DropdownMenuLabel>Gestión de usuario</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => toggleBlock(u)}
+                            className={u.is_blocked ? 'text-emerald-600' : 'text-orange-600'}
+                          >
+                            {u.is_blocked ? (
+                              <>
+                                <UserCheck className="mr-2 h-4 w-4" />
+                                Desbloquear
+                              </>
+                            ) : (
+                              <>
+                                <UserX className="mr-2 h-4 w-4" />
+                                Bloquear Acceso
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => remove(u)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Eliminar Permanentemente
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
