@@ -11,27 +11,48 @@ const PHRASES = [
   'Dios qué pereza todo',
   'Vamos a darle un meneo',
   'Hala, a trabajar',
+  'A ver si tiramos del carro hoy',
+  'Llevo 3 cafés, cuidado conmigo',
+  '¿Otra reunión? No gracias',
   // Memes / internet
   'Stonks 📈',
   'Modo gigachad ON',
   'Loading... loading... loading...',
   'Plot twist: hay que currar',
   'POV: tú cobrando',
+  'Aura farming en marcha',
+  'Skill issue, del impago',
+  'El boss final: el cliente que no responde',
+  'Aura al cobrar +100',
   // Pelis
   'Houston, tenemos un cliente',
+  'Hasta la vista, deudor',
+  'Que la fuerza del cobro te acompañe',
   // Madre / jefe pesado
   'Niño, espabila',
   'Tu jefe te está mirando 👀',
+  'Hijo, deja el móvil y cobra',
+  '¿Otra vez en TikTok?',
+  'Cuando yo tenía tu edad cobraba con DOS teléfonos',
+  'Aquí no se viene a calentar la silla',
+  'Espabila o te quito el café',
   // Auto-bullying motivacional
   'Mientras lees esto, alguien debe pasta',
   'Fingiendo productividad desde 2026',
   'Tú no eres persona, eres un cobrador',
   'El dinero no se cobra solo, ojalá',
+  'Mi LinkedIn dice "professional". Mentira.',
+  'Otro lunes, otra crisis existencial',
+  'Si no cobro, lloro',
+  'El cliente es mi karma',
   // España-España
   'Hagan juego, señores',
   'Vamos a por todas, equipo 💪',
   'Aplausos para el del fondo',
   'Mr. Worldwide del cobro',
+  // Random absurdo
+  'Te cobraría con la mirada si pudiera',
+  'Mi novia cree que cobro mucho. Mi banco no.',
 ];
 
 const pick = () => PHRASES[Math.floor(Math.random() * PHRASES.length)];
