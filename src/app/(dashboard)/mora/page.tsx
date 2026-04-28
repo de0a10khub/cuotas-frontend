@@ -133,39 +133,40 @@ export default function MoraPage() {
 
   return (
     <div className="relative mx-auto max-w-[1800px] space-y-5 p-4">
-      {/* Orbs ambient navy */}
-      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-rose-500/8 blur-3xl" />
-      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-amber-500/8 blur-3xl" />
-      <div className="pointer-events-none fixed left-1/3 top-2/3 -z-10 h-72 w-72 rounded-full bg-blue-500/8 blur-3xl" />
+      {/* Orbs ambient navy estándar */}
+      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
+      <div className="pointer-events-none fixed left-1/3 top-2/3 -z-10 h-72 w-72 rounded-full bg-indigo-500/8 blur-3xl" />
 
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500/30 to-amber-400/30 ring-1 ring-rose-400/40 shadow-[0_0_15px_rgba(244,63,94,0.3)]">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-400/30 ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
               ⚠️
             </span>
-            <span className="bg-gradient-to-r from-rose-200 via-amber-100 to-rose-200 bg-clip-text text-transparent">
-              Clientes con Pagos Pendientes
+            <span className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
+              Mora — Clientes con Deuda
             </span>
           </h1>
-          <p className="mt-1 ml-12 text-sm text-rose-200/60">
+          <p className="mt-1 ml-12 text-sm text-blue-300/60">
             Investigación de deuda y comportamiento de pago por cliente
+          </p>
+          <p className="mt-1 ml-12 text-xs text-blue-300/40">
+            Mostrando <b className="text-cyan-300">{rows.length}</b> de{' '}
+            <b className="text-cyan-300">{total}</b> clientes
           </p>
         </div>
         <MoraFilterHeader value={filters} onChange={handleFilterChange} />
       </header>
 
       <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(59,130,246,0.10)]">
-        <div className="flex items-center justify-between border-b border-blue-500/15 bg-gradient-to-r from-blue-950/40 via-rose-950/30 to-blue-950/40 px-4 py-2.5">
-          <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-rose-300">
-            🎯 Gestión operativa de mora
-          </h2>
-          {hasAnyFilter && (
-            <span className="rounded-md border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-200">
+        {hasAnyFilter && (
+          <div className="flex items-center justify-end border-b border-blue-500/15 bg-blue-950/40 px-4 py-2">
+            <span className="rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-cyan-300">
               Filtros activos
             </span>
-          )}
-        </div>
+          </div>
+        )}
         <div className="p-4">
           <MoraTable
             rows={rows}
