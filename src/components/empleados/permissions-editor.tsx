@@ -259,22 +259,18 @@ export function PermissionsEditor({ roles, permissions, onChanged }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Hero cards: una por rol con progreso visual */}
+      {/* Hero cards: una por rol con progreso visual (informativo, no clickable) */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
         {roleStats.map(({ role, granted, total, dirty }) => {
           const a = accent(role);
           const pct = total > 0 ? Math.round((granted / total) * 100) : 0;
           return (
-            <button
+            <div
               key={role}
-              type="button"
-              onClick={() => toggleAllRole(role)}
               className={cn(
-                'group relative overflow-hidden rounded-xl border bg-gradient-to-br p-3 text-left transition-all',
-                'border-blue-500/20 from-[#0a1628] via-[#0d1f3a] to-[#0a1628]',
-                'hover:border-cyan-400/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)]',
+                'group relative overflow-hidden rounded-xl border p-3',
+                'border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628]',
               )}
-              title={granted === total ? `Quitar todos a ${role}` : `Activar todos a ${role}`}
             >
               <div className={cn('pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-br opacity-50 blur-2xl', a.bg)} />
               <div className="relative flex items-center justify-between gap-2">
@@ -297,7 +293,7 @@ export function PermissionsEditor({ roles, permissions, onChanged }: Props) {
                   style={{ width: `${pct}%` }}
                 />
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
@@ -388,29 +384,38 @@ export function PermissionsEditor({ roles, permissions, onChanged }: Props) {
                     )}
                   >
                     <div className="flex flex-col items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => toggleAllRole(r)}
+                      {/* Badge informativo, NO clicable */}
+                      <div
                         className={cn(
-                          'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold uppercase tracking-wider ring-1 transition-all',
+                          'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold uppercase tracking-wider ring-1',
                           a.text,
-                          'bg-gradient-to-br hover:scale-105',
+                          'bg-gradient-to-br',
                           a.bg,
                           allOn ? a.ring : 'ring-blue-500/20',
                         )}
-                        title={allOn ? `Quitar todos a ${r}` : `Activar todos a ${r}`}
                       >
                         <Shield className="h-3 w-3" />
                         {r}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeRole(r)}
-                        className="text-rose-400/40 transition-colors hover:text-rose-300"
-                        title="Eliminar rol"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                      </div>
+                      {/* Acciones secundarias muy discretas: marcar/desmarcar todos + borrar rol */}
+                      <div className="flex items-center gap-2 opacity-30 hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => toggleAllRole(r)}
+                          className="text-blue-300/60 transition-colors hover:text-cyan-300"
+                          title={allOn ? `Desmarcar todos los permisos de ${r}` : `Marcar todos los permisos para ${r}`}
+                        >
+                          {allOn ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeRole(r)}
+                          className="text-rose-400/60 transition-colors hover:text-rose-300"
+                          title="Eliminar rol"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
                     </div>
                   </th>
                 );
