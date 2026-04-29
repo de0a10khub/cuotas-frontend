@@ -23,7 +23,7 @@ interface Props {
 export function PdfViewerModal({ open, url, title, description, onClose }: Props) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="flex h-[85vh] max-h-[85vh] w-[90vw] max-w-5xl flex-col gap-3 p-4">
+      <DialogContent className="flex h-[95vh] max-h-[95vh] w-[95vw] max-w-[1600px] flex-col gap-3 p-4">
         <DialogHeader>
           <DialogTitle>{title || 'Visor de documento'}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
