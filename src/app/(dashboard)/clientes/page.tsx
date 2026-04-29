@@ -67,7 +67,6 @@ function personToRow(p: PersonRow): ClienteRow {
     recovery_updated_at: p.recovery_updated_at,
   };
 }
-import { Card, CardContent } from '@/components/ui/card';
 import { FilterHeader, type HardFilters } from '@/components/clientes/filter-header';
 import { ClientesTable } from '@/components/clientes/clientes-table';
 import { RecoveryDrawer } from '@/components/recovery/recovery-drawer';
@@ -201,19 +200,39 @@ export default function ClientesPage() {
   );
 
   return (
-    <div className="mx-auto max-w-[1900px] space-y-4">
+    <div className="relative mx-auto max-w-[1900px] space-y-5 p-4">
+      {/* Orbs ambient */}
+      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
+
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gestión de clientes</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-400/30 ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
+              👤
+            </span>
+            <span className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
+              Gestión de Clientes
+            </span>
+          </h1>
+          <p className="mt-1 ml-12 text-sm text-blue-300/60">
             Vista unificada de clientes, acciones y seguimiento de actividad
+          </p>
+          <p className="mt-1 ml-12 text-xs text-blue-300/40">
+            Mostrando <b className="text-cyan-300">{rows.length}</b> de{' '}
+            <b className="text-cyan-300">{total}</b> clientes
           </p>
         </div>
         <FilterHeader value={filters} onChange={handleFilterChange} />
       </header>
 
-      <Card>
-        <CardContent className="p-4">
+      <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(59,130,246,0.10)]">
+        <div className="flex items-center justify-between border-b border-blue-500/15 bg-gradient-to-r from-blue-950/40 via-blue-900/30 to-blue-950/40 px-4 py-2.5">
+          <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300">
+            👥 Directorio Unificado de Clientes
+          </h2>
+        </div>
+        <div className="p-4">
           <ClientesTable
             rows={rows}
             total={total}
@@ -234,8 +253,8 @@ export default function ClientesPage() {
             onRowOpen={handleRowOpen}
             onClearFilters={hasFilters ? clearAll : () => {}}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <RecoveryDrawer
         mode="clientes"
