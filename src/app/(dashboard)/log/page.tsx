@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { AlertCircle, CheckCircle2, Play, Search, Square, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logApi, type ChargeDetail, type LogEvent } from '@/lib/webhook-log-api';
 import { toast } from 'sonner';
@@ -88,11 +88,11 @@ function dayLabel(iso: string): string {
 export default function LogPage() {
   const [events, setEvents] = useState<LogEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isLive, setIsLive] = useState(true);
   const [filter, setFilter] = useState<'all' | 'success' | 'failure'>('all');
   const [source, setSource] = useState<'all' | 'stripe' | 'whop' | 'whop-erp'>('all');
   const [search, setSearch] = useState('');
   const [dayFilter, setDayFilter] = useState<string>('all'); // 'all' | YYYY-MM-DD
+  const isLive = true;
   const [now, setNow] = useState(Date.now());
   const [selected, setSelected] = useState<LogEvent | null>(null);
 
@@ -102,14 +102,24 @@ export default function LogPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await logApi.events({ source, filter, search, limit: 200 });
+      // Si el user ha pickeado un dia concreto, lo pasa al backend
+      // (con limit alto para no perder eventos del dia entero) y NO usa polling.
+      // Si esta en 'all', carga ultimos 200 con polling en vivo.
+      const isDaySpecific = dayFilter !== 'all';
+      const r = await logApi.events({
+        source,
+        filter,
+        search,
+        day: isDaySpecific ? dayFilter : undefined,
+        limit: isDaySpecific ? 2000 : 200,
+      });
       setEvents(r.results);
     } catch {
       toast.error('Error cargando log');
     } finally {
       setLoading(false);
     }
-  }, [source, filter, search]);
+  }, [source, filter, search, dayFilter]);
 
   useEffect(() => {
     load();
@@ -121,9 +131,10 @@ export default function LogPage() {
     return () => clearInterval(t);
   }, []);
 
-  // Polling incremental 5s
+  // Polling incremental 5s — solo cuando NO hay dayFilter especifico
   useEffect(() => {
     if (!isLive) return;
+    if (dayFilter !== 'all') return;
     const poll = async () => {
       const latest = eventsRef.current[0]?.created_at;
       try {
@@ -145,7 +156,7 @@ export default function LogPage() {
     };
     const interval = setInterval(poll, 5000);
     return () => clearInterval(interval);
-  }, [isLive, source, filter, search]);
+  }, [isLive, source, filter, search, dayFilter]);
 
   // Días únicos (en orden, más reciente primero) para el selector
   const availableDays = useMemo(() => {
@@ -219,7 +230,7 @@ export default function LogPage() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-white">Activity Log</h1>
               <p className="text-xs text-blue-200/70">
-                {isLive ? 'Feed en vivo' : 'Pausado'} · webhooks de pago en tiempo real
+                Feed en vivo · webhooks de pago en tiempo real
               </p>
             </div>
           </div>
@@ -253,15 +264,6 @@ export default function LogPage() {
                 })}
               </select>
             )}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsLive((v) => !v)}
-              className="gap-1.5 border-blue-400/40 bg-blue-500/10 text-blue-100 hover:bg-blue-500/20 hover:text-white"
-            >
-              {isLive ? <Square className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-              {isLive ? 'Pausar' : 'Reanudar'}
-            </Button>
           </div>
         </div>
 

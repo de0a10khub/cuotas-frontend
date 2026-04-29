@@ -52,6 +52,7 @@ export const logApi = {
     filter?: string;
     search?: string;
     since?: string;
+    day?: string;
     limit?: number;
   }) => api.get<{ results: LogEvent[] }>(`${BASE}/events/${q({ ...params })}`),
 
