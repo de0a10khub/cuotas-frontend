@@ -9,6 +9,123 @@ import { ApiError } from '@/lib/api';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2, LogIn } from 'lucide-react';
 
+/** Chip con N pines en cada lado y LEDs animados. */
+function Chip({
+  width = 80,
+  height = 80,
+  pins = 8,
+  label = 'CPU',
+  color = '#22d3ee',
+  className = '',
+  style,
+}: {
+  width?: number;
+  height?: number;
+  pins?: number;
+  label?: string;
+  color?: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const pinW = 4;
+  const pinH = 6;
+  const gap = (width - pins * pinW * 2) / (pins + 1);
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} className={className} style={style}>
+      {/* Cuerpo del chip */}
+      <rect x={pinH} y={pinH} width={width - pinH * 2} height={height - pinH * 2} rx="2" fill="#0a0e1a" stroke={color} strokeWidth="1" strokeOpacity="0.6" />
+      {/* Texto */}
+      <text x={width / 2} y={height / 2 + 3} textAnchor="middle" fill={color} fontSize="9" fontFamily="monospace" fontWeight="bold" opacity="0.9">{label}</text>
+      {/* Marca esquina (pin 1) */}
+      <circle cx={pinH + 5} cy={pinH + 5} r="2" fill={color} opacity="0.7" />
+      {/* LEDs centrales */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <circle key={i} cx={width / 2 - 12 + i * 12} cy={height - pinH - 4} r="1.5" fill={i === 0 ? '#22d3ee' : i === 1 ? '#10b981' : '#f59e0b'}>
+          <animate attributeName="opacity" values="0.3;1;0.3" dur={`${1.5 + i * 0.4}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+      {/* Pines arriba */}
+      {Array.from({ length: pins }).map((_, i) => (
+        <rect key={`top-${i}`} x={gap + i * (pinW + gap)} y="0" width={pinW} height={pinH} fill="#9ca3af" />
+      ))}
+      {/* Pines abajo */}
+      {Array.from({ length: pins }).map((_, i) => (
+        <rect key={`bot-${i}`} x={gap + i * (pinW + gap)} y={height - pinH} width={pinW} height={pinH} fill="#9ca3af" />
+      ))}
+      {/* Pines izq */}
+      {Array.from({ length: pins }).map((_, i) => (
+        <rect key={`left-${i}`} x="0" y={gap + i * (pinW + gap)} width={pinH} height={pinW} fill="#9ca3af" />
+      ))}
+      {/* Pines der */}
+      {Array.from({ length: pins }).map((_, i) => (
+        <rect key={`right-${i}`} x={width - pinH} y={gap + i * (pinW + gap)} width={pinH} height={pinW} fill="#9ca3af" />
+      ))}
+    </svg>
+  );
+}
+
+/** Capacitor cilindrico vertical. */
+function Capacitor({ x, y, color = '#22d3ee' }: { x: number; y: number; color?: string }) {
+  return (
+    <g transform={`translate(${x}, ${y})`}>
+      <ellipse cx="0" cy="0" rx="6" ry="2" fill="#1e293b" stroke="#475569" strokeWidth="0.5" />
+      <rect x="-6" y="0" width="12" height="14" fill="#1e293b" stroke="#475569" strokeWidth="0.5" />
+      <ellipse cx="0" cy="14" rx="6" ry="2" fill="#0f172a" stroke="#475569" strokeWidth="0.5" />
+      <text x="0" y="9" textAnchor="middle" fill={color} fontSize="6" fontFamily="monospace">+</text>
+      <line x1="-2" y1="16" x2="-2" y2="20" stroke="#9ca3af" strokeWidth="0.8" />
+      <line x1="2" y1="16" x2="2" y2="20" stroke="#9ca3af" strokeWidth="0.8" />
+    </g>
+  );
+}
+
+/** Resistencia tipo bobinada con las bandas de color. */
+function Resistor({ x, y, rotation = 0 }: { x: number; y: number; rotation?: number }) {
+  return (
+    <g transform={`translate(${x}, ${y}) rotate(${rotation})`}>
+      <line x1="-15" y1="0" x2="-8" y2="0" stroke="#9ca3af" strokeWidth="1" />
+      <rect x="-8" y="-3" width="16" height="6" rx="1" fill="#cbd5e1" stroke="#475569" strokeWidth="0.5" />
+      <rect x="-5" y="-3" width="1.5" height="6" fill="#7c2d12" />
+      <rect x="-2" y="-3" width="1.5" height="6" fill="#000" />
+      <rect x="1" y="-3" width="1.5" height="6" fill="#dc2626" />
+      <rect x="4" y="-3" width="1.5" height="6" fill="#fbbf24" />
+      <line x1="8" y1="0" x2="15" y2="0" stroke="#9ca3af" strokeWidth="1" />
+    </g>
+  );
+}
+
+/** Ventilador estilo CPU cooler que gira. */
+function CPUFan({ size = 90, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg viewBox="-50 -50 100 100" width={size} height={size} className={className}>
+      {/* Marco cuadrado del cooler */}
+      <rect x="-48" y="-48" width="96" height="96" rx="4" fill="#0a0e1a" stroke="#475569" strokeWidth="1" />
+      {/* Tornillos esquinas */}
+      {[[-42, -42], [42, -42], [-42, 42], [42, 42]].map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="2.5" fill="#374151" stroke="#22d3ee" strokeWidth="0.5" strokeOpacity="0.5" />
+      ))}
+      {/* Aspas (giran) */}
+      <g style={{ animation: 'gear-spin 1.5s linear infinite', transformOrigin: 'center' }}>
+        {Array.from({ length: 7 }).map((_, i) => {
+          const angle = i * (360 / 7);
+          return (
+            <path
+              key={i}
+              d="M 0 0 Q 4 -10 12 -28 Q 8 -36 -2 -32 Q -6 -20 -2 -2 Z"
+              fill="#1f2937"
+              stroke="#475569"
+              strokeWidth="0.5"
+              transform={`rotate(${angle})`}
+            />
+          );
+        })}
+      </g>
+      {/* Hub central */}
+      <circle cx="0" cy="0" r="10" fill="#0a0e1a" stroke="#22d3ee" strokeWidth="0.8" />
+      <text x="0" y="3" textAnchor="middle" fill="#22d3ee" fontSize="6" fontFamily="monospace">CPU</text>
+    </svg>
+  );
+}
+
 /** Engranaje SVG con N dientes, gira al ritmo de la prop duration. */
 function Gear({
   size = 100,
@@ -157,6 +274,12 @@ export default function LoginPage() {
           0%, 100% { opacity: 0.05; }
           50% { opacity: 0.12; }
         }
+        @keyframes bit-fall {
+          0% { transform: translateY(0); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateY(120vh); opacity: 0; }
+        }
       `}</style>
 
       {/* === FONDO BASE: gradient deep === */}
@@ -250,19 +373,197 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute -left-10 top-12 opacity-50">
         <Gear size={180} teeth={16} duration={28} />
       </div>
-      <div className="pointer-events-none absolute -left-4 top-44 opacity-40">
+      <div className="pointer-events-none absolute left-32 top-32 opacity-45">
         <Gear size={110} teeth={10} duration={18} reverse color="#a855f7" />
+      </div>
+      <div className="pointer-events-none absolute left-44 top-12 opacity-30">
+        <Gear size={70} teeth={8} duration={12} color="#10b981" />
       </div>
 
       <div className="pointer-events-none absolute -right-12 bottom-8 opacity-50">
         <Gear size={200} teeth={20} duration={35} reverse />
       </div>
-      <div className="pointer-events-none absolute -right-6 bottom-44 opacity-45">
+      <div className="pointer-events-none absolute right-32 bottom-44 opacity-45">
         <Gear size={120} teeth={12} duration={22} color="#10b981" />
+      </div>
+      <div className="pointer-events-none absolute right-44 bottom-16 opacity-35">
+        <Gear size={80} teeth={9} duration={16} reverse color="#f59e0b" />
       </div>
 
       <div className="pointer-events-none absolute right-1/4 -top-6 opacity-30">
         <Gear size={80} teeth={8} duration={14} color="#f59e0b" />
+      </div>
+      <div className="pointer-events-none absolute left-1/3 -bottom-8 opacity-30">
+        <Gear size={90} teeth={10} duration={16} reverse color="#22d3ee" />
+      </div>
+
+      {/* === MOTHERBOARD: chips, capacitores, resistencias === */}
+      {/* Chip esquina superior izquierda */}
+      <div className="pointer-events-none absolute left-[18%] top-[20%] hidden md:block opacity-80">
+        <Chip width={90} height={90} pins={10} label="MCU" color="#22d3ee" />
+      </div>
+      {/* Chip pequeño */}
+      <div className="pointer-events-none absolute left-[8%] top-[55%] hidden md:block opacity-75">
+        <Chip width={60} height={60} pins={6} label="ROM" color="#a855f7" />
+      </div>
+      {/* Chip BIOS */}
+      <div className="pointer-events-none absolute right-[10%] top-[28%] hidden md:block opacity-80">
+        <Chip width={70} height={70} pins={7} label="BIOS" color="#10b981" />
+      </div>
+      {/* Chip RAM */}
+      <div className="pointer-events-none absolute right-[18%] top-[60%] hidden md:block opacity-75">
+        <Chip width={100} height={50} pins={12} label="RAM-DDR4" color="#f59e0b" />
+      </div>
+
+      {/* CPU FAN ventilador girando */}
+      <div className="pointer-events-none absolute left-[13%] bottom-[18%] hidden md:block opacity-70">
+        <CPUFan size={100} />
+      </div>
+
+      {/* Capacitores y resistencias dispersas */}
+      <svg className="pointer-events-none absolute inset-0 hidden md:block" width="100%" height="100%">
+        {/* Capacitores en columna izquierda */}
+        <Capacitor x={150} y={350} color="#22d3ee" />
+        <Capacitor x={170} y={350} color="#22d3ee" />
+        <Capacitor x={190} y={350} color="#a855f7" />
+        {/* Capacitores derecha */}
+        <Capacitor x={1150} y={250} color="#10b981" />
+        <Capacitor x={1170} y={250} color="#22d3ee" />
+        {/* Resistencias dispersas */}
+        <Resistor x={250} y={500} />
+        <Resistor x={300} y={500} />
+        <Resistor x={1000} y={520} rotation={90} />
+        <Resistor x={1050} y={550} />
+        <Resistor x={130} y={650} rotation={45} />
+      </svg>
+
+      {/* === CABLES animados saliendo de la "placa base" === */}
+      <svg className="pointer-events-none absolute inset-0 hidden md:block" width="100%" height="100%">
+        <defs>
+          <linearGradient id="cable-flow-1" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#22d3ee" stopOpacity="0" />
+            <stop offset="50%" stopColor="#22d3ee" stopOpacity="1" />
+            <stop offset="100%" stopColor="#22d3ee" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {/* Cables curvos saliendo del chip MCU */}
+        <path
+          d="M 280 280 Q 350 280 380 220 Q 420 150 500 150"
+          stroke="rgba(34,211,238,0.3)"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d="M 280 280 Q 350 280 380 220 Q 420 150 500 150"
+          stroke="#22d3ee"
+          strokeWidth="1.5"
+          fill="none"
+          strokeDasharray="8 200"
+          strokeLinecap="round"
+          style={{ animation: 'circuit-flow 4s linear infinite', filter: 'drop-shadow(0 0 4px rgba(34,211,238,1))' }}
+        />
+        {/* Cable del MCU a abajo */}
+        <path
+          d="M 230 320 Q 230 400 280 450 Q 330 500 380 600"
+          stroke="rgba(168,85,247,0.3)"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d="M 230 320 Q 230 400 280 450 Q 330 500 380 600"
+          stroke="#a855f7"
+          strokeWidth="1.5"
+          fill="none"
+          strokeDasharray="8 200"
+          strokeLinecap="round"
+          style={{ animation: 'circuit-flow 5s linear 1s infinite', filter: 'drop-shadow(0 0 4px rgba(168,85,247,1))' }}
+        />
+        {/* Cable derecha BIOS al centro */}
+        <path
+          d="M 1000 350 Q 950 350 920 400 Q 880 460 800 480"
+          stroke="rgba(16,185,129,0.3)"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d="M 1000 350 Q 950 350 920 400 Q 880 460 800 480"
+          stroke="#10b981"
+          strokeWidth="1.5"
+          fill="none"
+          strokeDasharray="8 200"
+          strokeLinecap="round"
+          style={{ animation: 'circuit-flow 6s linear 2s infinite', filter: 'drop-shadow(0 0 4px rgba(16,185,129,1))' }}
+        />
+        {/* Cable RAM hacia abajo */}
+        <path
+          d="M 1100 700 Q 1000 720 900 700 Q 800 680 700 720"
+          stroke="rgba(245,158,11,0.3)"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d="M 1100 700 Q 1000 720 900 700 Q 800 680 700 720"
+          stroke="#f59e0b"
+          strokeWidth="1.5"
+          fill="none"
+          strokeDasharray="8 200"
+          strokeLinecap="round"
+          style={{ animation: 'circuit-flow 5s linear 0.5s infinite', filter: 'drop-shadow(0 0 4px rgba(245,158,11,1))' }}
+        />
+      </svg>
+
+      {/* === OSCILOSCOPIO / waveform === */}
+      <svg className="pointer-events-none absolute right-[5%] top-[42%] hidden lg:block opacity-70" width="180" height="60" viewBox="0 0 180 60">
+        <rect x="0" y="0" width="180" height="60" rx="4" fill="rgba(0,0,0,0.7)" stroke="#22d3ee" strokeWidth="1" strokeOpacity="0.5" />
+        {/* Grid */}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <line key={`v-${i}`} x1={i * 30} y1="0" x2={i * 30} y2="60" stroke="rgba(34,211,238,0.15)" />
+        ))}
+        {Array.from({ length: 4 }).map((_, i) => (
+          <line key={`h-${i}`} x1="0" y1={i * 15} x2="180" y2={i * 15} stroke="rgba(34,211,238,0.15)" />
+        ))}
+        {/* Waveform sinusoidal */}
+        <path
+          d="M 0 30 Q 22 5 45 30 T 90 30 T 135 30 T 180 30"
+          stroke="#22d3ee"
+          strokeWidth="1.5"
+          fill="none"
+          style={{ filter: 'drop-shadow(0 0 3px #22d3ee)' }}
+        >
+          <animate attributeName="d" dur="3s" repeatCount="indefinite"
+            values="M 0 30 Q 22 5 45 30 T 90 30 T 135 30 T 180 30;
+                    M 0 30 Q 22 55 45 30 T 90 30 T 135 30 T 180 30;
+                    M 0 30 Q 22 5 45 30 T 90 30 T 135 30 T 180 30" />
+        </path>
+        <text x="6" y="11" fill="#22d3ee" fontSize="8" fontFamily="monospace" opacity="0.7">SIG-IN</text>
+        <text x="155" y="56" fill="#10b981" fontSize="7" fontFamily="monospace">2.4kHz</text>
+      </svg>
+
+      {/* === LLUVIA DE BITS estilo Matrix sutil === */}
+      <div className="pointer-events-none absolute inset-0 hidden lg:block">
+        {Array.from({ length: 12 }).map((_, i) => {
+          const seed = (i * 17 + 3) % 100;
+          return (
+            <div
+              key={`bit-${i}`}
+              className="absolute font-mono text-[10px] text-cyan-400/30"
+              style={{
+                left: `${seed}%`,
+                top: '-20%',
+                animation: `bit-fall ${8 + (seed % 6)}s linear ${(seed % 4)}s infinite`,
+                writingMode: 'vertical-rl',
+              }}
+            >
+              {Array.from({ length: 12 }).map((_, j) => (
+                <span key={j}>{(seed + i + j) % 2}</span>
+              ))}
+            </div>
+          );
+        })}
       </div>
 
       {/* === SPARKS / cortocircuitos aleatorios === */}
