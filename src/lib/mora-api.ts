@@ -88,7 +88,7 @@ export const moraApi = {
     item_id: string;
     platform: string;
   }) =>
-    api.post<{ success: boolean; item_id: string }>(
+    api.post<{ success: boolean; item_id: string; error?: string; status?: string }>(
       `${BASE}/retry-payment/`,
       payload,
     ),

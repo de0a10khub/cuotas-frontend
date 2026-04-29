@@ -44,7 +44,7 @@ export interface RecoveryDrawerApi {
     customer_id: string;
     item_id: string;
     platform: string;
-  }) => Promise<{ success: boolean; item_id: string }>;
+  }) => Promise<{ success: boolean; item_id: string; error?: string; status?: string }>;
   assignPaymentOperator?: (payload: {
     platform: string;
     item_id: string;

@@ -252,12 +252,20 @@ export function FailedPaymentsList({
         item_id: item.id,
         platform: item.platform || platform,
       });
-      if (r.success) toast.success('Cobro reintentado con éxito');
-      else toast.error('El reintento falló');
+      if (r.success) {
+        toast.success('Cobro reintentado con éxito');
+      } else {
+        const reason = (r as { error?: string }).error?.trim();
+        toast.error('El reintento falló', {
+          description: reason || 'Mira la pestaña Reintentos para más detalles.',
+          duration: 8000,
+        });
+      }
       onRetryResult?.(r.success);
       await load();
-    } catch {
-      toast.error('Error al reintentar');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error al reintentar';
+      toast.error('Error al reintentar', { description: msg });
     } finally {
       setRetryingId(null);
     }
