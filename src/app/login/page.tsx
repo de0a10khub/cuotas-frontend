@@ -207,7 +207,23 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const [glitchAt, setGlitchAt] = useState(0);
+  const [bursts, setBursts] = useState<{ id: number; x: number; y: number }[]>([]);
   const usernameRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      // Ignora clicks dentro del card del login (en inputs/botones)
+      const target = e.target as HTMLElement;
+      if (target.closest('form') || target.closest('input') || target.closest('button')) return;
+      const id = Date.now() + Math.random();
+      setBursts((prev) => [...prev, { id, x: e.clientX, y: e.clientY }]);
+      setTimeout(() => {
+        setBursts((prev) => prev.filter((b) => b.id !== id));
+      }, 1100);
+    };
+    window.addEventListener('click', onClick);
+    return () => window.removeEventListener('click', onClick);
+  }, []);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => setCursor({ x: e.clientX, y: e.clientY });
@@ -279,6 +295,24 @@ export default function LoginPage() {
           10% { opacity: 1; }
           90% { opacity: 1; }
           100% { transform: translateY(120vh); opacity: 0; }
+        }
+        @keyframes burst-ring {
+          0% { transform: translate(-50%, -50%) scale(0); opacity: 1; border-width: 4px; }
+          80% { opacity: 0.8; border-width: 2px; }
+          100% { transform: translate(-50%, -50%) scale(8); opacity: 0; border-width: 0.5px; }
+        }
+        @keyframes burst-ring-2 {
+          0% { transform: translate(-50%, -50%) scale(0); opacity: 0.7; border-width: 2px; }
+          100% { transform: translate(-50%, -50%) scale(12); opacity: 0; border-width: 0.5px; }
+        }
+        @keyframes burst-flash {
+          0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+          50% { opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+        }
+        @keyframes burst-spark {
+          0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
+          100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
         }
       `}</style>
 
@@ -602,30 +636,6 @@ export default function LoginPage() {
         }}
       />
 
-      {/* === HUD: lineas estado tipo terminal arriba === */}
-      <div
-        key={glitchAt}
-        className="pointer-events-none absolute left-6 top-6 hidden font-mono text-[10px] text-cyan-400/70 md:block"
-      >
-        <div className="flex flex-col gap-0.5">
-          <span className="text-emerald-400">[●] SYSTEM ONLINE</span>
-          <span>[◉] PROTOCOL: SECURE-AUTH-v2.6</span>
-          <span>[◉] CONN: cuotas-backend.onrender.com</span>
-          <span className="text-amber-400">[!] AWAITING CREDENTIALS</span>
-          <span className="opacity-50">└─ NODE-26 │ SESSION READY</span>
-        </div>
-      </div>
-
-      {/* HUD inferior derecha — telemetría falsa */}
-      <div className="pointer-events-none absolute right-6 bottom-6 hidden font-mono text-[10px] text-cyan-400/70 md:block">
-        <div className="flex flex-col gap-0.5 text-right">
-          <span>CPU: <span className="text-emerald-400">8.4%</span></span>
-          <span>MEM: <span className="text-cyan-300">2.1GB / 16GB</span></span>
-          <span>NET: <span className="text-emerald-400">●</span> 142ms</span>
-          <span>UPTIME: 142d 6h 22m</span>
-          <span className="opacity-50">v26.04.29 │ build 7ab6efc</span>
-        </div>
-      </div>
 
       {/* Ticker bar inferior */}
       <div className="pointer-events-none absolute bottom-0 left-0 right-0 overflow-hidden border-t border-cyan-400/20 bg-black/40 py-1 text-[9px] font-mono text-cyan-400/40 backdrop-blur-sm">
@@ -634,6 +644,91 @@ export default function LoginPage() {
           <span className="px-8">{'>>'} CUOTAS-OS // SECURE LAYER ACTIVE // ALL TRANSACTIONS ENCRYPTED // FIREWALL: ENGAGED // BIOMETRIC GATEWAY: STANDBY // QUANTUM-RESISTANT KEYS DEPLOYED // MAINFRAME LINK: STABLE // DATA STREAM: NOMINAL //</span>
         </div>
       </div>
+
+      {/* === BURSTS al click === */}
+      {bursts.map((b) => (
+        <div
+          key={b.id}
+          className="pointer-events-none fixed"
+          style={{ left: b.x, top: b.y, zIndex: 5 }}
+        >
+          {/* Flash central */}
+          <div
+            className="absolute h-12 w-12 rounded-full"
+            style={{
+              left: 0,
+              top: 0,
+              background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(34,211,238,0.9) 30%, rgba(34,211,238,0) 70%)',
+              animation: 'burst-flash 0.5s ease-out forwards',
+              boxShadow: '0 0 30px rgba(34,211,238,1)',
+            }}
+          />
+          {/* Anillo principal */}
+          <div
+            className="absolute h-12 w-12 rounded-full"
+            style={{
+              left: 0,
+              top: 0,
+              border: '4px solid rgba(34,211,238,1)',
+              boxShadow: '0 0 20px rgba(34,211,238,0.8), inset 0 0 10px rgba(34,211,238,0.4)',
+              animation: 'burst-ring 1s ease-out forwards',
+            }}
+          />
+          {/* Anillo secundario violet retrasado */}
+          <div
+            className="absolute h-12 w-12 rounded-full"
+            style={{
+              left: 0,
+              top: 0,
+              border: '2px solid rgba(168,85,247,0.8)',
+              boxShadow: '0 0 15px rgba(168,85,247,0.6)',
+              animation: 'burst-ring-2 1.1s ease-out 0.15s forwards',
+            }}
+          />
+          {/* Sparks: 12 chispas radiales */}
+          {Array.from({ length: 12 }).map((_, i) => {
+            const angle = (i * 360) / 12;
+            const dist = 80 + (i % 3) * 30;
+            const tx = Math.cos((angle * Math.PI) / 180) * dist;
+            const ty = Math.sin((angle * Math.PI) / 180) * dist;
+            const colors = ['#22d3ee', '#a855f7', '#10b981', '#f59e0b'];
+            const color = colors[i % colors.length];
+            return (
+              <div
+                key={i}
+                className="absolute h-1.5 w-1.5 rounded-full"
+                style={{
+                  left: 0,
+                  top: 0,
+                  background: color,
+                  boxShadow: `0 0 6px ${color}, 0 0 12px ${color}`,
+                  ['--tx' as string]: `${tx}px`,
+                  ['--ty' as string]: `${ty}px`,
+                  animation: `burst-spark ${0.7 + (i % 3) * 0.1}s ease-out forwards`,
+                }}
+              />
+            );
+          })}
+          {/* Lineas de electricidad (4 cruces) */}
+          {[0, 45, 90, 135].map((angle) => (
+            <div
+              key={`line-${angle}`}
+              className="absolute"
+              style={{
+                left: 0,
+                top: 0,
+                width: '120px',
+                height: '2px',
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,1) 50%, transparent)',
+                transform: `translate(-50%, -50%) rotate(${angle}deg)`,
+                transformOrigin: 'center',
+                animation: 'burst-flash 0.4s ease-out forwards',
+                boxShadow: '0 0 8px rgba(34,211,238,1)',
+              }}
+            />
+          ))}
+        </div>
+      ))}
 
       {/* LUZ que sigue al cursor */}
       {cursor && (
