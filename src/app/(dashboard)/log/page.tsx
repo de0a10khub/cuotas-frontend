@@ -498,55 +498,145 @@ function ChargesDialog({
       .finally(() => setLoading(false));
   }, [event]);
 
+  const stats = useMemo(() => {
+    if (!charges) return { total: 0, paid: 0, failed: 0, paidAmount: 0, failedAmount: 0 };
+    const paid = charges.filter((c) => c.paid).length;
+    const failed = charges.length - paid;
+    const paidAmount = charges.filter((c) => c.paid).reduce((a, c) => a + (c.amount || 0), 0);
+    const failedAmount = charges.filter((c) => !c.paid).reduce((a, c) => a + (c.amount || 0), 0);
+    return { total: charges.length, paid, failed, paidAmount, failedAmount };
+  }, [charges]);
+
   return (
     <Dialog open={!!event} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Historial de charges · {event?.customer_name}</DialogTitle>
+      <DialogContent className="sm:max-w-3xl border border-cyan-400/30 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] p-0 text-blue-100 shadow-[0_0_60px_rgba(34,211,238,0.20)]">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -left-12 bottom-0 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl" />
+
+        <DialogHeader className="relative border-b border-blue-500/20 px-6 py-4">
+          <DialogTitle className="flex items-center gap-2 bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-lg font-bold tracking-tight text-transparent">
+            💳 Intentos de cobro · {event?.customer_name || event?.customer_email || 'Cliente'}
+          </DialogTitle>
+          {event?.customer_email && (
+            <p className="text-xs text-blue-300/60">{event.customer_email}</p>
+          )}
         </DialogHeader>
-        {loading && <Skeleton className="h-40 w-full" />}
-        {!loading && charges && charges.length === 0 && (
-          <p className="py-10 text-center text-sm text-muted-foreground">Sin charges.</p>
-        )}
-        {!loading && charges && charges.length > 0 && (
-          <ul className="max-h-96 space-y-2 overflow-y-auto">
-            {charges.map((c) => (
-              <li
-                key={c.id}
-                className={cn(
-                  'rounded-md border p-2 text-xs',
-                  c.paid
-                    ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/50 dark:bg-emerald-950/40'
-                    : 'border-rose-200 bg-rose-50/50 dark:border-rose-900/50 dark:bg-rose-950/40',
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] text-muted-foreground">{c.id}</span>
-                  <span className="font-mono text-sm tabular-nums">
-                    {formatEur(c.amount / 100)}
-                  </span>
+
+        <div className="relative max-h-[70vh] overflow-y-auto px-6 py-4">
+          {loading && <Skeleton className="h-40 w-full bg-blue-950/50" />}
+
+          {!loading && charges && charges.length === 0 && (
+            <p className="py-10 text-center text-sm text-blue-300/60">Sin intentos de cobro registrados.</p>
+          )}
+
+          {!loading && charges && charges.length > 0 && (
+            <>
+              {/* === STATS HEADER === */}
+              <div className="mb-4 grid grid-cols-3 gap-2">
+                <div className="rounded-lg border border-blue-500/30 bg-blue-950/40 p-3 text-center">
+                  <div className="text-[10px] uppercase tracking-wider text-blue-300/60">Total intentos</div>
+                  <div className="mt-1 text-2xl font-bold text-cyan-100">{stats.total}</div>
                 </div>
-                <div className="mt-1 flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground" suppressHydrationWarning>
-                    {toMadridTime(c.created, 'datetime')}
-                  </span>
-                  <Badge
-                    variant={c.paid ? 'default' : 'destructive'}
-                    className="text-[10px]"
-                  >
-                    {c.status}
-                  </Badge>
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/30 p-3 text-center">
+                  <div className="text-[10px] uppercase tracking-wider text-emerald-300/80">Cobrados</div>
+                  <div className="mt-1 text-2xl font-bold text-emerald-300">{stats.paid}</div>
+                  <div className="text-[10px] text-emerald-400/70">{formatEur(stats.paidAmount / 100)}</div>
                 </div>
-                {c.failure_code_es && (
-                  <p className="mt-1 text-xs text-rose-600">{c.failure_code_es}</p>
-                )}
-                <p className="mt-0.5 text-[10px] text-muted-foreground">
-                  {c.card_brand} •••• {c.card_last4} (exp {c.card_exp})
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
+                <div className="rounded-lg border border-rose-500/30 bg-rose-950/30 p-3 text-center">
+                  <div className="text-[10px] uppercase tracking-wider text-rose-300/80">Fallidos</div>
+                  <div className="mt-1 text-2xl font-bold text-rose-300">{stats.failed}</div>
+                  <div className="text-[10px] text-rose-400/70">{formatEur(stats.failedAmount / 100)}</div>
+                </div>
+              </div>
+
+              {/* === TIMELINE === */}
+              <div className="space-y-2">
+                {charges.map((c, idx) => {
+                  const reason =
+                    c.failure_code_es ||
+                    c.outcome_reason_es ||
+                    c.outcome_seller_message ||
+                    c.failure_message ||
+                    null;
+                  return (
+                    <div
+                      key={c.id}
+                      className={cn(
+                        'relative rounded-lg border p-3 transition-colors',
+                        c.paid
+                          ? 'border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-950/30'
+                          : 'border-rose-500/30 bg-rose-950/20 hover:bg-rose-950/30',
+                      )}
+                    >
+                      {/* Numero de intento */}
+                      <span className="absolute -left-2 -top-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-blue-500/30 bg-[#0a1628] text-[10px] font-bold text-cyan-300">
+                        #{charges.length - idx}
+                      </span>
+
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          {/* Fecha grande */}
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="font-mono text-sm font-semibold text-cyan-100"
+                              suppressHydrationWarning
+                            >
+                              {toMadridTime(c.created, 'datetime')}
+                            </span>
+                            <Badge
+                              className={cn(
+                                'text-[9px] uppercase tracking-wider',
+                                c.paid
+                                  ? 'border-emerald-400/40 bg-emerald-500/20 text-emerald-200'
+                                  : 'border-rose-400/40 bg-rose-500/20 text-rose-200',
+                              )}
+                            >
+                              {c.paid ? '✓ ' + c.status : '✗ ' + c.status}
+                            </Badge>
+                          </div>
+
+                          {/* Razón del fallo destacada */}
+                          {!c.paid && reason && (
+                            <p className="mt-1.5 rounded border-l-2 border-rose-400/60 bg-rose-950/40 px-2 py-1 text-xs text-rose-200">
+                              <span className="font-semibold">Motivo:</span> {reason}
+                            </p>
+                          )}
+
+                          {/* Tarjeta + ID */}
+                          <div className="mt-1 flex flex-wrap items-center gap-3 text-[10px] text-blue-300/60">
+                            {c.card_brand && (
+                              <span className="font-mono">
+                                💳 {c.card_brand} •••• {c.card_last4}
+                                {c.card_exp ? ` (exp ${c.card_exp})` : ''}
+                              </span>
+                            )}
+                            <span className="font-mono opacity-60">{c.id}</span>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <div
+                            className={cn(
+                              'font-mono text-lg font-bold tabular-nums',
+                              c.paid ? 'text-emerald-300' : 'text-rose-300',
+                            )}
+                          >
+                            {formatEur(c.amount / 100)}
+                          </div>
+                          {c.outcome_network_status && (
+                            <div className="text-[9px] uppercase tracking-wider text-blue-300/40">
+                              {c.outcome_network_status}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
