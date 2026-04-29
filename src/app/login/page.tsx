@@ -95,6 +95,33 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#050b1a] p-4">
+      {/* Estilos animaciones espaciales */}
+      <style jsx global>{`
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes drift {
+          0% { transform: translate(0, 0); }
+          50% { transform: translate(20px, -15px); }
+          100% { transform: translate(0, 0); }
+        }
+        @keyframes orbit {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes comet {
+          0% { transform: translate(-100px, -100px) rotate(35deg); opacity: 0; }
+          5% { opacity: 1; }
+          70% { opacity: 1; }
+          100% { transform: translate(120vw, 120vh) rotate(35deg); opacity: 0; }
+        }
+        @keyframes asteroid-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+
       {/* Fondo navy gradient */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#050b1a] via-[#0a1628] to-[#050b1a]" />
 
@@ -107,6 +134,101 @@ export default function LoginPage() {
           backgroundSize: '60px 60px',
         }}
       />
+
+      {/* === ESTRELLAS TITILANTES === */}
+      <div className="pointer-events-none absolute inset-0">
+        {Array.from({ length: 60 }).map((_, i) => {
+          const seed = (i * 9973 + 7) % 10000;
+          const x = (seed % 100);
+          const y = ((seed * 13) % 10000) / 100;
+          const size = 1 + ((seed * 7) % 30) / 10;
+          const delay = ((seed * 3) % 50) / 10;
+          const duration = 2 + ((seed * 5) % 40) / 10;
+          return (
+            <span
+              key={i}
+              className="absolute rounded-full bg-white"
+              style={{
+                left: `${x}%`,
+                top: `${y}%`,
+                width: `${size}px`,
+                height: `${size}px`,
+                opacity: 0.6,
+                animation: `twinkle ${duration}s ease-in-out ${delay}s infinite`,
+                boxShadow: size > 2 ? '0 0 4px rgba(255,255,255,0.5)' : undefined,
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* === PLANETA CON ANILLO esquina superior derecha === */}
+      <div
+        className="pointer-events-none absolute right-[8%] top-[12%] h-32 w-32"
+        style={{ animation: 'drift 12s ease-in-out infinite' }}
+      >
+        {/* Glow alrededor del planeta */}
+        <div className="absolute inset-0 rounded-full bg-violet-500/20 blur-2xl" />
+        {/* Anillo (rotando) */}
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ animation: 'orbit 30s linear infinite' }}
+        >
+          <div
+            className="h-44 w-44 rounded-full border-2 border-cyan-300/30"
+            style={{ transform: 'rotateX(75deg)' }}
+          />
+        </div>
+        {/* Esfera del planeta */}
+        <div
+          className="relative h-full w-full rounded-full"
+          style={{
+            background:
+              'radial-gradient(circle at 30% 30%, #d8b4fe 0%, #a855f7 35%, #6b21a8 70%, #1e1b4b 100%)',
+            boxShadow: 'inset -8px -8px 20px rgba(0,0,0,0.5), 0 0 30px rgba(168,85,247,0.4)',
+          }}
+        />
+      </div>
+
+      {/* === ASTEROIDE pequeño girando arriba izq === */}
+      <div className="pointer-events-none absolute left-[10%] top-[25%]">
+        <div
+          className="h-6 w-8 rounded-[40%]"
+          style={{
+            background: 'linear-gradient(135deg, #6b7280, #374151)',
+            boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.5)',
+            animation: 'asteroid-spin 18s linear infinite',
+          }}
+        />
+      </div>
+
+      {/* === ASTEROIDE pequeño abajo derecha === */}
+      <div className="pointer-events-none absolute right-[15%] bottom-[20%]">
+        <div
+          className="h-4 w-5 rounded-[40%]"
+          style={{
+            background: 'linear-gradient(135deg, #94a3b8, #475569)',
+            boxShadow: 'inset -1px -1px 3px rgba(0,0,0,0.5)',
+            animation: 'asteroid-spin 22s linear infinite reverse',
+          }}
+        />
+      </div>
+
+      {/* === COMETA cruzando ocasionalmente === */}
+      <div
+        className="pointer-events-none absolute left-0 top-0"
+        style={{ animation: 'comet 14s linear infinite' }}
+      >
+        <div
+          className="h-1 w-32"
+          style={{
+            background:
+              'linear-gradient(90deg, transparent 0%, rgba(34,211,238,0.6) 60%, white 100%)',
+            borderRadius: '999px',
+            boxShadow: '0 0 12px rgba(34,211,238,0.6), 0 0 24px rgba(34,211,238,0.3)',
+          }}
+        />
+      </div>
 
       {/* Orbs ambient */}
       <div className="pointer-events-none absolute -left-32 top-1/4 h-[500px] w-[500px] rounded-full bg-blue-500/15 blur-[120px]" />
@@ -217,10 +339,6 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-
-          <div className="relative mt-6 text-center text-[10px] uppercase tracking-[0.3em] text-blue-300/30">
-            © 2026 · Panel de gestión
-          </div>
         </div>
       </div>
     </div>
