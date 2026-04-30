@@ -51,6 +51,7 @@ import { FailedPaymentsList } from './failed-payments-list';
 import { InteractionHistoryList } from './interaction-history-list';
 import { MultiSelectTags } from './multi-select-tags';
 import { MultiContactList } from './multi-contact-list';
+import { ExternalPaymentButton } from './external-payment-button';
 import type { DrawerMode, RecoveryDrawerApi, RecoveryRow } from './types';
 
 interface Props {
@@ -372,6 +373,10 @@ export function RecoveryDrawer({
                   Abrir contrato
                 </Button>
               )}
+              <ExternalPaymentButton
+                subscriptionId={row.subscription_id}
+                defaultAmountEur={Number(row.unpaid_invoices_total) || 0}
+              />
             </div>
 
             {paymentLink && (
