@@ -201,38 +201,52 @@ export default function ClientesPage() {
 
   return (
     <div className="relative mx-auto max-w-[1900px] space-y-5 p-4">
-      {/* Orbs ambient */}
-      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
-      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
+      {/* Orbs vibrantes — púrpura/fucsia/ámbar */}
+      <div className="pointer-events-none fixed -left-32 top-1/4 -z-10 h-[500px] w-[500px] rounded-full bg-fuchsia-500/15 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 top-0 -z-10 h-96 w-96 rounded-full bg-violet-500/12 blur-3xl" />
+      <div className="pointer-events-none fixed left-1/2 bottom-0 -z-10 h-80 w-80 -translate-x-1/2 rounded-full bg-amber-500/10 blur-3xl" />
 
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-400/30 ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
-              👤
+          <h1 className="flex items-center gap-3 text-3xl font-black tracking-tight">
+            <span className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 via-violet-500 to-indigo-500 text-xl shadow-[0_8px_25px_-5px_rgba(217,70,239,0.5)] ring-1 ring-white/20">
+              <span className="relative z-10">👤</span>
+              <span className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/25 to-transparent" />
             </span>
-            <span className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-fuchsia-300 via-violet-200 to-amber-300 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(217,70,239,0.4)]">
               Gestión de Clientes
             </span>
           </h1>
-          <p className="mt-1 ml-12 text-sm text-blue-300/60">
+          <p className="ml-14 mt-1 text-sm text-violet-200/70">
             Vista unificada de clientes, acciones y seguimiento de actividad
           </p>
-          <p className="mt-1 ml-12 text-xs text-blue-300/40">
-            Mostrando <b className="text-cyan-300">{rows.length}</b> de{' '}
-            <b className="text-cyan-300">{total}</b> clientes
+          <p className="ml-14 mt-0.5 text-xs text-violet-300/50">
+            Mostrando <b className="bg-gradient-to-r from-fuchsia-300 to-amber-300 bg-clip-text text-transparent">{rows.length}</b> de{' '}
+            <b className="bg-gradient-to-r from-fuchsia-300 to-amber-300 bg-clip-text text-transparent">{total}</b> clientes
           </p>
         </div>
         <FilterHeader value={filters} onChange={handleFilterChange} />
       </header>
 
-      <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(59,130,246,0.10)]">
-        <div className="flex items-center justify-between border-b border-blue-500/15 bg-gradient-to-r from-blue-950/40 via-blue-900/30 to-blue-950/40 px-4 py-2.5">
-          <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300">
-            👥 Directorio Unificado de Clientes
-          </h2>
-        </div>
-        <div className="p-4">
+      {/* Card con borde gradiente animado y fondo claro de cristal */}
+      <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-fuchsia-500/30 via-violet-500/30 to-amber-400/30 p-[1.5px] shadow-[0_25px_50px_-12px_rgba(167,139,250,0.35)]">
+        <div className="relative overflow-hidden rounded-[14px] bg-gradient-to-br from-slate-50 via-white to-violet-50 dark:from-slate-900 dark:via-slate-900 dark:to-violet-950/40">
+          {/* Header con franja vibrante */}
+          <div className="relative flex items-center justify-between border-b border-violet-200/60 bg-gradient-to-r from-fuchsia-100 via-violet-100 to-amber-100 px-5 py-3 dark:border-violet-800/40 dark:from-fuchsia-950/40 dark:via-violet-950/40 dark:to-amber-950/30">
+            <h2 className="flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.22em]">
+              <span className="text-base">✨</span>
+              <span className="bg-gradient-to-r from-fuchsia-600 via-violet-600 to-amber-600 bg-clip-text text-transparent dark:from-fuchsia-300 dark:via-violet-300 dark:to-amber-300">
+                Directorio Unificado de Clientes
+              </span>
+            </h2>
+            {/* Decoración: 3 puntitos como semáforo de Mac */}
+            <div className="hidden gap-1.5 sm:flex">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.8)]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            </div>
+          </div>
+          <div className="bg-gradient-to-b from-transparent to-violet-50/30 p-4 dark:to-violet-950/10">
           <ClientesTable
             rows={rows}
             total={total}
@@ -253,6 +267,7 @@ export default function ClientesPage() {
             onRowOpen={handleRowOpen}
             onClearFilters={hasFilters ? clearAll : () => {}}
           />
+        </div>
         </div>
       </div>
 
