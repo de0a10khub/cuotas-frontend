@@ -407,30 +407,28 @@ export function RecoveryDrawer({
               </div>
             )}
 
-            {/* KPIs financieros (solo mora) */}
-            {isMora && (
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-                <FinancialTile
-                  label="Pagado"
-                  amount={Number(row.paid_total) || 0}
-                  subtitle={`${row.paid_count ?? 0} cuotas`}
-                  tone="emerald"
-                />
-                <FinancialTile
-                  label="Deuda"
-                  amount={Number(row.unpaid_total) || 0}
-                  subtitle={`${row.unpaid_invoices_count} cuotas`}
-                  tone="rose"
-                />
-                <FinancialTile
-                  label="A Pagar"
-                  amount={tcv > 0 ? Number(row.remaining_contract) || 0 : null}
-                  subtitle={tcv > 0 ? `de ${formatEuros(tcv, { decimals: 0 })}` : undefined}
-                  tone="slate"
-                  beta
-                />
-              </div>
-            )}
+            {/* KPIs financieros — visibles en clientes, mora, mora-n2 y recobrame */}
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+              <FinancialTile
+                label="Pagado"
+                amount={Number(row.paid_total) || 0}
+                subtitle={`${row.paid_count ?? 0} cuotas`}
+                tone="emerald"
+              />
+              <FinancialTile
+                label="Deuda"
+                amount={Number(row.unpaid_total) || 0}
+                subtitle={`${row.unpaid_invoices_count ?? 0} cuotas`}
+                tone="rose"
+              />
+              <FinancialTile
+                label="A Pagar"
+                amount={tcv > 0 ? Number(row.remaining_contract) || 0 : null}
+                subtitle={tcv > 0 ? `de ${formatEuros(tcv, { decimals: 0 })}` : undefined}
+                tone="slate"
+                beta
+              />
+            </div>
 
             {/* Alerts destacados */}
             {showActionNeeded && (
