@@ -25,6 +25,31 @@ export function clearTokens() {
   localStorage.removeItem(TOKENS.refresh);
 }
 
+/**
+ * Logout server-side: blacklist el refresh token en el backend para que no
+ * pueda usarse aunque alguien lo robe. Es best-effort — si falla la red,
+ * limpiamos local igualmente para no atrapar al usuario.
+ */
+export async function serverLogout(): Promise<void> {
+  const refresh = getRefreshToken();
+  if (!refresh) return;
+  try {
+    await fetch(`${API_URL}/api/v1/auth/logout/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Authorization opcional pero ayuda si el endpoint lo pide en el futuro.
+        ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
+      },
+      body: JSON.stringify({ refresh }),
+      // No bloqueamos navegación si el endpoint tarda.
+      keepalive: true,
+    });
+  } catch {
+    // Network blip — al cliente ya se le borran los tokens igualmente.
+  }
+}
+
 // Single-flight: si N peticiones simultáneas reciben 401, solo una llama a /refresh.
 // Las demás esperan al mismo Promise para evitar el race con ROTATE_REFRESH_TOKENS
 // (donde el refresh token viejo queda blacklisteado tras la primera rotación).

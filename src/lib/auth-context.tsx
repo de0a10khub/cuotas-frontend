@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { api, clearTokens, getAccessToken, login as apiLogin } from './api';
+import { api, clearTokens, getAccessToken, login as apiLogin, serverLogout } from './api';
 import type { Profile } from './types';
 
 interface AuthContextValue {
@@ -67,6 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let timer: ReturnType<typeof setTimeout> | null = null;
 
     const triggerLogout = () => {
+      // Best-effort blacklist en backend antes de borrar tokens locales.
+      void serverLogout();
       clearTokens();
       setProfile(null);
       router.replace('/login?reason=idle');
@@ -95,6 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    // Blacklist el refresh en backend → token robado deja de funcionar.
+    void serverLogout();
     clearTokens();
     setProfile(null);
     router.replace('/login');
