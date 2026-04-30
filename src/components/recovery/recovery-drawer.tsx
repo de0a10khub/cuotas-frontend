@@ -50,6 +50,7 @@ import { ActionHistoryList } from './action-history-list';
 import { FailedPaymentsList } from './failed-payments-list';
 import { InteractionHistoryList } from './interaction-history-list';
 import { MultiSelectTags } from './multi-select-tags';
+import { MultiContactList } from './multi-contact-list';
 import type { DrawerMode, RecoveryDrawerApi, RecoveryRow } from './types';
 
 interface Props {
@@ -317,19 +318,21 @@ export function RecoveryDrawer({
 
         <div className="flex-1 overflow-y-auto">
           <div className="space-y-4 p-6">
-            {/* Contacto rápido: email ocupa ancho completo, teléfono debajo */}
+            {/* Multi-email + multi-phone con notas */}
             <div className="space-y-2">
-              <QuickContactTile
+              <MultiContactList
+                subscriptionId={row.subscription_id}
+                kind="email"
+                label="Emails"
                 icon={Mail}
-                label="Email"
-                value={row.customer_email}
-                copyable
+                initialPrimary={row.customer_email}
               />
-              <QuickContactTile
+              <MultiContactList
+                subscriptionId={row.subscription_id}
+                kind="phone"
+                label="Teléfonos"
                 icon={Phone}
-                label="Teléfono"
-                value={row.customer_phone || null}
-                copyable
+                initialPrimary={row.customer_phone}
               />
             </div>
 
