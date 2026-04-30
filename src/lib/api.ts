@@ -25,25 +25,45 @@ export function clearTokens() {
   localStorage.removeItem(TOKENS.refresh);
 }
 
+// Single-flight: si N peticiones simultáneas reciben 401, solo una llama a /refresh.
+// Las demás esperan al mismo Promise para evitar el race con ROTATE_REFRESH_TOKENS
+// (donde el refresh token viejo queda blacklisteado tras la primera rotación).
+let inflightRefresh: Promise<string | null> | null = null;
+
 async function refreshAccessToken(): Promise<string | null> {
-  const refresh = getRefreshToken();
-  if (!refresh) return null;
+  if (inflightRefresh) return inflightRefresh;
 
-  const res = await fetch(`${API_URL}/api/v1/auth/refresh/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh }),
-  });
+  inflightRefresh = (async () => {
+    const refresh = getRefreshToken();
+    if (!refresh) return null;
 
-  if (!res.ok) {
-    clearTokens();
-    return null;
-  }
+    try {
+      const res = await fetch(`${API_URL}/api/v1/auth/refresh/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh }),
+      });
 
-  const data = await res.json();
-  localStorage.setItem(TOKENS.access, data.access);
-  if (data.refresh) localStorage.setItem(TOKENS.refresh, data.refresh);
-  return data.access;
+      if (!res.ok) {
+        clearTokens();
+        return null;
+      }
+
+      const data = await res.json();
+      localStorage.setItem(TOKENS.access, data.access);
+      if (data.refresh) localStorage.setItem(TOKENS.refresh, data.refresh);
+      return data.access;
+    } catch {
+      // Network/abort — no borramos tokens (puede ser un blip), mantenemos sesión
+      return null;
+    } finally {
+      // Pequeño delay antes de liberar el lock para que requests muy juntas
+      // que reentren al while no salten la cache de localStorage que acabamos de escribir
+      setTimeout(() => { inflightRefresh = null; }, 50);
+    }
+  })();
+
+  return inflightRefresh;
 }
 
 export class ApiError extends Error {
