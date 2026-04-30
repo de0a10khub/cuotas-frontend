@@ -338,14 +338,25 @@ export default function GodModePage() {
         {/* JOB PROGRESS */}
         {job && (
           <div className="mt-10 w-full max-w-3xl rounded-lg border border-amber-500/30 bg-slate-900/80 p-5 backdrop-blur">
-            <div className="flex items-center gap-2">
-              {isRunning && <Loader2 className="h-5 w-5 animate-spin text-amber-400" />}
-              {job.status === 'completed' && <Check className="h-5 w-5 text-emerald-400" />}
-              {job.status === 'cancelled' && <X className="h-5 w-5 text-amber-400" />}
-              {job.status === 'errored' && <AlertTriangle className="h-5 w-5 text-rose-400" />}
-              <span className="font-mono uppercase tracking-wider text-amber-100">
-                Job · {job.status}
-              </span>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                {isRunning && <Loader2 className="h-5 w-5 animate-spin text-amber-400" />}
+                {job.status === 'completed' && <Check className="h-5 w-5 text-emerald-400" />}
+                {job.status === 'cancelled' && <X className="h-5 w-5 text-amber-400" />}
+                {job.status === 'errored' && <AlertTriangle className="h-5 w-5 text-rose-400" />}
+                <span className="font-mono uppercase tracking-wider text-amber-100">
+                  Job · {job.status}
+                </span>
+              </div>
+              {isRunning && (
+                <button
+                  onClick={onCancel}
+                  className="group flex items-center gap-2 rounded-lg border-2 border-rose-500 bg-gradient-to-br from-rose-600 to-rose-800 px-5 py-2.5 font-bold uppercase tracking-wider text-white shadow-[0_0_20px_rgba(244,63,94,0.5)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(244,63,94,0.8)] active:scale-95"
+                >
+                  <X className="h-5 w-5 transition-transform group-hover:rotate-90" />
+                  PARAR JOB
+                </button>
+              )}
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-2 text-center">
@@ -371,19 +382,6 @@ export default function GodModePage() {
                 style={{ width: `${progress}%` }}
               />
             </div>
-
-            {isRunning && (
-              <div className="mt-3">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={onCancel}
-                  className="border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
-                >
-                  Cancelar job
-                </Button>
-              </div>
-            )}
 
             <div className="mt-4">
               <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-amber-400/70">
@@ -436,6 +434,18 @@ export default function GodModePage() {
           </div>
         )}
       </div>
+
+      {/* FLOATING STOP BUTTON — siempre visible mientras corre el job */}
+      {isRunning && (
+        <button
+          onClick={onCancel}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full border-2 border-rose-400 bg-gradient-to-br from-rose-600 to-rose-800 px-6 py-4 text-base font-black uppercase tracking-wider text-white shadow-[0_0_30px_rgba(244,63,94,0.7)] transition-all hover:scale-110 hover:shadow-[0_0_45px_rgba(244,63,94,1)] active:scale-95"
+          style={{ animation: 'shake-tiny 0.4s infinite' }}
+        >
+          <X className="h-6 w-6" />
+          PARAR JOB
+        </button>
+      )}
 
       {/* CONFIRM DIALOG */}
       <Dialog open={confirmOpen} onOpenChange={(v) => !v && setConfirmOpen(false)}>
