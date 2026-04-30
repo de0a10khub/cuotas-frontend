@@ -103,6 +103,15 @@ export const moraApi = {
       payload,
     ),
 
+  // Notas en pagos: reutilizamos el endpoint de clientes-directorio (es genérico
+  // por platform + payment_id, no depende de la zona). Sin esto, FailedPaymentsList
+  // ocultaba el botón de notas en /mora, /mora-n2 y /recobros.
+  paymentNote: (payload: { platform: string; payment_id: string; note: string }) =>
+    api.post<{ ok: boolean; note: string | null; updated_at?: string }>(
+      `/api/v1/clientes-directorio/payment-note/`,
+      payload,
+    ),
+
   paymentUpdateLink: (payload: {
     subscription_id: string;
     customer_id: string;
