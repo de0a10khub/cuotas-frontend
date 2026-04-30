@@ -297,7 +297,7 @@ export function ClientesTable({
 
       <div
         key={`${search}-${page}-${platform}-${category}-${disputeState}`}
-        className="rounded-lg border border-slate-200 bg-background dark:border-slate-800"
+        className="overflow-hidden rounded-xl border border-violet-200/60 bg-gradient-to-br from-violet-50/60 via-white to-fuchsia-50/40 shadow-[0_4px_20px_-4px_rgba(167,139,250,0.18)] dark:border-violet-700/30 dark:from-slate-800/80 dark:via-slate-800/60 dark:to-violet-900/20"
       >
         <Table
           className={cn(
@@ -398,8 +398,14 @@ export function ClientesTable({
                     key={r.subscription_id}
                     onClick={() => !isLocked && onRowOpen(r)}
                     className={cn(
-                      'cursor-pointer',
-                      isLocked && 'bg-slate-50 opacity-80 dark:bg-slate-900/40',
+                      'cursor-pointer transition-colors',
+                      // Zebra: alternar fondo para que la tabla no parezca un bloque negro
+                      idx % 2 === 0
+                        ? 'bg-white/60 dark:bg-slate-900/40'
+                        : 'bg-violet-50/40 dark:bg-violet-950/20',
+                      // Hover vibrante (rosa/violeta sutil)
+                      'hover:bg-fuchsia-50 dark:hover:bg-violet-900/40 hover:shadow-[inset_3px_0_0_0_theme(colors.fuchsia.500)]',
+                      isLocked && 'opacity-60 grayscale',
                     )}
                   >
                     <TableCell className="text-center text-xs text-slate-400">
