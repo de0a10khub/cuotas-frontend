@@ -21,6 +21,7 @@ import {
   GraduationCap,
   Headphones,
   Bell,
+  Zap,
   GitMerge as MergeIcon,
   type LucideIcon,
 } from 'lucide-react';
@@ -62,6 +63,7 @@ export const navigation: NavItem[] = [
   { label: 'Integraciones', href: '/integraciones', icon: PlugZap, section: 'Admin' },
   { label: 'LOG Operaciones', href: '/log', icon: Activity, section: 'Admin' },
   { label: 'Webhooks', href: '/webhooks', icon: Webhook, section: 'Admin' },
+  { label: 'MODO DIOS', href: '/admin/god-mode', icon: Zap, section: 'Admin' },
 ];
 
 export function groupBySection(items: NavItem[]): Record<string, NavItem[]> {
