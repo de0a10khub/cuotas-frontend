@@ -86,7 +86,14 @@ export default function FullPayPage() {
       page: 1,
     });
 
-  const handleSearch = () => pushParams({ search: pendingSearch, page: 1 });
+  const handleSearch = () => {
+    if (!pendingSearch.trim()) {
+      setPendingSearch('');
+      pushParams({ search: '', page: 1 });
+      return;
+    }
+    pushParams({ search: pendingSearch, page: 1 });
+  };
   const handleClearSearch = () => {
     setPendingSearch('');
     pushParams({ search: '', page: 1 });

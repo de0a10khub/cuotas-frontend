@@ -28,14 +28,12 @@ export default function MoraPage() {
   const [pendingSearch, setPendingSearch] = useState(search);
   useEffect(() => setPendingSearch(search), [search]);
 
-  // /mora usa debounce 500ms + mínimo 3 chars (a diferencia de /clientes que es Enter).
+  // /mora usa debounce 500ms (sin mínimo de chars: con 1 carácter o vacío también busca).
   useEffect(() => {
     const cleaned = pendingSearch.trim();
     if (cleaned === search) return;
     const t = setTimeout(() => {
-      if (cleaned.length >= 3 || cleaned === '') {
-        pushParams({ search: cleaned, page: 1 });
-      }
+      pushParams({ search: cleaned, page: 1 });
     }, 500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -107,7 +105,14 @@ export default function MoraPage() {
   }, []);
 
   const handleFilterChange = (next: MoraHardFilters) => pushParams({ ...next, page: 1 });
-  const handleSearch = () => pushParams({ search: pendingSearch, page: 1 });
+  const handleSearch = () => {
+    if (!pendingSearch.trim()) {
+      setPendingSearch('');
+      pushParams({ search: '', page: 1 });
+      return;
+    }
+    pushParams({ search: pendingSearch, page: 1 });
+  };
   const handleClearSearch = () => {
     setPendingSearch('');
     pushParams({ search: '', page: 1 });

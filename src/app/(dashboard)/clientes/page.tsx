@@ -168,7 +168,16 @@ export default function ClientesPage() {
     pushParams({ ...next, page: 1 });
   };
 
-  const handleSearch = () => pushParams({ search: pendingSearch, page: 1 });
+  const handleSearch = () => {
+    // Si el input quedó vacío (usuario borró el texto y volvió a buscar),
+    // tratamos como limpiar: pendingSearch resetea + URL pierde ?search=...
+    if (!pendingSearch.trim()) {
+      setPendingSearch('');
+      pushParams({ search: '', page: 1 });
+      return;
+    }
+    pushParams({ search: pendingSearch, page: 1 });
+  };
   const handleClearSearch = () => {
     setPendingSearch('');
     pushParams({ search: '', page: 1 });
