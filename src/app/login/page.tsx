@@ -242,7 +242,14 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(username, password);
-      toast.success('Bienvenido');
+      // Marca para que el layout del dashboard muestre el splash de boot.
+      // Se consume y borra una sola vez (ver login-splash.tsx + dashboard layout).
+      try {
+        sessionStorage.setItem('cuotas_show_splash', '1');
+      } catch {
+        // Si sessionStorage está bloqueado (modo privado raro), no es crítico:
+        // el dashboard cargará directo sin animación.
+      }
     } catch (err) {
       const msg =
         err instanceof ApiError && err.status === 401
