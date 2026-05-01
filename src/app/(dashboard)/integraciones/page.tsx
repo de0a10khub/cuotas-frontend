@@ -77,10 +77,15 @@ function statusClass(status: number): string {
 
 export default function IntegracionesPage() {
   return (
-    <div className="mx-auto max-w-[1600px] space-y-4">
+    <div className="relative mx-auto max-w-[1600px] space-y-4 p-4">
+      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
+
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Integraciones</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="bg-gradient-to-r from-cyan-200 via-blue-100 to-cyan-200 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
+          Integraciones
+        </h1>
+        <p className="mt-1 text-sm text-blue-300/60">
           Gestiona las credenciales de acceso para servicios externos y configura webhooks
           para enviar notificaciones a otras plataformas.
         </p>
@@ -190,7 +195,7 @@ function ApiKeysTab() {
         />
       </div>
 
-      <Card>
+      <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-[#0a1628] to-cyan-950/30 shadow-[0_0_20px_rgba(34,211,238,0.08)]">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -405,7 +410,7 @@ function WebhooksTab() {
         <NewWebhookDialog onCreated={load} />
       </div>
 
-      <Card>
+      <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-[#0a1628] to-cyan-950/30 shadow-[0_0_20px_rgba(34,211,238,0.08)]">
         <CardContent className="p-0">
           <Table>
             <TableHeader>

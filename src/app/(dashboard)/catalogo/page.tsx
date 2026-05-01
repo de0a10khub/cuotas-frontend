@@ -185,11 +185,22 @@ export default function CatalogoPage() {
   };
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-4">
+    <div className="relative mx-auto max-w-[1600px] space-y-4 p-4">
+      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
+
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold tracking-tight">Catálogo de Productos</h1>
+        <h1 className="bg-gradient-to-r from-cyan-200 via-blue-100 to-cyan-200 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
+          Catálogo de Productos
+        </h1>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={sync} disabled={syncing}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={sync}
+            disabled={syncing}
+            className="border-blue-500/30 bg-blue-950/40 text-blue-200 hover:bg-blue-900/40 hover:text-cyan-200"
+          >
             <RefreshCcw className={cn('h-4 w-4', syncing && 'animate-spin')} />
             Sincronizar Productos
           </Button>
@@ -197,7 +208,7 @@ export default function CatalogoPage() {
         </div>
       </header>
 
-      <Card>
+      <Card className="border-cyan-500/30 bg-blue-950/30">
         <CardContent className="flex flex-wrap items-center gap-2 p-3">
           <div className="relative min-w-64 flex-1">
             <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
@@ -227,9 +238,9 @@ export default function CatalogoPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-[#0a1628] to-cyan-950/30 shadow-[0_0_40px_rgba(34,211,238,0.12)]">
         <CardHeader className="py-3">
-          <CardTitle className="text-base">Productos registrados</CardTitle>
+          <CardTitle className="text-base text-cyan-100">Productos registrados</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>

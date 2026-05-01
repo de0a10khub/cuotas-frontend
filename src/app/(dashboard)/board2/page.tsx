@@ -34,7 +34,7 @@ type SourceSegmentedProps = {
 
 function SourceSegmented({ value, onChange }: SourceSegmentedProps) {
   return (
-    <div className="inline-flex rounded-md border border-slate-200 bg-background p-0.5 dark:border-slate-800">
+    <div className="inline-flex rounded-md border border-cyan-500/30 bg-blue-950/40 p-0.5">
       {(['invoice', 'purchase'] as Board2Source[]).map((v) => (
         <button
           key={v}
@@ -43,8 +43,8 @@ function SourceSegmented({ value, onChange }: SourceSegmentedProps) {
           className={cn(
             'rounded px-3 py-1 text-xs font-medium transition-colors',
             value === v
-              ? 'bg-primary text-primary-foreground'
-              : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
+              ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-[0_0_15px_rgba(34,211,238,0.3)]'
+              : 'text-cyan-300/70 hover:bg-cyan-500/10 hover:text-cyan-200',
           )}
         >
           {v === 'invoice' ? '📄 Vista Invoice' : '📦 Vista Purchase'}
@@ -156,15 +156,25 @@ export default function Board2Page() {
   const unitLabelShort = source === 'invoice' ? 'facturas' : 'purchases';
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-5">
+    <div className="relative mx-auto max-w-[1400px] space-y-5 p-4">
+      {/* Orbs ambient */}
+      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
+      <div className="pointer-events-none fixed left-1/3 top-2/3 -z-10 h-72 w-72 rounded-full bg-indigo-500/8 blur-3xl" />
+
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Board2</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <h1 className="bg-gradient-to-r from-cyan-200 via-blue-100 to-cyan-200 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
+            Board KPIs
+          </h1>
+          <p className="mt-1 text-sm text-blue-300/60">
             Panel ejecutivo exclusivo para Administradores
           </p>
         </div>
-        <Badge variant="outline" className="text-[11px] uppercase tracking-wider">
+        <Badge
+          variant="outline"
+          className="border-cyan-400/40 bg-cyan-500/10 text-[11px] uppercase tracking-wider text-cyan-200"
+        >
           Vista: {source === 'invoice' ? 'Invoices' : 'Purchases'}
         </Badge>
       </header>
@@ -276,9 +286,9 @@ export default function Board2Page() {
       </section>
 
       {/* Aging 5 buckets */}
-      <Card>
+      <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-indigo-950/30 to-cyan-950/40 shadow-[0_0_40px_rgba(34,211,238,0.12)]">
         <CardHeader>
-          <CardTitle className="text-base">📊 Cuotas Impagadas por Antigüedad</CardTitle>
+          <CardTitle className="text-base text-cyan-100">📊 Cuotas Impagadas por Antigüedad</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
@@ -323,32 +333,32 @@ export default function Board2Page() {
       </Card>
 
       {/* Nota explicativa */}
-      <Card className="bg-muted/40">
+      <Card className="border-cyan-500/20 bg-blue-950/20">
         <CardHeader>
-          <CardTitle className="text-sm">ℹ️ ¿Por qué varían los datos entre vistas?</CardTitle>
+          <CardTitle className="text-sm text-cyan-200">ℹ️ ¿Por qué varían los datos entre vistas?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <p className="text-muted-foreground">
+          <p className="text-blue-200/70">
             Al cambiar entre Vista Invoice y Vista Purchase, los números pueden diferir
             significativamente. Esto es correcto y responde a preguntas distintas:
           </p>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div className="rounded-md border border-slate-200 p-3 dark:border-slate-800">
-              <p className="mb-1 text-xs font-semibold">📄 Vista Invoice (Contabilidad)</p>
-              <p className="text-xs text-muted-foreground">
+            <div className="rounded-md border border-cyan-500/20 bg-blue-950/40 p-3">
+              <p className="mb-1 text-xs font-semibold text-cyan-200">📄 Vista Invoice (Contabilidad)</p>
+              <p className="text-xs text-blue-200/60">
                 Filtra por fecha de emisión de la factura. Responde: <em>&quot;¿Cuánto dinero de las
                 facturas emitidas este mes sigue pendiente?&quot;</em>
               </p>
             </div>
-            <div className="rounded-md border border-slate-200 p-3 dark:border-slate-800">
-              <p className="mb-1 text-xs font-semibold">📦 Vista Purchase (Cohortes)</p>
-              <p className="text-xs text-muted-foreground">
+            <div className="rounded-md border border-cyan-500/20 bg-blue-950/40 p-3">
+              <p className="mb-1 text-xs font-semibold text-cyan-200">📦 Vista Purchase (Cohortes)</p>
+              <p className="text-xs text-blue-200/60">
                 Filtra por fecha de alta del cliente. Responde: <em>&quot;¿Cuánto deben HOY los
                 clientes captados este mes?&quot;</em> (incluye cuotas futuras ya facturadas).
               </p>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-blue-200/50">
             El importe total de deuda es idéntico en ambas vistas si seleccionas &quot;Todo&quot;. Las
             diferencias aparecen al filtrar por periodos específicos.
           </p>
@@ -374,18 +384,28 @@ function Kpi({
   loading?: boolean;
 }) {
   return (
-    <Card className={cn(border)}>
+    <Card
+      className={cn(
+        'border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-[#0a1628] to-cyan-950/30 shadow-[0_0_20px_rgba(34,211,238,0.08)]',
+        border,
+      )}
+    >
       <CardHeader className="space-y-0 pb-2">
-        <CardTitle className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <CardTitle className="flex items-center gap-1.5 text-xs font-medium text-cyan-300/80">
           <span aria-hidden>{icon}</span>
           {title}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className={cn('text-2xl font-bold tabular-nums tracking-tight', loading && 'opacity-60')}>
+        <p
+          className={cn(
+            'text-2xl font-bold tabular-nums tracking-tight text-cyan-100',
+            loading && 'opacity-60',
+          )}
+        >
           {value}
         </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
+        <p className="mt-0.5 text-xs text-blue-200/60">{subtitle}</p>
       </CardContent>
     </Card>
   );

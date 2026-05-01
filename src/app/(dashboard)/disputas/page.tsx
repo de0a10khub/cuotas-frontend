@@ -188,19 +188,23 @@ export default function DisputasPage() {
     totalDisputes > 0 ? ((kpis?.disputas_perdidas || 0) / totalDisputes) * 100 : 0;
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-4">
+    <div className="relative mx-auto max-w-[1500px] space-y-4 p-4">
+      {/* Orbs ambient */}
+      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
+
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Scale className="h-6 w-6 text-primary" />
+          <h1 className="flex items-center gap-2 bg-gradient-to-r from-cyan-200 via-blue-100 to-cyan-200 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
+            <Scale className="h-7 w-7 text-cyan-300" />
             Disputas y Reembolsos
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-blue-300/60">
             Chargebacks, devoluciones e incidencias financieras
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="border-cyan-400/40 bg-cyan-500/10 text-xs text-cyan-200">
             {platform === 'stripe' ? '💳 Stripe' : platform === 'whop' ? '🎮 Whop' : '🌎 Todo'}
           </Badge>
           <Select value={platform} onValueChange={(v) => pushParams({ platform: v || 'all' })}>
@@ -217,14 +221,14 @@ export default function DisputasPage() {
       </header>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-        <Card className="border-red-200 dark:border-red-900/50">
+        <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-[#0a1628] to-cyan-950/30 shadow-[0_0_20px_rgba(34,211,238,0.08)]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">
+            <CardTitle className="text-xs font-medium text-cyan-300/80">
               ⚖️ Disputas Abiertas
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-red-600">
+            <p className="text-3xl font-bold text-red-400">
               {kpis?.disputas_abiertas ?? 0}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
@@ -233,53 +237,53 @@ export default function DisputasPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-red-200 dark:border-red-900/50">
+        <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-[#0a1628] to-cyan-950/30 shadow-[0_0_20px_rgba(34,211,238,0.08)]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">
+            <CardTitle className="text-xs font-medium text-cyan-300/80">
               💸 Importe en Disputa
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-red-600">
+            <p className="text-3xl font-bold text-red-400">
               {kpis ? formatEur(kpis.importe_en_disputa_eur * 100) : '—'}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-green-200 dark:border-green-900/50">
+        <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-[#0a1628] to-cyan-950/30 shadow-[0_0_20px_rgba(34,211,238,0.08)]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">
+            <CardTitle className="text-xs font-medium text-cyan-300/80">
               ✅ Win Rate
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-emerald-600">
+            <p className="text-3xl font-bold text-emerald-400">
               {kpis ? `${kpis.win_rate_pct}%` : '—'}
             </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-0.5 text-xs text-blue-200/60">
               sobre {totalResolved} resueltas
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-[#0a1628] to-cyan-950/30 shadow-[0_0_20px_rgba(34,211,238,0.08)]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">
+            <CardTitle className="text-xs font-medium text-cyan-300/80">
               📊 Histórico
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-2">
             <div>
-              <p className="text-xs text-muted-foreground">Ganadas</p>
-              <p className="font-bold text-emerald-600">{kpis?.disputas_ganadas ?? 0}</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs text-blue-200/60">Ganadas</p>
+              <p className="font-bold text-emerald-400">{kpis?.disputas_ganadas ?? 0}</p>
+              <p className="text-[10px] text-blue-200/50">
                 {kpis ? formatEur(kpis.importe_ganadas_eur * 100) : '—'}
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Perdidas</p>
-              <p className="font-bold text-red-600">{kpis?.disputas_perdidas ?? 0}</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs text-blue-200/60">Perdidas</p>
+              <p className="font-bold text-red-400">{kpis?.disputas_perdidas ?? 0}</p>
+              <p className="text-[10px] text-blue-200/50">
                 {kpis ? formatEur(kpis.importe_perdidas_eur * 100) : '—'}
               </p>
             </div>
@@ -287,9 +291,9 @@ export default function DisputasPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-indigo-950/30 to-cyan-950/40 shadow-[0_0_40px_rgba(34,211,238,0.12)]">
         <CardHeader>
-          <CardTitle className="text-base">📈 Resultado de Disputas</CardTitle>
+          <CardTitle className="text-base text-cyan-100">📈 Resultado de Disputas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {totalDisputes === 0 ? (
@@ -306,10 +310,10 @@ export default function DisputasPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-amber-200 dark:border-amber-900/50">
+      <Card className="border-amber-400/40 bg-gradient-to-br from-amber-950/30 via-[#0a1628] to-blue-950/40 shadow-[0_0_30px_rgba(251,191,36,0.08)]">
         <CardHeader>
-          <CardTitle className="text-base">💸 Reembolsos (Período Seleccionado)</CardTitle>
-          <p className="text-xs text-muted-foreground">
+          <CardTitle className="text-base text-amber-200">💸 Reembolsos (Período Seleccionado)</CardTitle>
+          <p className="text-xs text-amber-300/60">
             Devoluciones voluntarias y membresías canceladas
           </p>
         </CardHeader>
@@ -328,11 +332,11 @@ export default function DisputasPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-[#0a1628] to-cyan-950/30 shadow-[0_0_20px_rgba(34,211,238,0.08)]">
         <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
           <div>
-            <CardTitle className="text-base">📋 Listado Detallado de Incidencias</CardTitle>
-            <p className="text-xs text-muted-foreground">
+            <CardTitle className="text-base text-cyan-100">📋 Listado Detallado de Incidencias</CardTitle>
+            <p className="text-xs text-blue-200/60">
               Disputas y operaciones con reembolso (Ordenado por fecha desc)
             </p>
           </div>
@@ -471,7 +475,7 @@ export default function DisputasPage() {
         </CardContent>
       </Card>
 
-      <Card className="bg-muted/40">
+      <Card className="border-cyan-500/20 bg-blue-950/20">
         <CardHeader>
           <CardTitle className="text-sm">¿Qué es una disputa?</CardTitle>
         </CardHeader>

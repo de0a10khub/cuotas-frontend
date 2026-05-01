@@ -38,10 +38,14 @@ export default function OperacionesPage() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-4">
+    <div className="relative mx-auto max-w-[1400px] space-y-4 p-4">
+      <div className="pointer-events-none fixed -left-20 top-1/4 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
       <header>
-        <h1 className="text-2xl font-bold">Operaciones</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="bg-gradient-to-r from-cyan-200 via-blue-100 to-cyan-200 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
+          Operaciones
+        </h1>
+        <p className="mt-1 text-sm text-blue-300/60">
           Refinanciaciones, duplicados y operaciones especiales
         </p>
       </header>
@@ -74,10 +78,10 @@ export default function OperacionesPage() {
           value={loading ? '—' : String(kpis?.bonuses_30d ?? 0)}
           loading={loading}
         />
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/40 dark:to-emerald-900/20">
+        <Card className="border-emerald-400/30 bg-gradient-to-br from-emerald-950/40 via-blue-950/40 to-cyan-950/30 shadow-[0_0_20px_rgba(52,211,153,0.1)]">
           <CardContent className="p-4">
-            <p className="text-xs font-medium text-muted-foreground">✅ Status</p>
-            <p className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            <p className="text-xs font-medium text-emerald-300/80">✅ Status</p>
+            <p className="mt-1 text-2xl font-bold text-emerald-300">
               Operando Normal
             </p>
           </CardContent>
@@ -85,10 +89,10 @@ export default function OperacionesPage() {
       </section>
 
       {/* Cohort default rate */}
-      <Card>
+      <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-indigo-950/30 to-cyan-950/40 shadow-[0_0_40px_rgba(34,211,238,0.12)]">
         <CardHeader>
-          <CardTitle className="text-base">📈 Default Rate por Cohorte</CardTitle>
-          <p className="text-xs text-muted-foreground">
+          <CardTitle className="text-base text-cyan-100">📈 Default Rate por Cohorte</CardTitle>
+          <p className="text-xs text-blue-200/60">
             Porcentaje de impagos por mes de alta
           </p>
         </CardHeader>
@@ -138,11 +142,11 @@ export default function OperacionesPage() {
 
       {/* Info cards */}
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <Card>
+        <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-[#0a1628] to-cyan-950/30">
           <CardHeader>
-            <CardTitle className="text-sm">🔁 Refinanciación</CardTitle>
+            <CardTitle className="text-sm text-cyan-200">🔁 Refinanciación</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-xs text-muted-foreground">
+          <CardContent className="space-y-2 text-xs text-blue-200/70">
             <p>Una refinanciación ocurre cuando un cliente solicita modificar su plan de pagos.</p>
             <div>
               <p className="font-medium text-foreground">El proceso incluye:</p>
@@ -158,11 +162,11 @@ export default function OperacionesPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-[#0a1628] to-cyan-950/30">
           <CardHeader>
-            <CardTitle className="text-sm">🔂 Duplicados</CardTitle>
+            <CardTitle className="text-sm text-cyan-200">🔂 Duplicados</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-xs text-muted-foreground">
+          <CardContent className="space-y-2 text-xs text-blue-200/70">
             <p>
               Los duplicados se detectan cuando un cliente tiene múltiples compras del mismo
               producto.
@@ -199,17 +203,17 @@ function KpiCard({
   loading?: boolean;
 }) {
   return (
-    <Card>
+    <Card className="border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-[#0a1628] to-cyan-950/30 shadow-[0_0_20px_rgba(34,211,238,0.08)]">
       <CardContent className="p-4">
-        <p className="text-xs font-medium text-muted-foreground">
+        <p className="text-xs font-medium text-cyan-300/80">
           {emoji} {title}
         </p>
         {loading ? (
           <Skeleton className="mt-1 h-8 w-20" />
         ) : (
           <>
-            <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight">{value}</p>
-            {sublabel && <p className="mt-0.5 text-xs text-muted-foreground">{sublabel}</p>}
+            <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight text-cyan-100">{value}</p>
+            {sublabel && <p className="mt-0.5 text-xs text-blue-200/60">{sublabel}</p>}
           </>
         )}
       </CardContent>
