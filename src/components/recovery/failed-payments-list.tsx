@@ -341,6 +341,28 @@ export function FailedPaymentsList({
           showBothDates && scheduled && paidAt ? daysBetween(scheduled, paidAt) : 0;
         const ps = platformStyle(p.platform);
 
+        // Detección de cadena Stripe bloqueada: si una invoice queda en
+        // 'open'/'failed' y agota retries, Stripe pone la sub en 'unpaid' y
+        // la siguiente cuota del ciclo nace en 'draft' con auto_advance=false
+        // (no la cobra). Pagar la vieja desbloquea la draft automáticamente.
+        const blockerScheduled =
+          items
+            .filter((x) => {
+              const t = classifyStatus(x.status);
+              return t === 'open' || t === 'failed';
+            })
+            .map((x) => x.due_date || x.created_at || '')
+            .filter((d) => !!d)
+            .sort()[0] || null;
+        const hasAnyDraft = items.some((x) => classifyStatus(x.status) === 'draft');
+        const isBlockedDraft =
+          tone === 'draft' && !!blockerScheduled && !!scheduled && scheduled > blockerScheduled;
+        const isBlocker =
+          (tone === 'open' || tone === 'failed') &&
+          hasAnyDraft &&
+          !!scheduled &&
+          scheduled === blockerScheduled;
+
         return (
           <li
             key={`${p.platform}-${p.id}`}
@@ -394,6 +416,24 @@ export function FailedPaymentsList({
                 {p.attempt_count > 1 && tone !== 'paid' && (
                   <Badge variant="outline" className="text-[10px]">
                     {p.attempt_count} intentos
+                  </Badge>
+                )}
+                {isBlockedDraft && (
+                  <Badge
+                    variant="outline"
+                    className="border-amber-400 bg-amber-50 text-[10px] font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+                    title="Stripe no la cobra hasta que se pague la cuota anterior. Al cobrar la vieja, esta se finaliza y cobra automáticamente."
+                  >
+                    🔒 Pagar primero la cuota anterior
+                  </Badge>
+                )}
+                {isBlocker && (
+                  <Badge
+                    variant="outline"
+                    className="border-sky-400 bg-sky-50 text-[10px] font-semibold text-sky-800 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200"
+                    title="Esta es la cuota más antigua sin pagar. Al cobrarla, las posteriores en draft se desbloquean y Stripe las cobra automáticamente."
+                  >
+                    🔓 Pagar esto desbloquea las siguientes
                   </Badge>
                 )}
               </div>
