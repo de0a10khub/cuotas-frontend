@@ -147,6 +147,25 @@ export default function GodModePage() {
 
   useEffect(() => { loadPreview(); }, []);
 
+  // Recuperar jobId persistido tras refresh / navegación. El backend mantiene
+  // el job en memoria hasta que termine, así que reconectamos polling.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('god_mode_active_job_id');
+    if (stored) setJobId(stored);
+  }, []);
+
+  // Persistir/limpiar jobId según el ciclo de vida del job
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (jobId) {
+      localStorage.setItem('god_mode_active_job_id', jobId);
+    }
+    if (job && (job.status === 'completed' || job.status === 'cancelled' || job.status === 'errored')) {
+      localStorage.removeItem('god_mode_active_job_id');
+    }
+  }, [jobId, job]);
+
   useEffect(() => {
     if (!jobId) return;
     let cancelled = false;
@@ -155,7 +174,11 @@ export default function GodModePage() {
         const s = await api.get<JobStatus>(`/api/v1/admin/god-mode/status/${jobId}/`);
         if (cancelled) return;
         setJob(s);
-        if (s.status === 'running') setTimeout(tick, 1500);
+        // Sigue pollando mientras esté running O paused — el backend sigue
+        // vivo durante la pausa y la UI debe reflejar el resume cuando vuelve.
+        if (s.status === 'running' || s.status === 'paused') {
+          setTimeout(tick, 1500);
+        }
       } catch {
         if (!cancelled) setTimeout(tick, 3000);
       }
