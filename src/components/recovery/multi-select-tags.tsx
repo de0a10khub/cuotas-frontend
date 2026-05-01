@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import type { ObjecionTag } from '@/lib/clientes-types';
 import { cn } from '@/lib/utils';
 import { Check, Search, Tags, X } from 'lucide-react';
@@ -26,6 +26,23 @@ export function MultiSelectTags({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Cierra dropdown al click fuera SIN tragar el click. El overlay
+  // fixed inset-0 que usábamos antes interceptaba clicks legítimos a otros
+  // botones del Sheet (p.ej. "Guardar gestión"): el click lo absorbía el
+  // overlay y nunca llegaba al botón → sensación de "no me deja guardar".
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      if (rootRef.current && target && !rootRef.current.contains(target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
 
   const selectedTags = useMemo(
     () => options.filter((t) => selected.includes(t.id)),
@@ -49,7 +66,7 @@ export function MultiSelectTags({
   };
 
   return (
-    <div className={cn('relative', className)}>
+    <div ref={rootRef} className={cn('relative', className)}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -84,13 +101,7 @@ export function MultiSelectTags({
       </button>
 
       {open && (
-        <>
-          <div
-            className="fixed inset-0 z-30"
-            onClick={() => setOpen(false)}
-            aria-hidden
-          />
-          <div className="absolute left-0 right-0 top-full z-40 mt-1 rounded-lg border border-slate-200 bg-popover p-2 shadow-lg dark:border-slate-800">
+        <div className="absolute left-0 right-0 top-full z-40 mt-1 rounded-lg border border-slate-200 bg-popover p-2 shadow-lg dark:border-slate-800">
             <div className="relative mb-2">
               <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
               <input
@@ -130,9 +141,8 @@ export function MultiSelectTags({
                   </li>
                 );
               })}
-            </ul>
-          </div>
-        </>
+          </ul>
+        </div>
       )}
     </div>
   );
