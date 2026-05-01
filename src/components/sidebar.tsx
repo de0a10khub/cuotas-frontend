@@ -7,12 +7,29 @@ import { cn } from '@/lib/utils';
 import { navigation, groupBySection } from './nav-config';
 import { Wallet } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 
 // Sidebar colapsable por hover (mismo feel que la web vieja de Conciliación).
 // Default colapsada a w-16 (solo iconos), expande a w-64 al pasar el raton.
 export function Sidebar() {
   const pathname = usePathname();
-  const grouped = groupBySection(navigation);
+  const { profile } = useAuth();
+
+  // Admin (rol 'Admin' en /empleados) ve todo. Resto solo lo permitido.
+  const isAdmin = React.useMemo(
+    () => profile?.roles?.some((r) => r.name === 'Admin') ?? false,
+    [profile?.roles],
+  );
+  const allowedPaths = React.useMemo(
+    () => new Set(profile?.allowed_paths ?? []),
+    [profile?.allowed_paths],
+  );
+  const visibleNav = React.useMemo(
+    () => (isAdmin ? navigation : navigation.filter((n) => allowedPaths.has(n.href))),
+    [isAdmin, allowedPaths],
+  );
+
+  const grouped = groupBySection(visibleNav);
   const [collapsed, setCollapsed] = React.useState(true);
   const [notifTotal, setNotifTotal] = React.useState(0);
 

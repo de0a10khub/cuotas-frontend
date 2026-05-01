@@ -50,8 +50,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isPublic = PUBLIC_ROUTES.includes(pathname);
     if (!profile && !isPublic) {
       router.replace('/login');
-    } else if (profile && pathname === '/login') {
+      return;
+    }
+    if (profile && pathname === '/login') {
       router.replace('/');
+      return;
+    }
+    if (!profile || isPublic) return;
+
+    // Path-based access control: si el usuario no es Admin y el path actual
+    // no está en su lista de allowed_paths → redirigir al primero permitido.
+    const isAdmin = profile.roles?.some((r) => r.name === 'Admin') ?? false;
+    if (isAdmin) return;
+
+    const allowed = profile.allowed_paths ?? [];
+    const isAllowed = allowed.some(
+      (p) => pathname === p || (p !== '/' && pathname.startsWith(p + '/')),
+    );
+    if (!isAllowed) {
+      const fallback = allowed[0] ?? '/login';
+      router.replace(fallback);
     }
   }, [profile, loading, pathname, router]);
 
