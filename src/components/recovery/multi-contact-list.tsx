@@ -63,19 +63,23 @@ export function MultiContactList({ subscriptionId, kind, label, icon: Icon, init
 
   const path = kind === 'email' ? 'emails' : 'phones';
 
+  const fallbackItem = (): ContactItem[] => {
+    if (!initialPrimary) return [];
+    return [{
+      id: 'fallback', source: 'primary', is_primary: true,
+      [kind]: initialPrimary,
+    } as ContactItem];
+  };
+
   const load = async () => {
     setLoading(true);
     try {
       const r = await api.get<{ results: ContactItem[] }>(`/api/v1/clientes-directorio/${path}/${subscriptionId}/`);
-      setItems(r.results);
+      // Si la API responde OK pero vacío (cliente Whop nativo sin platform_account),
+      // usamos el email/phone primario del row para que no se vea "Sin emails".
+      setItems(r.results.length === 0 ? fallbackItem() : r.results);
     } catch {
-      // fallback al valor del row si el endpoint falla
-      if (initialPrimary) {
-        setItems([{
-          id: 'fallback', source: 'primary', is_primary: true,
-          [kind]: initialPrimary,
-        } as ContactItem]);
-      }
+      setItems(fallbackItem());
     } finally {
       setLoading(false);
     }
