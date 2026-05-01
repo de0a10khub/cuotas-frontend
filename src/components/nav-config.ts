@@ -1,7 +1,6 @@
 import {
   LayoutDashboard,
   Users,
-  Receipt,
   AlertTriangle,
   RefreshCcw,
   GitMerge,
@@ -39,7 +38,6 @@ export const navigation: NavItem[] = [
   { label: 'Notificaciones', href: '/notificaciones', icon: Bell, section: 'General' },
 
   { label: 'Clientes', href: '/clientes', icon: Users, section: 'Gestión' },
-  { label: 'Cobros', href: '/cobros', icon: Receipt, section: 'Gestión' },
   { label: 'Call Full Pay', href: '/full-pay', icon: PhoneCall, section: 'Gestión' },
   { label: 'Mentorías', href: '/mentorias', icon: GraduationCap, section: 'Gestión' },
 

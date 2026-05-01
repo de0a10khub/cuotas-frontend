@@ -80,6 +80,17 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // /cobros se fusionó en la home (/). Mantenemos redirect permanente
+  // por si quedan bookmarks o enlaces antiguos en emails/docs.
+  async redirects() {
+    return [
+      {
+        source: '/cobros',
+        destination: '/',
+        permanent: true,
+      },
+    ];
+  },
   // No exponer source maps en producción — limitan la info que un atacante
   // puede sacar leyendo el bundle minificado.
   productionBrowserSourceMaps: false,
