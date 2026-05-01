@@ -51,10 +51,7 @@ export const navigation: NavItem[] = [
 
   { label: 'Datos', href: '/datos', icon: FileText, section: 'Reportes' },
   { label: 'Disputas', href: '/disputas', icon: Scale, section: 'Reportes' },
-  { label: 'Refinanciación', href: '/refinanciacion', icon: Sparkles, section: 'Reportes' },
-  { label: 'Riesgos', href: '/riesgos', icon: ShieldAlert, section: 'Reportes' },
   { label: 'Operaciones', href: '/operaciones', icon: Briefcase, section: 'Reportes' },
-  { label: 'Proyecciones', href: '/proyecciones', icon: BarChart3, section: 'Reportes' },
 
   { label: 'Catálogo', href: '/catalogo', icon: Package, section: 'Admin' },
   { label: 'Empleados', href: '/empleados', icon: UsersRound, section: 'Admin' },
