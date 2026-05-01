@@ -57,6 +57,7 @@ export const navigation: NavItem[] = [
   { label: 'Empleados', href: '/empleados', icon: UsersRound, section: 'Admin' },
   { label: 'Integraciones', href: '/integraciones', icon: PlugZap, section: 'Admin' },
   { label: 'LOG Operaciones', href: '/log', icon: Activity, section: 'Admin' },
+  { label: 'Seguridad', href: '/admin/seguridad', icon: ShieldAlert, section: 'Admin' },
   { label: 'Webhooks', href: '/webhooks', icon: Webhook, section: 'Admin' },
   { label: 'MODO DIOS', href: '/admin/god-mode', icon: Zap, section: 'Admin' },
 ];
