@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 
 interface ByPlatform { count: number; amount: number }
 interface PreviewResponse {
@@ -169,18 +169,41 @@ export default function GodModePage() {
   useEffect(() => {
     if (!jobId) return;
     let cancelled = false;
+    let consecutiveErrors = 0;
     const tick = async () => {
       try {
         const s = await api.get<JobStatus>(`/api/v1/admin/god-mode/status/${jobId}/`);
         if (cancelled) return;
+        consecutiveErrors = 0;
         setJob(s);
         // Sigue pollando mientras esté running O paused — el backend sigue
         // vivo durante la pausa y la UI debe reflejar el resume cuando vuelve.
         if (s.status === 'running' || s.status === 'paused') {
           setTimeout(tick, 1500);
         }
-      } catch {
-        if (!cancelled) setTimeout(tick, 3000);
+      } catch (e) {
+        if (cancelled) return;
+        // Si el backend devuelve 404 para este jobId, significa que el
+        // worker murió (ej: deploy de Render reinició el container).
+        // Limpiamos localStorage para no quedar atrapados pollando un
+        // jobId fantasma indefinidamente.
+        if (e instanceof ApiError && e.status === 404) {
+          try {
+            localStorage.removeItem('god_mode_active_job_id');
+          } catch {/* sessionStorage bloqueado, no crítico */}
+          setJobId(null);
+          setJob(null);
+          toast.error('El job se interrumpió en el servidor. Refresca para empezar otro.');
+          return;
+        }
+        // Otros errores (red, timeout): reintenta hasta 10 veces seguidas,
+        // luego desiste.
+        consecutiveErrors += 1;
+        if (consecutiveErrors >= 10) {
+          toast.error('No se puede contactar al backend. Job desconectado.');
+          return;
+        }
+        setTimeout(tick, 3000);
       }
     };
     tick();
