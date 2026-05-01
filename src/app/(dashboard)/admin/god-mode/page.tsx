@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Zap, AlertTriangle, Check, X, Loader2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Zap, AlertTriangle, Check, X, Loader2, Terminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -96,6 +96,28 @@ function ElectricArc({ delay = 0, top = '20%', side = 'left' }: { delay?: number
   );
 }
 
+// Líneas de boot que se imprimen durante el zapazo (efecto relámpago)
+const ZAPAZO_BOOT_LINES = [
+  '> Acceso autorizado: ROLE_ADMIN',
+  '> Inicializando protocolo de cobro masivo…',
+  '> Conectando Stripe API…           [OK]',
+  '> Conectando Whop API…             [OK]',
+  '> Cargando lista de objetivos…     [OK]',
+  '> Bloqueando concurrencia…         [OK]',
+  '> Disparando cobros en cascada…',
+  '> ⚡ ZAPAZO ⚡ ⚡ ⚡',
+];
+
+interface LogEntry {
+  id: string;
+  at: string;
+  email: string | null;
+  platform: string;
+  amount_eur?: number;
+  success: boolean;
+  error?: string;
+}
+
 export default function GodModePage() {
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -103,6 +125,12 @@ export default function GodModePage() {
   const [confirmText, setConfirmText] = useState('');
   const [jobId, setJobId] = useState<string | null>(null);
   const [job, setJob] = useState<JobStatus | null>(null);
+  // Animación de zapazo: relámpago full-screen + boot lines tras pulsar LANZAR
+  const [zapazo, setZapazo] = useState(false);
+  // Feed log streaming — append-only, terminal style
+  const [logFeed, setLogFeed] = useState<LogEntry[]>([]);
+  const seenIdsRef = useRef<Set<string>>(new Set());
+  const logScrollRef = useRef<HTMLDivElement | null>(null);
 
   const loadPreview = async () => {
     setLoadingPreview(true);
@@ -138,17 +166,56 @@ export default function GodModePage() {
   const onStart = async () => {
     setConfirmOpen(false);
     setConfirmText('');
+    // ZAPAZO: lanza la animación inmediatamente, dispara el job en paralelo.
+    // La animación dura ~3.5s (8 líneas × ~280ms + 1.5s de relámpago final).
+    setZapazo(true);
+    setLogFeed([]);
+    seenIdsRef.current = new Set();
     try {
       const r = await api.post<{ job_id: string; total: number; total_amount_eur: number }>(
         '/api/v1/admin/god-mode/start/',
       );
       setJobId(r.job_id);
       setJob(null);
-      toast.success(`⚡ Lanzado: ${r.total} clientes · ${formatEur(r.total_amount_eur)}`);
+      // Tras la animación, mostrar toast y desactivar zapazo
+      setTimeout(() => {
+        setZapazo(false);
+        toast.success(`⚡ Lanzado: ${r.total} clientes · ${formatEur(r.total_amount_eur)}`);
+      }, 3500);
     } catch {
+      setZapazo(false);
       toast.error('No se pudo iniciar el job');
     }
   };
+
+  // Construye el feed de log a partir de job.recent — append-only, dedup por at+id
+  useEffect(() => {
+    if (!job?.recent) return;
+    const fresh: LogEntry[] = [];
+    for (const r of job.recent) {
+      const id = `${r.at}-${r.email || ''}-${r.platform}`;
+      if (seenIdsRef.current.has(id)) continue;
+      seenIdsRef.current.add(id);
+      fresh.push({
+        id,
+        at: r.at,
+        email: r.email || null,
+        platform: r.platform,
+        amount_eur: r.amount_eur,
+        success: r.success,
+        error: r.error,
+      });
+    }
+    if (fresh.length > 0) {
+      setLogFeed((prev) => [...prev, ...fresh].slice(-300)); // máx 300 líneas
+      // Auto-scroll
+      setTimeout(() => {
+        if (logScrollRef.current) {
+          logScrollRef.current.scrollTop = logScrollRef.current.scrollHeight;
+        }
+      }, 50);
+    }
+  }, [job?.recent]);
 
   const onCancel = async () => {
     if (!jobId) return;
@@ -194,6 +261,51 @@ export default function GodModePage() {
           0%, 100% { transform: translate(0,0); }
           25% { transform: translate(-1px, 0.5px); }
           75% { transform: translate(1px, -0.5px); }
+        }
+        /* === ZAPAZO === */
+        @keyframes zapazo-flash {
+          0%, 100% { opacity: 0; }
+          5% { opacity: 1; }
+          15% { opacity: 0.2; }
+          20% { opacity: 1; }
+          30% { opacity: 0.4; }
+          50% { opacity: 0.95; }
+          70% { opacity: 0.2; }
+          85% { opacity: 0.6; }
+          100% { opacity: 0; }
+        }
+        @keyframes zapazo-bolt {
+          0% { transform: translateY(-100vh) scaleY(0.4); opacity: 0; }
+          15% { transform: translateY(0) scaleY(1); opacity: 1; }
+          25% { transform: translateY(0) scaleY(1.1); opacity: 1; }
+          50% { opacity: 0.85; }
+          70% { transform: translateY(0) scaleY(1); opacity: 1; }
+          100% { transform: translateY(0) scaleY(1); opacity: 0.85; }
+        }
+        @keyframes zapazo-shake {
+          0%, 100% { transform: translate(0,0); }
+          10% { transform: translate(-6px, 4px); }
+          20% { transform: translate(5px, -3px); }
+          30% { transform: translate(-4px, 2px); }
+          40% { transform: translate(3px, -2px); }
+          60% { transform: translate(-2px, 1px); }
+          80% { transform: translate(1px, 0); }
+        }
+        @keyframes zapazo-line-in {
+          from { opacity: 0; transform: translateX(-12px); filter: brightness(2); }
+          to { opacity: 1; transform: translateX(0); filter: brightness(1); }
+        }
+        @keyframes log-row-flash {
+          0% { background: rgba(251,191,36,0.35); }
+          100% { background: transparent; }
+        }
+        @keyframes log-success-flash {
+          0% { background: rgba(52,211,153,0.35); }
+          100% { background: transparent; }
+        }
+        @keyframes log-fail-flash {
+          0% { background: rgba(244,63,94,0.30); }
+          100% { background: transparent; }
         }
       `}</style>
 
@@ -445,6 +557,195 @@ export default function GodModePage() {
           <X className="h-6 w-6" />
           PARAR JOB
         </button>
+      )}
+
+      {/* === ZAPAZO OVERLAY === */}
+      {zapazo && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center"
+          style={{ animation: 'zapazo-shake 0.45s ease-out 3' }}
+        >
+          {/* Flash blanco intenso */}
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-yellow-100"
+            style={{ animation: 'zapazo-flash 1.2s ease-out forwards' }}
+          />
+          {/* Fondo dark base */}
+          <div className="absolute inset-0 bg-[#0a0610]" />
+
+          {/* RAYO gigante centrado */}
+          <svg
+            className="pointer-events-none absolute h-[70vh] w-auto"
+            viewBox="0 0 100 200"
+            style={{ animation: 'zapazo-bolt 0.8s cubic-bezier(.7,0,.3,1) forwards' }}
+          >
+            <defs>
+              <linearGradient id="bolt-grad" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0" stopColor="#fef9c3" />
+                <stop offset="0.3" stopColor="#fde047" />
+                <stop offset="0.7" stopColor="#facc15" />
+                <stop offset="1" stopColor="#a78bfa" />
+              </linearGradient>
+              <filter id="bolt-glow">
+                <feGaussianBlur stdDeviation="4" result="b" />
+                <feMerge>
+                  <feMergeNode in="b" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            <path
+              d="M55 0 L25 90 L50 90 L20 200 L80 80 L48 80 L75 0 Z"
+              fill="url(#bolt-grad)"
+              filter="url(#bolt-glow)"
+              stroke="#fffbeb"
+              strokeWidth="0.5"
+            />
+          </svg>
+
+          {/* Anillos pulsantes que salen del centro */}
+          {[0, 0.3, 0.6, 0.9].map((d) => (
+            <div
+              key={d}
+              className="pointer-events-none absolute h-32 w-32 rounded-full border-2 border-amber-300"
+              style={{
+                animation: `pulse-ring 1.6s ease-out ${d}s infinite`,
+                boxShadow: '0 0 50px rgba(251,191,36,0.7)',
+              }}
+            />
+          ))}
+
+          {/* Rayos diagonales (electric arcs) saliendo del centro */}
+          {[0, 60, 120, 180, 240, 300].map((angle, i) => (
+            <div
+              key={angle}
+              className="pointer-events-none absolute h-1 w-[60vw] origin-left bg-gradient-to-r from-yellow-200 via-amber-400 to-transparent"
+              style={{
+                transform: `rotate(${angle}deg)`,
+                left: '50%',
+                top: '50%',
+                animation: `arc 1s ease-out ${i * 0.08}s forwards`,
+                opacity: 0,
+                boxShadow: '0 0 12px rgba(251,191,36,0.9)',
+              }}
+            />
+          ))}
+
+          {/* Boot lines tipo terminal flotando arriba */}
+          <div className="absolute left-1/2 top-[8%] -translate-x-1/2 font-mono text-sm text-amber-200 sm:text-base">
+            {ZAPAZO_BOOT_LINES.map((line, i) => (
+              <div
+                key={i}
+                style={{
+                  animation: `zapazo-line-in 240ms ease-out ${0.3 + i * 0.3}s forwards`,
+                  opacity: 0,
+                  filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.8))',
+                }}
+              >
+                {line}
+              </div>
+            ))}
+          </div>
+
+          {/* Texto MODO DIOS abajo, masivo */}
+          <div
+            className="pointer-events-none absolute bottom-[8%] left-1/2 -translate-x-1/2 text-center"
+            style={{
+              animation: 'zapazo-line-in 400ms ease-out 2.5s forwards',
+              opacity: 0,
+            }}
+          >
+            <p className="font-mono text-[11px] uppercase tracking-[0.5em] text-amber-300/80">
+              ⚡ Protocolo activado ⚡
+            </p>
+            <h2
+              className="bg-gradient-to-b from-amber-100 via-amber-300 to-amber-600 bg-clip-text font-mono text-5xl font-black uppercase tracking-[0.15em] text-transparent sm:text-6xl"
+              style={{
+                textShadow: '0 0 60px rgba(251,191,36,1)',
+              }}
+            >
+              MODO DIOS
+            </h2>
+          </div>
+        </div>
+      )}
+
+      {/* === LOG FEED LATERAL === aparece junto al panel de progreso */}
+      {job && jobId && (
+        <div className="fixed right-4 top-20 bottom-4 z-30 hidden w-96 flex-col rounded-xl border border-amber-500/30 bg-slate-950/95 shadow-[0_0_40px_rgba(251,191,36,0.15)] backdrop-blur xl:flex">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-amber-500/30 px-3 py-2">
+            <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-amber-300/80">
+              <Terminal className="h-3.5 w-3.5" />
+              live · /tty0
+            </div>
+            <div className="flex items-center gap-2 font-mono text-[10px] text-amber-100/50">
+              <span className="inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.9)]" />
+              {logFeed.length} líneas
+            </div>
+          </div>
+          {/* Stream */}
+          <div
+            ref={logScrollRef}
+            className="flex-1 overflow-y-auto px-2 py-2 font-mono text-[11px] leading-[1.5]"
+          >
+            {logFeed.length === 0 && (
+              <p className="px-2 text-amber-300/40 italic">esperando primera respuesta…</p>
+            )}
+            {logFeed.map((row) => {
+              const time = new Date(row.at).toLocaleTimeString('es-ES', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+              });
+              const flashAnim = row.success
+                ? 'log-success-flash 1.4s ease-out'
+                : 'log-fail-flash 1.4s ease-out';
+              return (
+                <div
+                  key={row.id}
+                  className="rounded px-2 py-1"
+                  style={{ animation: flashAnim }}
+                >
+                  <span className="text-amber-300/40">[{time}]</span>{' '}
+                  <span
+                    className={
+                      row.success ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'
+                    }
+                  >
+                    {row.success ? '✓' : '✗'}
+                  </span>{' '}
+                  <span className="text-amber-200">
+                    {row.platform}
+                  </span>{' '}
+                  <span className="text-amber-100/80">{row.email || 'cliente'}</span>
+                  {row.amount_eur ? (
+                    <span className="text-amber-100"> · {formatEur(row.amount_eur)}</span>
+                  ) : null}
+                  {!row.success && row.error && (
+                    <div className="ml-6 mt-0.5 truncate text-rose-300/70" title={row.error}>
+                      → {row.error.slice(0, 80)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {/* Footer mini-stats */}
+          <div className="grid grid-cols-3 gap-1 border-t border-amber-500/30 px-2 py-2 text-center font-mono text-[10px]">
+            <div>
+              <p className="text-amber-300/60">PROC</p>
+              <p className="text-amber-100">{job.done}/{job.total}</p>
+            </div>
+            <div>
+              <p className="text-emerald-400/60">OK</p>
+              <p className="text-emerald-300">{job.success}</p>
+            </div>
+            <div>
+              <p className="text-rose-400/60">ERR</p>
+              <p className="text-rose-300">{job.failure}</p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* CONFIRM DIALOG */}
