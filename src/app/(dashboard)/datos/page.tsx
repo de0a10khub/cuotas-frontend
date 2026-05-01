@@ -92,6 +92,7 @@ export default function DatosPage() {
       const path = datosApi.exportEntityUrl(entity, { from, to, limit });
       const token = getAccessToken();
       const res = await fetch(`${API_URL}${path}`, {
+        credentials: 'include',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) throw new Error('export_failed');

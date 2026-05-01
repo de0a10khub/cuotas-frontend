@@ -107,6 +107,7 @@ export function ExternalPaymentButton({ subscriptionId, defaultAmountEur, onRegi
         `${apiUrl}/api/v1/clientes-directorio/external-payment/${subscriptionId}/`,
         {
           method: 'POST',
+          credentials: 'include',
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           body: formData,
         },

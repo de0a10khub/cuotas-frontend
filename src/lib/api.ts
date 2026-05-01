@@ -1,5 +1,7 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
+// localStorage tokens (legacy compat — backend acepta cookies HttpOnly también).
+// Plan a futuro: cuando confirmemos que las cookies funcionan, quitar localStorage.
 export const TOKENS = {
   access: 'cuotas_access',
   refresh: 'cuotas_refresh',
@@ -26,23 +28,18 @@ export function clearTokens() {
 }
 
 /**
- * Logout server-side: blacklist el refresh token en el backend para que no
- * pueda usarse aunque alguien lo robe. Es best-effort — si falla la red,
- * limpiamos local igualmente para no atrapar al usuario.
+ * Logout server-side: blacklist el refresh token + limpia cookie HttpOnly.
+ * El backend lee el refresh de la cookie automáticamente — pero seguimos
+ * mandando el body con localStorage por compat con tokens legacy.
  */
 export async function serverLogout(): Promise<void> {
   const refresh = getRefreshToken();
-  if (!refresh) return;
   try {
     await fetch(`${API_URL}/api/v1/auth/logout/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Authorization opcional pero ayuda si el endpoint lo pide en el futuro.
-        ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
-      },
-      body: JSON.stringify({ refresh }),
-      // No bloqueamos navegación si el endpoint tarda.
+      credentials: 'include', // ← envía cookie HttpOnly del refresh
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh: refresh || '' }),
       keepalive: true,
     });
   } catch {
@@ -51,8 +48,7 @@ export async function serverLogout(): Promise<void> {
 }
 
 // Single-flight: si N peticiones simultáneas reciben 401, solo una llama a /refresh.
-// Las demás esperan al mismo Promise para evitar el race con ROTATE_REFRESH_TOKENS
-// (donde el refresh token viejo queda blacklisteado tras la primera rotación).
+// Las demás esperan al mismo Promise para evitar el race con ROTATE_REFRESH_TOKENS.
 let inflightRefresh: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
@@ -60,13 +56,15 @@ async function refreshAccessToken(): Promise<string | null> {
 
   inflightRefresh = (async () => {
     const refresh = getRefreshToken();
-    if (!refresh) return null;
 
     try {
       const res = await fetch(`${API_URL}/api/v1/auth/refresh/`, {
         method: 'POST',
+        credentials: 'include', // ← envía cookie del refresh si existe
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh }),
+        // Body fallback: si la cookie HttpOnly aún no llegó al browser
+        // (primer login post-deploy), sigue funcionando con localStorage.
+        body: JSON.stringify({ refresh: refresh || '' }),
       });
 
       if (!res.ok) {
@@ -75,15 +73,14 @@ async function refreshAccessToken(): Promise<string | null> {
       }
 
       const data = await res.json();
-      localStorage.setItem(TOKENS.access, data.access);
+      // Backend setea cookie HttpOnly automáticamente. Además guardamos
+      // en localStorage por compat — se irá quitando en próxima fase.
+      if (data.access) localStorage.setItem(TOKENS.access, data.access);
       if (data.refresh) localStorage.setItem(TOKENS.refresh, data.refresh);
-      return data.access;
+      return data.access || null;
     } catch {
-      // Network/abort — no borramos tokens (puede ser un blip), mantenemos sesión
       return null;
     } finally {
-      // Pequeño delay antes de liberar el lock para que requests muy juntas
-      // que reentren al while no salten la cache de localStorage que acabamos de escribir
       setTimeout(() => { inflightRefresh = null; }, 50);
     }
   })();
@@ -110,6 +107,8 @@ export async function apiFetch<T = unknown>(
       'Content-Type': 'application/json',
       ...(headers as Record<string, string>),
     };
+    // Authorization header sigue presente para compat — cuando los
+    // operarios actualicen su sesión, el backend leerá de cookie también.
     if (auth && token) base.Authorization = `Bearer ${token}`;
     return base;
   };
@@ -117,17 +116,19 @@ export async function apiFetch<T = unknown>(
   let token = auth ? getAccessToken() : null;
   let res = await fetch(`${API_URL}${path}`, {
     ...rest,
+    credentials: 'include', // ← cookie HttpOnly viaja con la request
     headers: buildHeaders(token),
   });
 
   if (res.status === 401 && auth) {
     token = await refreshAccessToken();
-    if (token) {
-      res = await fetch(`${API_URL}${path}`, {
-        ...rest,
-        headers: buildHeaders(token),
-      });
-    }
+    // Reintenta la request original — ahora con la cookie nueva
+    // (y el access token nuevo en localStorage si lo hay).
+    res = await fetch(`${API_URL}${path}`, {
+      ...rest,
+      credentials: 'include',
+      headers: buildHeaders(token),
+    });
   }
 
   const body = await res.text();
@@ -151,11 +152,15 @@ export const api = {
 };
 
 export async function login(username: string, password: string) {
+  // POST con credentials: 'include' para que el browser acepte la
+  // cookie HttpOnly que el backend setea en la response.
   const data = await api.post<{ access: string; refresh: string }>(
     '/api/v1/auth/login/',
     { username, password },
     { auth: false },
   );
+  // Backend ya seteó cookie HttpOnly. Guardamos también en localStorage
+  // por compat — se irá quitando en próxima fase.
   setTokens(data.access, data.refresh);
   return data;
 }

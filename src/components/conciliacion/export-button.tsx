@@ -23,6 +23,7 @@ export function ExportConciliacionButton({ month, year, disabled }: Props) {
     try {
       const token = getAccessToken();
       const res = await fetch(`${API_URL}${conciliacionApi.exportUrl(month, year)}`, {
+        credentials: 'include',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) throw new Error('export_failed');

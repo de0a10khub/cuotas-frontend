@@ -103,6 +103,7 @@ export default function RefinanciacionPage() {
     try {
       const token = getAccessToken();
       const res = await fetch(`${API_URL}${refinanApi.exportUrl()}`, {
+        credentials: 'include',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) throw new Error();
