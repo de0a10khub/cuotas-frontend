@@ -32,7 +32,7 @@ interface JobDetail {
 }
 interface JobStatus {
   id: string;
-  status: 'running' | 'completed' | 'cancelled' | 'errored';
+  status: 'running' | 'paused' | 'completed' | 'cancelled' | 'errored';
   started_at: string;
   completed_at: string | null;
   total: number;
@@ -40,6 +40,7 @@ interface JobStatus {
   success: number;
   failure: number;
   recent: JobDetail[];
+  pause_until?: number;
 }
 
 function formatEur(n: number) {
@@ -227,7 +228,8 @@ export default function GodModePage() {
     }
   };
 
-  const isRunning = job?.status === 'running';
+  const isRunning = job?.status === 'running' || job?.status === 'paused';
+  const isPaused = job?.status === 'paused';
   const progress = job ? Math.round((job.done / Math.max(job.total, 1)) * 100) : 0;
   const targetsCount = preview?.total_targets ?? 0;
   const totalAmount = preview?.total_amount_eur ?? 0;
@@ -452,12 +454,23 @@ export default function GodModePage() {
           <div className="mt-10 w-full max-w-3xl rounded-lg border border-amber-500/30 bg-slate-900/80 p-5 backdrop-blur">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                {isRunning && <Loader2 className="h-5 w-5 animate-spin text-amber-400" />}
+                {job.status === 'running' && <Loader2 className="h-5 w-5 animate-spin text-amber-400" />}
+                {isPaused && (
+                  <span
+                    className="inline-flex h-3 w-3 animate-pulse rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.9)]"
+                    aria-hidden
+                  />
+                )}
                 {job.status === 'completed' && <Check className="h-5 w-5 text-emerald-400" />}
                 {job.status === 'cancelled' && <X className="h-5 w-5 text-amber-400" />}
                 {job.status === 'errored' && <AlertTriangle className="h-5 w-5 text-rose-400" />}
                 <span className="font-mono uppercase tracking-wider text-amber-100">
                   Job · {job.status}
+                  {isPaused && (
+                    <span className="ml-2 text-amber-300/80 normal-case">
+                      (descanso 1 min — evitando rate limit)
+                    </span>
+                  )}
                 </span>
               </div>
               {isRunning && (
