@@ -21,6 +21,7 @@ import {
   Headphones,
   Bell,
   Zap,
+  User,
   GitMerge as MergeIcon,
   type LucideIcon,
 } from 'lucide-react';
@@ -33,6 +34,9 @@ export interface NavItem {
 }
 
 export const navigation: NavItem[] = [
+  { label: 'Mis Casos', href: '/mis-casos', icon: User, section: 'Personal' },
+  { label: 'Casos por Operario', href: '/casos-por-operario', icon: UsersRound, section: 'Personal' },
+
   { label: 'Inicio', href: '/', icon: LayoutDashboard, section: 'General' },
   { label: 'Board KPIs', href: '/board2', icon: BarChart3, section: 'General' },
   { label: 'Notificaciones', href: '/notificaciones', icon: Bell, section: 'General' },
