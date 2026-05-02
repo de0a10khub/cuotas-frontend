@@ -116,7 +116,9 @@ export const moraApi = {
     subscription_id: string;
     customer_id: string;
     platform: string;
-  }) => api.post<{ url: string }>(`${BASE}/payment-update-link/`, payload),
+    /** installment_id (poi_*) — necesario para Whop ERP. */
+    item_id?: string;
+  }) => api.post<{ url: string; platform: string }>(`${BASE}/payment-update-link/`, payload),
 
   generateContract: (payload: {
     subscription_id: string;
