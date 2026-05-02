@@ -557,7 +557,7 @@ function NotifPanel({
             {recaidas.map((it) => (
               <Link
                 key={`re-${it.subscription_id}`}
-                href={buildHref('mora', it.customer_email)}
+                href={buildHref('mora', it.customer_email ?? it.customer_name ?? '')}
                 className="block px-4 py-3 transition-colors hover:bg-cyan-500/5"
               >
                 <p className="font-medium text-cyan-100">
