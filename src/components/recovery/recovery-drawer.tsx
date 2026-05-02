@@ -28,6 +28,7 @@ import {
   CreditCard,
   FileText,
   GraduationCap,
+  History,
   Lock,
   Mail,
   MessageSquare,
@@ -49,6 +50,7 @@ import { PdfViewerModal } from '@/components/data/pdf-viewer-modal';
 import { ActionHistoryList } from './action-history-list';
 import { FailedPaymentsList } from './failed-payments-list';
 import { InteractionHistoryList } from './interaction-history-list';
+import { MoraTimeline } from './mora-timeline';
 import { MultiSelectTags } from './multi-select-tags';
 import { MultiContactList } from './multi-contact-list';
 import { ExternalPaymentButton } from './external-payment-button';
@@ -65,7 +67,7 @@ interface Props {
   onUpdated?: (row: RecoveryRow) => void;
 }
 
-type TabKey = 'gestion' | 'seguimiento' | 'pagos' | 'historial';
+type TabKey = 'gestion' | 'seguimiento' | 'pagos' | 'historial' | 'mora';
 
 export function RecoveryDrawer({
   mode,
@@ -485,7 +487,7 @@ export function RecoveryDrawer({
                 <TabsList
                   className={cn(
                     'h-auto w-full gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-900',
-                    isMora && 'grid grid-cols-4',
+                    isMora && 'grid grid-cols-5',
                   )}
                 >
                   <TabsTrigger
@@ -518,6 +520,15 @@ export function RecoveryDrawer({
                     <RotateCcw className="h-3.5 w-3.5" />
                     {isMora ? 'Reintentos' : 'Historial'}
                   </TabsTrigger>
+                  {isMora && (
+                    <TabsTrigger
+                      value="mora"
+                      className="gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
+                    >
+                      <History className="h-3.5 w-3.5" />
+                      Mora
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
                 <TabsContent value="gestion" className="space-y-4">
@@ -619,6 +630,12 @@ export function RecoveryDrawer({
                 <TabsContent value="historial">
                   <ActionHistoryList api={api} subscriptionId={row.subscription_id} />
                 </TabsContent>
+
+                {isMora && (
+                  <TabsContent value="mora">
+                    <MoraTimeline subscriptionId={row.subscription_id} />
+                  </TabsContent>
+                )}
               </Tabs>
             )}
           </div>

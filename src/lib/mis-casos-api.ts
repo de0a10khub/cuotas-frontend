@@ -82,6 +82,72 @@ export interface OperatorDetailResponse {
   rows_by_panel?: Record<MisCasosPanel, MisCasosRow[]>;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Timeline cronológico de un cliente (tab "Mora" en el drawer)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type TimelineEventType =
+  | 'entered_mora'
+  | 'assigned_owner'
+  | 'note'
+  | 'payment_attempt'
+  | 'status_changed'
+  | 'recovered'
+  | 'moved_to_n2'
+  | 'moved_to_n1';
+
+export interface TimelineEvent {
+  /** ISO timestamp. */
+  ts: string;
+  type: TimelineEventType;
+  actor_display: string | null;
+  /** Carga libre — depende del tipo de evento. */
+  details: Record<string, unknown>;
+  /** Resumen ya formateado por el backend. */
+  summary: string;
+}
+
+export interface MoraHistoryResponse {
+  subscription_id: string;
+  current_owner_email: string | null;
+  current_owner_display: string | null;
+  events: TimelineEvent[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notificaciones (campana en /mis-casos)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface MovedToN2Item {
+  subscription_id: string;
+  customer_name: string;
+  customer_email: string;
+  /** ISO timestamp en que el caso pasó a N2. */
+  moved_at: string;
+  current_status: string;
+  /** display_name del operario que ahora lleva el caso en N2. */
+  current_contacted_by: string | null;
+}
+
+export interface RecaidaItem {
+  subscription_id: string;
+  customer_name: string;
+  /** ISO timestamp de la última recuperación previa. */
+  previous_recovered_at: string | null;
+  now_status: string;
+  customer_email?: string;
+}
+
+export interface MovedToN2Response {
+  count: number;
+  results: MovedToN2Item[];
+}
+
+export interface RecaidasResponse {
+  count: number;
+  results: RecaidaItem[];
+}
+
 function toQuery(params: Record<string, string | number | undefined>): string {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
@@ -111,5 +177,27 @@ export const misCasosApi = {
   operatorDetail: (email: string) =>
     api.get<OperatorDetailResponse>(
       `/api/v1/casos-por-operario/operator/${encodeURIComponent(email)}/`,
+    ),
+
+  /** Timeline cronológico de un cliente (eventos de mora, notas, pagos, …). */
+  history: (subscriptionId: string) =>
+    api.get<MoraHistoryResponse>(
+      `/api/v1/mora-history/${encodeURIComponent(subscriptionId)}/`,
+    ),
+
+  /** Casos que el operario llevaba y han pasado a N2 (notificación campana). */
+  movidosAN2: (asEmail?: string) =>
+    api.get<MovedToN2Response>(
+      `/api/v1/mis-casos/movidos-a-n2/${
+        asEmail ? `?as_email=${encodeURIComponent(asEmail)}` : ''
+      }`,
+    ),
+
+  /** Clientes que el operario recuperó y han vuelto a caer (recaídas). */
+  recaidas: (asEmail?: string) =>
+    api.get<RecaidasResponse>(
+      `/api/v1/mis-casos/recaidas/${
+        asEmail ? `?as_email=${encodeURIComponent(asEmail)}` : ''
+      }`,
     ),
 };
