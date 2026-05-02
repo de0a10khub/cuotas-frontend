@@ -549,24 +549,24 @@ function NotifPanel({
       )}
 
       {recaidas.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[#0a1628]">
-          <div className="border-b border-cyan-400/20 bg-cyan-950/30 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300">
-            Recaídas · {recaidas.length}
+        <div className="overflow-hidden rounded-2xl border border-emerald-500/20 bg-[#0a1628]">
+          <div className="border-b border-emerald-400/20 bg-emerald-950/30 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-300">
+            Pagaron · {recaidas.length}
           </div>
-          <div className="divide-y divide-cyan-400/10">
+          <div className="divide-y divide-emerald-400/10">
             {recaidas.map((it) => (
               <Link
                 key={`re-${it.subscription_id}`}
                 href={buildHref('mora', it.customer_email ?? it.customer_name ?? '')}
-                className="block px-4 py-3 transition-colors hover:bg-cyan-500/5"
+                className="block px-4 py-3 transition-colors hover:bg-emerald-500/5"
               >
-                <p className="font-medium text-cyan-100">
+                <p className="font-medium text-emerald-100">
                   {it.customer_name || it.customer_email || 'Cliente'}
                 </p>
-                <p className="mt-0.5 text-xs text-cyan-200/60">
+                <p className="mt-0.5 text-xs text-emerald-200/60">
                   {it.customer_email}
                   {it.now_status && (
-                    <> · volvió a entrar en mora · <b>{it.now_status}</b></>
+                    <> · ✅ <b>{it.now_status}</b></>
                   )}
                 </p>
               </Link>
