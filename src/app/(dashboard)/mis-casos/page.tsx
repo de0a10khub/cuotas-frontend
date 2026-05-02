@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { NotificationsBell } from '@/components/mis-casos/notifications-bell';
 import { useAuth } from '@/lib/auth-context';
 import { formatEuros } from '@/lib/format';
 import {
@@ -47,7 +48,6 @@ const TABS: ReadonlyArray<{
   { id: 'mora_n2', label: 'Mora N2', panelHref: '/mora-n2', accent: 'orange' },
   { id: 'recobros', label: 'Recobrame', panelHref: '/recobros', accent: 'violet' },
   { id: 'full_pay', label: 'Full-Pay', panelHref: '/full-pay', accent: 'emerald' },
-  { id: 'clientes', label: 'Clientes', panelHref: '/clientes', accent: 'blue' },
 ] as const;
 
 const PAGE_SIZE = 25;
@@ -286,14 +286,17 @@ export default function MisCasosPage() {
             </div>
           </div>
 
-          <div className="relative w-full max-w-xs sm:w-auto">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-blue-300/60" />
-            <Input
-              value={pendingSearch}
-              onChange={(e) => setPendingSearch(e.target.value)}
-              placeholder="Buscar cliente, email..."
-              className="h-9 border-blue-400/20 bg-blue-950/30 pl-8 text-blue-100 placeholder:text-blue-300/40 focus-visible:border-blue-400/60"
-            />
+          <div className="flex items-center gap-2">
+            <NotificationsBell asEmail={asEmail} />
+            <div className="relative w-full max-w-xs sm:w-auto">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-blue-300/60" />
+              <Input
+                value={pendingSearch}
+                onChange={(e) => setPendingSearch(e.target.value)}
+                placeholder="Buscar cliente, email..."
+                className="h-9 border-blue-400/20 bg-blue-950/30 pl-8 text-blue-100 placeholder:text-blue-300/40 focus-visible:border-blue-400/60"
+              />
+            </div>
           </div>
         </div>
       </header>
