@@ -57,6 +57,29 @@ export function NotificationsBell({ asEmail }: Props) {
   const [movidos, setMovidos] = useState<MovedToN2Item[]>([]);
   const [recaidas, setRecaidas] = useState<RecaidaItem[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
+
+  // Recalcula posición del popover cada vez que se abre o se hace scroll/resize.
+  useEffect(() => {
+    if (!open) return;
+    const updatePos = () => {
+      const btn = buttonRef.current;
+      if (!btn) return;
+      const r = btn.getBoundingClientRect();
+      setPopoverPos({
+        top: r.bottom + 8,                          // 8px debajo del botón
+        right: window.innerWidth - r.right,         // alineado al borde derecho del botón
+      });
+    };
+    updatePos();
+    window.addEventListener('resize', updatePos);
+    window.addEventListener('scroll', updatePos, true);
+    return () => {
+      window.removeEventListener('resize', updatePos);
+      window.removeEventListener('scroll', updatePos, true);
+    };
+  }, [open]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -119,6 +142,7 @@ export function NotificationsBell({ asEmail }: Props) {
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={`Notificaciones (${total})`}
@@ -139,7 +163,8 @@ export function NotificationsBell({ asEmail }: Props) {
         <div
           role="dialog"
           aria-label="Notificaciones"
-          className="absolute right-0 top-[calc(100%+8px)] z-50 w-[360px] max-w-[92vw] overflow-hidden rounded-xl border border-blue-400/20 bg-[#0a1628]/95 shadow-2xl backdrop-blur-sm"
+          style={{ top: popoverPos.top, right: popoverPos.right }}
+          className="fixed z-[9999] w-[360px] max-w-[92vw] overflow-hidden rounded-xl border border-blue-400/20 bg-[#0a1628] shadow-2xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-2 border-b border-blue-400/20 bg-blue-950/40 px-3 py-2">

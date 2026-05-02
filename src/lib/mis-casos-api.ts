@@ -54,6 +54,8 @@ export interface MisCasosListResponse {
   counts?: Record<MisCasosPanel, number>;
   /** Deuda total agregada del operario activo (todos los paneles). */
   deuda_total_eur?: number;
+  /** Tabs visibles según el rol del operario (deriva de allowed_paths). */
+  panels_visible?: MisCasosPanel[];
 }
 
 export interface OperatorWithKPIs {

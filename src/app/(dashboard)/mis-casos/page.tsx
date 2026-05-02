@@ -86,11 +86,22 @@ export default function MisCasosPage() {
   const asEmail = sp.get('as') || undefined;
   const isImpersonating = isAdmin && !!asEmail;
 
+  // Tabs visibles según el rol del operario impersonado/propio.
+  // Se hidrata desde la respuesta del backend (panels_visible). Default: solo Mora N1
+  // hasta que llegue la primera respuesta — evita parpadeo.
+  const [panelsVisible, setPanelsVisible] = useState<MisCasosPanel[]>(['mora_n1']);
+  const visibleTabs = useMemo(
+    () => TABS.filter((t) => panelsVisible.includes(t.id)),
+    [panelsVisible],
+  );
+
   // Tab activo desde URL para que sea linkeable / refrescable.
+  // Si la URL pide un tab que el rol no puede ver, fallback al primer disponible.
+  const requestedTab = sp.get('tab') as MisCasosPanel | null;
   const activeTab: MisCasosPanel =
-    (sp.get('tab') as MisCasosPanel) && TABS.some((t) => t.id === sp.get('tab'))
-      ? (sp.get('tab') as MisCasosPanel)
-      : 'mora_n1';
+    requestedTab && visibleTabs.some((t) => t.id === requestedTab)
+      ? requestedTab
+      : (visibleTabs[0]?.id ?? 'mora_n1');
 
   const [search, setSearch] = useState('');
   const [pendingSearch, setPendingSearch] = useState('');
@@ -122,6 +133,10 @@ export default function MisCasosPage() {
         as_email: asEmail,
       });
       setData(r);
+      // Actualiza tabs visibles si el backend los manda
+      if (r.panels_visible && r.panels_visible.length > 0) {
+        setPanelsVisible(r.panels_visible);
+      }
     } catch {
       toast.error('Error cargando casos');
       setData(null);
@@ -155,10 +170,10 @@ export default function MisCasosPage() {
     let cancelled = false;
     (async () => {
       try {
-        // Pedimos los 5 paneles con page_size=1 solo para extraer total_count.
-        // Cuando backend lo soporte, esto se podrá colapsar a 1 sola llamada.
+        // Solo pedimos los tabs visibles (según rol del operario).
+        const tabsToFetch = visibleTabs.length > 0 ? visibleTabs : TABS;
         const all = await Promise.all(
-          TABS.map((t) =>
+          tabsToFetch.map((t) =>
             misCasosApi
               .list(t.id, { page: 1, page_size: 1, as_email: asEmail })
               .catch(() => null),
@@ -176,7 +191,7 @@ export default function MisCasosPage() {
         let total = 0;
         let deuda = 0;
         let displayName = '';
-        TABS.forEach((t, i) => {
+        tabsToFetch.forEach((t, i) => {
           const r = all[i];
           if (!r) return;
           next[t.id] = r.total_count || 0;
@@ -201,7 +216,7 @@ export default function MisCasosPage() {
     return () => {
       cancelled = true;
     };
-  }, [asEmail, profile?.full_name, profile?.user?.email]);
+  }, [asEmail, profile?.full_name, profile?.user?.email, visibleTabs]);
 
   const setTab = (id: MisCasosPanel) => {
     const q = new URLSearchParams(sp.toString());
@@ -304,7 +319,7 @@ export default function MisCasosPage() {
       {/* Tabs */}
       <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-[#0d1f3a]/80 to-[#1a2c52]/60 p-1.5 backdrop-blur-sm">
         <div className="flex flex-wrap gap-1">
-          {TABS.map((t) => {
+          {visibleTabs.map((t) => {
             const active = activeTab === t.id;
             const count = tabCounts[t.id];
             return (
