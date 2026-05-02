@@ -303,7 +303,7 @@ function DatePicker({
 export default function LogPage() {
   const [events, setEvents] = useState<LogEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'success' | 'failure'>('all');
+  const [filter, setFilter] = useState<'all' | 'success' | 'failure' | 'checkout_attempt'>('all');
   const [source, setSource] = useState<'all' | 'stripe' | 'whop' | 'whop-erp'>('all');
   const [search, setSearch] = useState('');
   const [dayFilter, setDayFilter] = useState<string>('all'); // 'all' | YYYY-MM-DD
@@ -383,7 +383,11 @@ export default function LogPage() {
     () => ({
       total: filteredEvents.length,
       success: filteredEvents.filter((e) => e.is_success).length,
-      failure: filteredEvents.filter((e) => !e.is_success).length,
+      // failure = solo cuotas recurrentes que fallaron (problema real).
+      // Los intentos de checkout (leads nuevos) van en 'attempts' aparte
+      // para que no inflen el contador de fallos.
+      failure: filteredEvents.filter((e) => e.event_kind === 'recurring_failed').length,
+      attempts: filteredEvents.filter((e) => e.event_kind === 'checkout_attempt').length,
     }),
     [filteredEvents],
   );
@@ -393,9 +397,12 @@ export default function LogPage() {
     () => filteredEvents.filter((e) => e.is_success).reduce((s, e) => s + (e.amount || 0), 0),
     [filteredEvents],
   );
-  // Total NO cobrado (eventos fallidos)
+  // Total NO cobrado (solo cuotas recurrentes fallidas; checkout attempts no
+  // se suman porque no son cuotas reales del sistema).
   const totalFailureAmount = useMemo(
-    () => filteredEvents.filter((e) => !e.is_success).reduce((s, e) => s + (e.amount || 0), 0),
+    () => filteredEvents
+      .filter((e) => e.event_kind === 'recurring_failed')
+      .reduce((s, e) => s + (e.amount || 0), 0),
     [filteredEvents],
   );
   const successRate = counts.total > 0 ? Math.round((counts.success / counts.total) * 100) : 0;
@@ -473,7 +480,7 @@ export default function LogPage() {
       <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-[#0d1f3a]/80 to-[#1a2c52]/60 p-3 backdrop-blur-sm">
         <div className="flex flex-wrap items-center gap-3">
           <div className="inline-flex rounded-lg border border-blue-400/20 bg-blue-950/40 p-0.5">
-            {(['all', 'success', 'failure'] as const).map((f) => (
+            {(['all', 'success', 'failure', 'checkout_attempt'] as const).map((f) => (
               <button
                 key={f}
                 type="button"
@@ -485,7 +492,10 @@ export default function LogPage() {
                     : 'text-blue-200/70 hover:text-white',
                 )}
               >
-                {f === 'all' ? 'Todos' : f === 'success' ? '✓ Éxito' : '✗ Fallo'}
+                {f === 'all' ? 'Todos'
+                  : f === 'success' ? '✓ Éxito'
+                  : f === 'failure' ? '✗ Fallo'
+                  : '⚠ Intentos'}
               </button>
             ))}
           </div>
@@ -572,7 +582,8 @@ export default function LogPage() {
                   onClick={() => setSelected(e)}
                   className={cn(
                     'group grid w-full grid-cols-[110px_120px_1fr_140px_90px] items-center gap-4 border-b border-blue-400/10 px-4 py-2.5 text-left transition-all hover:bg-blue-500/5',
-                    !e.is_success && 'bg-orange-500/[0.02]',
+                    e.event_kind === 'recurring_failed' && 'bg-orange-500/[0.02]',
+                    e.event_kind === 'checkout_attempt' && 'bg-amber-500/[0.02]',
                   )}
                 >
                   {/* Fecha + tiempo */}
@@ -620,7 +631,9 @@ export default function LogPage() {
                     <p
                       className={cn(
                         'text-base font-bold tabular-nums tracking-tight',
-                        e.is_success ? 'text-cyan-300' : 'text-blue-300/40 line-through decoration-orange-400/60',
+                        e.is_success && 'text-cyan-300',
+                        e.event_kind === 'recurring_failed' && 'text-blue-300/40 line-through decoration-orange-400/60',
+                        e.event_kind === 'checkout_attempt' && 'text-amber-300/70',
                       )}
                     >
                       {formatEur(e.amount)}
@@ -633,6 +646,14 @@ export default function LogPage() {
                       <span className="inline-flex items-center gap-1 rounded-full bg-cyan-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300 ring-1 ring-cyan-400/30">
                         <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.9)]" />
                         OK
+                      </span>
+                    ) : e.event_kind === 'checkout_attempt' ? (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300 ring-1 ring-amber-400/30"
+                        title="Lead nuevo intentando pagar (no cuenta como cuota fallida)"
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.9)]" />
+                        INTENTO
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-300 ring-1 ring-orange-400/30">

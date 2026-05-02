@@ -14,6 +14,12 @@ export interface LogEvent {
   currency: string;
   is_success: boolean;
   failure_reason: string | null;
+  // success: cobro completado.
+  // recurring_failed: cuota recurrente fallida (cuenta como fallo real).
+  // checkout_attempt: lead nuevo probando pagar (informativo, NO cuenta).
+  // other: cualquier otro tipo (refund, pending, etc.).
+  event_kind?: 'success' | 'recurring_failed' | 'checkout_attempt' | 'other';
+  installment_number?: number | null;
 }
 
 export interface ChargeDetail {
