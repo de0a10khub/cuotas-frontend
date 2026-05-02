@@ -31,13 +31,15 @@ export interface MisCasosRow {
   customer_email: string;
   customer_phone?: string;
   platform: string;
-  /** Estado del panel correspondiente (mora status, recovery status, …). */
-  status: string | null;
-  /** display_name del operario asignado. */
-  assigned_operator: string | null;
-  assigned_operator_email: string | null;
+  /** Estado de recobros (Pendiente, Seguimiento, Recobrame, etc.). */
+  recovery_status: string | null;
+  /** display_name del operario que está actualmente trabajando el caso. */
+  recovery_contacted_by: string | null;
+  /** Email del owner sticky (el operario que "lleva" al cliente). */
+  recovery_owner_email: string | null;
   days_overdue: number;
   unpaid_total: number;
+  category?: string;
   /** El backend marca a qué panel pertenece la fila para la columna "Panel". */
   panel?: MisCasosPanel;
 }

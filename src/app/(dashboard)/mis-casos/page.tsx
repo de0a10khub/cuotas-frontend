@@ -302,7 +302,6 @@ export default function MisCasosPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <NotificationsBell asEmail={asEmail} />
             <div className="relative w-full max-w-xs sm:w-auto">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-blue-300/60" />
               <Input
@@ -316,9 +315,9 @@ export default function MisCasosPage() {
         </div>
       </header>
 
-      {/* Tabs */}
+      {/* Tabs + campana al final (orden: Mora N1, Mora N2, Recobrame, Full-Pay, 🔔) */}
       <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-[#0d1f3a]/80 to-[#1a2c52]/60 p-1.5 backdrop-blur-sm">
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           {visibleTabs.map((t) => {
             const active = activeTab === t.id;
             const count = tabCounts[t.id];
@@ -348,17 +347,20 @@ export default function MisCasosPage() {
               </button>
             );
           })}
+          {/* Separador + campana al final de los tabs */}
+          <div className="ml-auto pl-2">
+            <NotificationsBell asEmail={asEmail} />
+          </div>
         </div>
       </div>
 
       {/* Tabla */}
       <div className="overflow-hidden rounded-2xl border border-blue-500/20 bg-[#0a1628]">
-        {/* Header */}
-        <div className="grid grid-cols-[minmax(0,1.6fr)_100px_120px_120px_80px_120px_80px] items-center gap-3 border-b border-blue-400/20 bg-blue-950/40 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-300/60">
+        {/* Header — sin columna Operario (en /mis-casos todos son del mismo owner) */}
+        <div className="grid grid-cols-[minmax(0,1.8fr)_100px_140px_80px_120px_80px] items-center gap-3 border-b border-blue-400/20 bg-blue-950/40 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-300/60">
           <span>Cliente</span>
           <span>Plataforma</span>
           <span>Estado</span>
-          <span>Operario</span>
           <span className="text-right">Días</span>
           <span className="text-right">Deuda</span>
           <span className="text-right">Acción</span>
@@ -448,7 +450,7 @@ function CaseRow({
   )}`;
 
   return (
-    <div className="grid grid-cols-[minmax(0,1.6fr)_100px_120px_120px_80px_120px_80px] items-center gap-3 border-b border-blue-400/10 px-4 py-2.5 text-sm transition-colors hover:bg-blue-500/5">
+    <div className="grid grid-cols-[minmax(0,1.8fr)_100px_140px_80px_120px_80px] items-center gap-3 border-b border-blue-400/10 px-4 py-2.5 text-sm transition-colors hover:bg-blue-500/5">
       {/* Cliente: avatar + nombre + email */}
       <div className="flex min-w-0 items-center gap-2.5">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/30 to-cyan-400/30 text-[10px] font-bold text-cyan-200 ring-1 ring-cyan-400/30">
@@ -476,15 +478,10 @@ function CaseRow({
         {row.platform}
       </span>
 
-      {/* Estado */}
+      {/* Estado (recovery_status: Pendiente, Seguimiento, Contactado, etc.) */}
       <span className="truncate text-xs text-blue-100/90">
-        {row.status || '—'}
-      </span>
-
-      {/* Operario asignado */}
-      <span className="truncate text-xs text-blue-200/70">
-        {row.assigned_operator || (
-          <span className="italic text-blue-300/40">sin asignar</span>
+        {row.recovery_status || (
+          <span className="italic text-blue-300/40">sin gestionar</span>
         )}
       </span>
 

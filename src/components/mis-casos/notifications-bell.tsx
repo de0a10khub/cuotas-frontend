@@ -264,7 +264,9 @@ export function NotificationsBell({ asEmail }: Props) {
                       {it.previous_recovered_at ? (
                         <>recuperado {formatRelative(it.previous_recovered_at)} · </>
                       ) : null}
-                      <span className="text-cyan-100/90">volvió a {it.now_status}</span>
+                      <span className="text-cyan-100/90">
+                        volvió a entrar en mora{it.now_status ? ` · ${it.now_status}` : ''}
+                      </span>
                     </p>
                   </Link>
                 ))}
