@@ -148,8 +148,14 @@ export function FullPayDrawer({ row, open, onClose, onUpdated }: Props) {
       setPaymentLink(r.url);
       await navigator.clipboard.writeText(r.url).catch(() => {});
       toast.success('Link copiado al portapapeles');
-    } catch {
-      toast.error('No se pudo generar el link');
+    } catch (e: unknown) {
+      const detail =
+        (e as { response?: { data?: { detail?: string } }; data?: { detail?: string }; detail?: string } | null)
+          ?.response?.data?.detail ??
+        (e as { data?: { detail?: string } } | null)?.data?.detail ??
+        (e as { detail?: string } | null)?.detail ??
+        null;
+      toast.error('No se pudo generar el link', detail ? { description: detail } : undefined);
     } finally {
       setGeneratingLink(false);
     }

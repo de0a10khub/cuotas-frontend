@@ -213,8 +213,16 @@ export function RecoveryDrawer({
       toast.success('Link generado', {
         description: 'Visualízalo o cópialo debajo.',
       });
-    } catch {
-      toast.error('No se pudo generar el link');
+    } catch (e: unknown) {
+      // El backend devuelve { detail: "<mensaje en español>" }. Sacamos
+      // el detail si lo tenemos, si no caemos a un mensaje genérico.
+      const detail =
+        (e as { response?: { data?: { detail?: string } }; data?: { detail?: string }; detail?: string } | null)
+          ?.response?.data?.detail ??
+        (e as { data?: { detail?: string } } | null)?.data?.detail ??
+        (e as { detail?: string } | null)?.detail ??
+        null;
+      toast.error('No se pudo generar el link', detail ? { description: detail } : undefined);
     } finally {
       setGeneratingLink(false);
     }
