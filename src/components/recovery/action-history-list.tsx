@@ -29,26 +29,12 @@ const ACTION_LABELS: Record<string, string> = {
   UPDATE_TRACKING: 'Actualización gestión',
   GENERATE_CONTRACT: 'Contrato generado',
   MANUAL_RECOVERY: 'Recuperación manual',
-  PAYMENT_LINK_GENERATED: 'Link de pago generado',
+  PAYMENT_LINK_GENERATED: 'Cambio de tarjeta — link generado',
   PAYMENT_FAILED: 'Cobro fallido',
-  NOTE_ADDED: 'Nota añadida',
-};
-
-const PANEL_LABELS: Record<string, string> = {
-  fullpay: 'Full Pay',
-  mora_n1: 'Mora N1',
-  mora_n2: 'Mora N2',
-  recobros: 'Recobros',
-  clientes: 'Clientes',
 };
 
 function humanizeAction(type: string): string {
   return ACTION_LABELS[type] || type.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
-}
-
-function panelLabel(panel: string | undefined): string {
-  if (!panel) return '';
-  return PANEL_LABELS[panel] || panel;
 }
 
 function extractError(payload: unknown): string | null {
@@ -95,25 +81,14 @@ export function ActionHistoryList({ api, subscriptionId }: Props) {
       {items.map((item) => {
         const { Icon, className } = statusTone(item.status);
         const isOpen = expanded[item.id];
-        const isNote = item.action_type === 'NOTE_ADDED';
         const errorMsg =
           item.status.toUpperCase() === 'FAILURE' || item.status.toUpperCase() === 'FAILED'
             ? extractError(item.result_payload)
             : null;
-        // Para notas: extraemos panel + content del payload.
-        const payload = item.result_payload as Record<string, unknown> | undefined;
-        const notePanel = typeof payload?.panel === 'string' ? payload.panel : undefined;
-        const noteContent = typeof payload?.content === 'string' ? payload.content : '';
-        const noteField = typeof payload?.field === 'string' ? payload.field : '';
         return (
           <li
             key={item.id}
-            className={cn(
-              'rounded-md border p-3',
-              isNote
-                ? 'border-cyan-300/60 bg-cyan-50/50 dark:border-cyan-800/60 dark:bg-cyan-950/20'
-                : 'border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/40',
-            )}
+            className="rounded-md border border-slate-200 bg-slate-50/50 p-3 dark:border-slate-800 dark:bg-slate-900/40"
           >
             <button
               type="button"
@@ -124,37 +99,22 @@ export function ActionHistoryList({ api, subscriptionId }: Props) {
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium">{humanizeAction(item.action_type)}</span>
-                  {notePanel && (
-                    <Badge variant="outline" className="text-xs border-cyan-400/40 text-cyan-700 dark:text-cyan-300">
-                      {panelLabel(notePanel)}
-                    </Badge>
-                  )}
-                  {item.platform && !isNote && (
-                    <Badge variant="outline" className="text-xs capitalize">
-                      {item.platform}
-                    </Badge>
-                  )}
-                  {!isNote && (
-                    <Badge variant="outline" className={cn('text-xs', className, 'border-current/30')}>
-                      {item.status}
-                    </Badge>
-                  )}
+                  <Badge variant="outline" className="text-xs capitalize">
+                    {item.platform}
+                  </Badge>
+                  <Badge variant="outline" className={cn('text-xs', className, 'border-current/30')}>
+                    {item.status}
+                  </Badge>
                 </div>
-                {isNote && noteContent && (
-                  <p className="mt-1.5 text-sm text-slate-700 dark:text-slate-200 leading-snug whitespace-pre-wrap">
-                    {noteContent}
-                  </p>
-                )}
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   {new Date(item.created_at).toLocaleString('es-ES')} · {item.performed_by || 'sistema'}
-                  {isNote && noteField && <> · campo <code className="text-[10px]">{noteField}</code></>}
                 </p>
               </div>
-              {!isNote && (isOpen ? (
+              {isOpen ? (
                 <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
               ) : (
                 <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-              ))}
+              )}
             </button>
             {errorMsg && (
               <div className="mt-2 flex items-start gap-1.5 rounded-md bg-rose-50 px-2 py-1.5 text-xs text-rose-800 dark:bg-rose-950/40 dark:text-rose-200">
@@ -162,7 +122,7 @@ export function ActionHistoryList({ api, subscriptionId }: Props) {
                 <span className="leading-snug">{errorMsg}</span>
               </div>
             )}
-            {isOpen && !isNote && (
+            {isOpen && (
               <pre className="mt-2 max-h-48 overflow-auto rounded bg-background p-2 text-xs text-slate-600 dark:text-slate-300">
                 {JSON.stringify(item.result_payload, null, 2)}
               </pre>

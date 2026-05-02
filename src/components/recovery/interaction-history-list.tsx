@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { InteractionSnapshot } from '@/lib/mora-types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { Clock, User } from 'lucide-react';
 import { StatusPill } from '@/components/data/status-pill';
 import { RECOVERY_STATUS_STYLES } from './styles';
@@ -12,6 +13,22 @@ interface Props {
   api: RecoveryDrawerApi;
   subscriptionId: string;
 }
+
+const PANEL_LABELS: Record<string, string> = {
+  fullpay: 'Full Pay',
+  mora_n1: 'Mora N1',
+  mora_n2: 'Mora N2',
+  recobros: 'Recobros',
+  clientes: 'Clientes',
+};
+
+const PANEL_TONE: Record<string, string> = {
+  fullpay: 'border-emerald-400/40 text-emerald-700 dark:text-emerald-300',
+  mora_n1: 'border-amber-400/40 text-amber-700 dark:text-amber-300',
+  mora_n2: 'border-orange-400/40 text-orange-700 dark:text-orange-300',
+  recobros: 'border-rose-400/40 text-rose-700 dark:text-rose-300',
+  clientes: 'border-cyan-400/40 text-cyan-700 dark:text-cyan-300',
+};
 
 // Snapshots históricos de cada "Guardar Gestión". Append-only.
 // Solo /mora lo muestra (a través del tab "Seguimiento").
@@ -56,7 +73,16 @@ export function InteractionHistoryList({ api, subscriptionId }: Props) {
           className="rounded-md border border-slate-200 bg-slate-50/50 p-3 dark:border-slate-800 dark:bg-slate-900/40"
         >
           <div className="flex flex-wrap items-center gap-2">
-            <StatusPill value={item.status} styles={RECOVERY_STATUS_STYLES} />
+            {item.panel && (
+              <Badge
+                variant="outline"
+                className={`text-xs ${PANEL_TONE[item.panel] || 'border-slate-400/40'}`}
+                title="Panel desde el que se escribió"
+              >
+                {PANEL_LABELS[item.panel] || item.panel}
+              </Badge>
+            )}
+            {item.status && <StatusPill value={item.status} styles={RECOVERY_STATUS_STYLES} />}
             <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
               <User className="h-3 w-3" />
               {item.contacted_by || 'Sin asignar'}

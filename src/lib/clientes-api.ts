@@ -111,6 +111,14 @@ export const clientesApi = {
     item_id?: string;
   }) => api.post<{ url: string; platform: string }>(`${BASE}/payment-update-link/`, payload),
 
+  // Notas de seguimiento del operario (pestaña 'Seguimiento' del drawer).
+  // Reusa el endpoint de mora-directorio porque la tabla `tracking_notes`
+  // es agnóstica de panel — cada nota viene con su badge `panel`.
+  interactions: (subscriptionId: string) =>
+    api.get<{ results: import('./mora-types').InteractionSnapshot[] }>(
+      `/api/v1/mora-directorio/interactions/${encodeURIComponent(subscriptionId)}/`,
+    ),
+
   generateContract: (payload: {
     subscription_id: string;
     customer_id: string;
