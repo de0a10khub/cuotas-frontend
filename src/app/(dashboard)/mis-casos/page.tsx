@@ -528,21 +528,34 @@ function NotifPanel({
           </div>
           <div className="divide-y divide-amber-400/10">
             {movidos.map((it) => (
-              <Link
+              <div
                 key={`n2-${it.subscription_id}`}
-                href={buildHref('mora-n2', it.customer_email)}
-                className="block px-4 py-3 transition-colors hover:bg-amber-500/5"
+                className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-amber-500/5"
               >
-                <p className="font-medium text-amber-100">
-                  {it.customer_name || it.customer_email}
-                </p>
-                <p className="mt-0.5 text-xs text-amber-200/60">
-                  {it.customer_email}
-                  {it.current_contacted_by && (
-                    <> · ahora lo lleva <b>{it.current_contacted_by}</b></>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-amber-100">
+                    {it.customer_name || it.customer_email}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-amber-200/60">
+                    {it.customer_email}
+                    {it.current_contacted_by && (
+                      <> · ahora lo lleva <b>{it.current_contacted_by}</b></>
+                    )}
+                  </p>
+                  {it.moved_at && (
+                    <p className="mt-1 text-[11px] text-amber-200/50">
+                      Movido a N2: <b className="text-amber-100/80">{formatNotifDate(it.moved_at)}</b>
+                    </p>
                   )}
-                </p>
-              </Link>
+                </div>
+                <Link
+                  href={buildHref('mora-n2', it.customer_email)}
+                  className="inline-flex items-center gap-1 rounded-md border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-amber-200 transition-colors hover:bg-amber-500/20"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Abrir
+                </Link>
+              </div>
             ))}
           </div>
         </div>
@@ -555,27 +568,61 @@ function NotifPanel({
           </div>
           <div className="divide-y divide-emerald-400/10">
             {recaidas.map((it) => (
-              <Link
+              <div
                 key={`re-${it.subscription_id}`}
-                href={buildHref('mora', it.customer_email ?? it.customer_name ?? '')}
-                className="block px-4 py-3 transition-colors hover:bg-emerald-500/5"
+                className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-emerald-500/5"
               >
-                <p className="font-medium text-emerald-100">
-                  {it.customer_name || it.customer_email || 'Cliente'}
-                </p>
-                <p className="mt-0.5 text-xs text-emerald-200/60">
-                  {it.customer_email}
-                  {it.now_status && (
-                    <> · ✅ <b>{it.now_status}</b></>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-emerald-100">
+                    {it.customer_name || it.customer_email || 'Cliente'}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-emerald-200/60">
+                    {it.customer_email}
+                    {it.now_status && (
+                      <> · ✅ <b>{it.now_status}</b></>
+                    )}
+                  </p>
+                  {it.previous_recovered_at && (
+                    <p className="mt-1 text-[11px] text-emerald-200/50">
+                      Pagó: <b className="text-emerald-100/80">{formatNotifDate(it.previous_recovered_at)}</b>
+                    </p>
                   )}
-                </p>
-              </Link>
+                </div>
+                <Link
+                  href={buildHref('mora', it.customer_email ?? it.customer_name ?? '')}
+                  className="inline-flex items-center gap-1 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-cyan-200 transition-colors hover:bg-cyan-500/20"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Abrir
+                </Link>
+              </div>
             ))}
           </div>
         </div>
       )}
     </div>
   );
+}
+
+function formatNotifDate(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const date = d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const time = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    // hace X (relativo)
+    const ms = Date.now() - d.getTime();
+    const day = Math.round(ms / 86400000);
+    let rel = '';
+    if (day < 1) rel = 'hoy';
+    else if (day < 2) rel = 'ayer';
+    else if (day < 7) rel = `hace ${day}d`;
+    else if (day < 30) rel = `hace ${Math.round(day / 7)} sem`;
+    else rel = `hace ${Math.round(day / 30)} mes`;
+    return `${date} ${time} · ${rel}`;
+  } catch {
+    return iso;
+  }
 }
 
 function CaseRow({
