@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { AlertCircle, CheckCircle2, Search, X } from 'lucide-react';
+import { AlertCircle, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logApi, type ChargeDetail, type LogEvent } from '@/lib/webhook-log-api';
 import { toast } from 'sonner';
@@ -23,14 +23,20 @@ const SOURCES = [
   { id: 'whop-erp', label: 'Whop ERP', color: '#2299aa' },
 ] as const;
 
+// Las fechas se muestran en hora Dubai (Asia/Dubai, UTC+4).
+const TZ = 'Asia/Dubai';
+// Día más antiguo del que tenemos logs en webhook_events_inbound.
+// Antes de esta fecha la tabla no recogía eventos.
+const OLDEST_DAY = '2026-04-22';
+
 function toMadridTime(iso: string, fmt: 'time' | 'datetime'): string {
   try {
     const d = new Date(iso);
     const opts: Intl.DateTimeFormatOptions =
       fmt === 'time'
-        ? { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }
+        ? { timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }
         : {
-            timeZone: 'Europe/Madrid',
+            timeZone: TZ,
             day: '2-digit',
             month: '2-digit',
             year: '2-digit',
@@ -60,13 +66,12 @@ function formatEur(eur: number): string {
   }).format(eur || 0);
 }
 
-// YYYY-MM-DD del evento en zona Madrid (para agrupar y filtrar)
+// YYYY-MM-DD del evento en zona Dubai (para agrupar y filtrar)
 function dayKey(iso: string): string {
   const d = new Date(iso);
-  // toLocaleString to Madrid then build YYYY-MM-DD manually
-  const yyyy = d.toLocaleString('en-CA', { timeZone: 'Europe/Madrid', year: 'numeric' });
-  const mm = d.toLocaleString('en-CA', { timeZone: 'Europe/Madrid', month: '2-digit' });
-  const dd = d.toLocaleString('en-CA', { timeZone: 'Europe/Madrid', day: '2-digit' });
+  const yyyy = d.toLocaleString('en-CA', { timeZone: TZ, year: 'numeric' });
+  const mm = d.toLocaleString('en-CA', { timeZone: TZ, month: '2-digit' });
+  const dd = d.toLocaleString('en-CA', { timeZone: TZ, day: '2-digit' });
   return `${yyyy}-${mm}-${dd}`;
 }
 
@@ -78,11 +83,221 @@ function dayLabel(iso: string): string {
   if (k === yesterday) return 'Ayer';
   const d = new Date(iso);
   return d.toLocaleDateString('es-ES', {
-    timeZone: 'Europe/Madrid',
+    timeZone: TZ,
     weekday: 'long',
     day: 'numeric',
     month: 'long',
   });
+}
+
+// Formatea YYYY-MM-DD a "22 abr 2026"
+function formatDayShort(yyyymmdd: string): string {
+  const [y, m, d] = yyyymmdd.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+// ---------------------------------------------------------------------------
+// DatePicker: botón con calendario + atajos Hoy/Ayer/Todos.
+// Solo permite seleccionar 1 día (no rangos). Bloquea días anteriores a
+// OLDEST_DAY y futuros. value puede ser 'all' o YYYY-MM-DD.
+// ---------------------------------------------------------------------------
+function DatePicker({
+  value,
+  onChange,
+}: {
+  value: string;  // 'all' o YYYY-MM-DD
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  const today = dayKey(new Date().toISOString());
+  const yesterday = dayKey(new Date(Date.now() - 86400000).toISOString());
+
+  // Mes que está mostrando el calendario. Default: mes del valor (o hoy).
+  const initialMonth = (() => {
+    const ref = value !== 'all' ? value : today;
+    const [y, m] = ref.split('-').map(Number);
+    return new Date(y, m - 1, 1);
+  })();
+  const [viewMonth, setViewMonth] = useState<Date>(initialMonth);
+
+  // Cierra al click fuera (mismo patrón que MultiSelectTags)
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      const t = e.target as Node | null;
+      if (rootRef.current && t && !rootRef.current.contains(t)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const buttonLabel = (() => {
+    if (value === 'all') return 'Todos los días';
+    if (value === today) return 'Hoy';
+    if (value === yesterday) return 'Ayer';
+    return formatDayShort(value);
+  })();
+
+  // Construir grid del mes (lunes a domingo)
+  const grid = useMemo(() => {
+    const y = viewMonth.getFullYear();
+    const m = viewMonth.getMonth();
+    const firstOfMonth = new Date(y, m, 1);
+    const lastOfMonth = new Date(y, m + 1, 0);
+    const totalDays = lastOfMonth.getDate();
+
+    // getDay(): 0=Sun, 1=Mon, ... 6=Sat. Queremos semana ES (Lun=0).
+    const firstWeekday = (firstOfMonth.getDay() + 6) % 7;
+
+    const cells: { day: number | null; key: string | null; disabled: boolean; isToday: boolean; isSelected: boolean }[] = [];
+    for (let i = 0; i < firstWeekday; i++) cells.push({ day: null, key: null, disabled: false, isToday: false, isSelected: false });
+
+    for (let d = 1; d <= totalDays; d++) {
+      const k = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const disabled = k < OLDEST_DAY || k > today;
+      cells.push({
+        day: d,
+        key: k,
+        disabled,
+        isToday: k === today,
+        isSelected: k === value,
+      });
+    }
+    return cells;
+  }, [viewMonth, value, today]);
+
+  const monthLabel = viewMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+  const canPrevMonth = (() => {
+    // Permitir ir al mes anterior solo si OLDEST_DAY está en él o antes
+    const prev = new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1);
+    const lastDayPrev = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 0);
+    const lastK = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}-${String(lastDayPrev.getDate()).padStart(2, '0')}`;
+    return lastK >= OLDEST_DAY;
+  })();
+  const canNextMonth = (() => {
+    const next = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1);
+    const firstK = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-01`;
+    return firstK <= today;
+  })();
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-9 items-center gap-2 rounded-md border border-blue-400/40 bg-blue-500/10 px-2.5 text-xs font-medium text-blue-100 transition-colors hover:bg-blue-500/20 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+      >
+        <CalendarDays className="h-3.5 w-3.5" />
+        {buttonLabel}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1 w-[420px] rounded-lg border border-blue-400/30 bg-[#0a1628] p-3 shadow-2xl">
+          <div className="flex gap-3">
+            {/* Atajos izquierda */}
+            <div className="flex w-[110px] shrink-0 flex-col gap-1 border-r border-blue-400/20 pr-3">
+              <button
+                type="button"
+                onClick={() => { onChange('all'); setOpen(false); }}
+                className={cn(
+                  'rounded px-2 py-1.5 text-left text-xs transition-colors',
+                  value === 'all'
+                    ? 'bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/50'
+                    : 'text-blue-100 hover:bg-blue-500/20',
+                )}
+              >
+                Todos los días
+              </button>
+              <button
+                type="button"
+                onClick={() => { onChange(today); setOpen(false); }}
+                className={cn(
+                  'rounded px-2 py-1.5 text-left text-xs transition-colors',
+                  value === today
+                    ? 'bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/50'
+                    : 'text-blue-100 hover:bg-blue-500/20',
+                )}
+              >
+                Hoy
+              </button>
+              <button
+                type="button"
+                onClick={() => { onChange(yesterday); setOpen(false); }}
+                className={cn(
+                  'rounded px-2 py-1.5 text-left text-xs transition-colors',
+                  value === yesterday
+                    ? 'bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/50'
+                    : 'text-blue-100 hover:bg-blue-500/20',
+                )}
+              >
+                Ayer
+              </button>
+            </div>
+
+            {/* Calendario derecha */}
+            <div className="flex-1">
+              <div className="mb-2 flex items-center justify-between">
+                <button
+                  type="button"
+                  disabled={!canPrevMonth}
+                  onClick={() => setViewMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+                  className="rounded p-1 text-blue-200/70 hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="text-xs font-semibold capitalize text-blue-100">{monthLabel}</span>
+                <button
+                  type="button"
+                  disabled={!canNextMonth}
+                  onClick={() => setViewMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+                  className="rounded p-1 text-blue-200/70 hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] text-blue-300/60">
+                {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((wd, i) => (
+                  <div key={i} className="py-1">{wd}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-0.5">
+                {grid.map((c, i) => {
+                  if (!c.day) return <div key={i} />;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      disabled={c.disabled}
+                      onClick={() => { if (c.key) { onChange(c.key); setOpen(false); } }}
+                      className={cn(
+                        'flex h-7 items-center justify-center rounded text-xs transition-all',
+                        c.disabled && 'cursor-not-allowed text-blue-300/20',
+                        !c.disabled && !c.isSelected && 'text-blue-100 hover:bg-blue-500/20',
+                        c.isToday && !c.isSelected && 'ring-1 ring-cyan-400/40',
+                        c.isSelected && 'bg-cyan-500/30 font-bold text-cyan-200 ring-1 ring-cyan-400',
+                      )}
+                    >
+                      {c.day}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-3 border-t border-blue-400/15 pt-2 text-[10px] text-blue-300/50">
+            Logs disponibles desde <b>{formatDayShort(OLDEST_DAY)}</b> · hora Dubai
+          </p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function LogPage() {
@@ -158,20 +373,6 @@ export default function LogPage() {
     return () => clearInterval(interval);
   }, [isLive, source, filter, search, dayFilter]);
 
-  // Días únicos (en orden, más reciente primero) para el selector
-  const availableDays = useMemo(() => {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const e of events) {
-      const k = dayKey(e.created_at);
-      if (!seen.has(k)) {
-        seen.add(k);
-        out.push(k);
-      }
-    }
-    return out;
-  }, [events]);
-
   // Eventos filtrados por día (si dayFilter != 'all')
   const filteredEvents = useMemo(() => {
     if (dayFilter === 'all') return events;
@@ -235,35 +436,8 @@ export default function LogPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Día filter */}
-            {availableDays.length > 0 && (
-              <select
-                value={dayFilter}
-                onChange={(e) => setDayFilter(e.target.value)}
-                className="h-9 rounded-md border border-blue-400/40 bg-blue-500/10 px-2.5 text-xs font-medium text-blue-100 transition-colors hover:bg-blue-500/20 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
-              >
-                <option value="all" className="bg-[#0a1628]">Todos los días</option>
-                {availableDays.map((d) => {
-                  const today = dayKey(new Date().toISOString());
-                  const yesterday = dayKey(new Date(Date.now() - 86400000).toISOString());
-                  const label =
-                    d === today
-                      ? 'Hoy'
-                      : d === yesterday
-                      ? 'Ayer'
-                      : new Date(d + 'T12:00:00').toLocaleDateString('es-ES', {
-                          weekday: 'short',
-                          day: 'numeric',
-                          month: 'short',
-                        });
-                  return (
-                    <option key={d} value={d} className="bg-[#0a1628]">
-                      {label}
-                    </option>
-                  );
-                })}
-              </select>
-            )}
+            {/* Día filter — calendario con atajos Hoy/Ayer/Todos */}
+            <DatePicker value={dayFilter} onChange={setDayFilter} />
           </div>
         </div>
 
