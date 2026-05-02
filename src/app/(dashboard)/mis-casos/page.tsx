@@ -24,7 +24,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { NotificationsBell } from '@/components/mis-casos/notifications-bell';
 import { useAuth } from '@/lib/auth-context';
 import { formatEuros } from '@/lib/format';
 import {
@@ -47,8 +46,12 @@ const TABS: ReadonlyArray<{
   { id: 'mora_n1', label: 'Mora N1', panelHref: '/mora', accent: 'cyan' },
   { id: 'mora_n2', label: 'Mora N2', panelHref: '/mora-n2', accent: 'orange' },
   { id: 'recobros', label: 'Recobrame', panelHref: '/recobros', accent: 'violet' },
-  { id: 'full_pay', label: 'Full-Pay', panelHref: '/full-pay', accent: 'emerald' },
 ] as const;
+
+/** Tab sintético "Notificaciones" — siempre visible, pinta movidos-a-N2 + recaídas
+ *  como una vista más (no es un panel real ni se filtra por panels_visible). */
+const NOTIF_TAB_ID = '__notif__' as const;
+type TabId = MisCasosPanel | typeof NOTIF_TAB_ID;
 
 const PAGE_SIZE = 25;
 
@@ -97,11 +100,14 @@ export default function MisCasosPage() {
 
   // Tab activo desde URL para que sea linkeable / refrescable.
   // Si la URL pide un tab que el rol no puede ver, fallback al primer disponible.
-  const requestedTab = sp.get('tab') as MisCasosPanel | null;
-  const activeTab: MisCasosPanel =
-    requestedTab && visibleTabs.some((t) => t.id === requestedTab)
+  const requestedTab = sp.get('tab') as TabId | null;
+  const isValidTab = (id: string | null): id is TabId =>
+    id === NOTIF_TAB_ID || (id != null && visibleTabs.some((t) => t.id === id));
+  const activeTab: TabId =
+    isValidTab(requestedTab)
       ? requestedTab
       : (visibleTabs[0]?.id ?? 'mora_n1');
+  const isNotifTab = activeTab === NOTIF_TAB_ID;
 
   const [search, setSearch] = useState('');
   const [pendingSearch, setPendingSearch] = useState('');
@@ -124,16 +130,21 @@ export default function MisCasosPage() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
+    if (isNotifTab) {
+      // El tab Notif no necesita load() — se renderiza con su propio estado.
+      setData(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const r = await misCasosApi.list(activeTab, {
+      const r = await misCasosApi.list(activeTab as MisCasosPanel, {
         search,
         page,
         page_size: PAGE_SIZE,
         as_email: asEmail,
       });
       setData(r);
-      // Actualiza tabs visibles si el backend los manda
       if (r.panels_visible && r.panels_visible.length > 0) {
         setPanelsVisible(r.panels_visible);
       }
@@ -143,11 +154,35 @@ export default function MisCasosPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, search, page, asEmail]);
+  }, [activeTab, isNotifTab, search, page, asEmail]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  // Notificaciones: estado independiente que se carga al montar y al cambiar de operario.
+  const [notif, setNotif] = useState<{
+    movidos: import('@/lib/mis-casos-api').MovedToN2Item[];
+    recaidas: import('@/lib/mis-casos-api').RecaidaItem[];
+  }>({ movidos: [], recaidas: [] });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [a, b] = await Promise.all([
+        misCasosApi.movidosAN2(asEmail).catch(() => null),
+        misCasosApi.recaidas(asEmail).catch(() => null),
+      ]);
+      if (cancelled) return;
+      setNotif({
+        movidos: a?.results ?? [],
+        recaidas: b?.results ?? [],
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [asEmail]);
+
+  const notifTotal = notif.movidos.length + notif.recaidas.length;
 
   // Cargamos counts de TODOS los tabs en una llamada paralela (1ª vez y al cambiar
   // de impersonación). Si el backend ya devuelve `counts` en cada list, lo usamos —
@@ -218,7 +253,7 @@ export default function MisCasosPage() {
     };
   }, [asEmail, profile?.full_name, profile?.user?.email, visibleTabs]);
 
-  const setTab = (id: MisCasosPanel) => {
+  const setTab = (id: TabId) => {
     const q = new URLSearchParams(sp.toString());
     q.set('tab', id);
     router.replace(`/mis-casos?${q.toString()}`);
@@ -315,7 +350,7 @@ export default function MisCasosPage() {
         </div>
       </header>
 
-      {/* Tabs + campana al final (orden: Mora N1, Mora N2, Recobrame, Full-Pay, 🔔) */}
+      {/* Tabs (Notificaciones es un tab más, no popover) */}
       <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-[#0d1f3a]/80 to-[#1a2c52]/60 p-1.5 backdrop-blur-sm">
         <div className="flex flex-wrap items-center gap-1">
           {visibleTabs.map((t) => {
@@ -347,20 +382,41 @@ export default function MisCasosPage() {
               </button>
             );
           })}
-          {/* Separador + campana al final de los tabs */}
-          <div className="ml-auto pl-2">
-            <NotificationsBell asEmail={asEmail} />
-          </div>
+          {/* Tab "Notificaciones" — siempre visible, mismo estilo que los demás */}
+          <button
+            type="button"
+            onClick={() => setTab(NOTIF_TAB_ID)}
+            className={cn(
+              'group relative inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all',
+              isNotifTab
+                ? 'bg-gradient-to-br from-rose-500 to-rose-700 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)]'
+                : 'text-rose-200/70 hover:bg-rose-500/10 hover:text-white',
+            )}
+          >
+            <span>Notificaciones</span>
+            <span
+              className={cn(
+                'inline-flex h-5 min-w-[22px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums',
+                isNotifTab
+                  ? 'bg-white/20 text-white'
+                  : 'bg-rose-950/40 text-rose-300/80 ring-1 ring-rose-400/30',
+              )}
+            >
+              {notifTotal}
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* Tabla */}
+      {/* Contenido del tab activo: tabla normal o panel de Notificaciones */}
+      {isNotifTab ? (
+        <NotifPanel asEmail={asEmail} movidos={notif.movidos} recaidas={notif.recaidas} />
+      ) : (
       <div className="overflow-hidden rounded-2xl border border-blue-500/20 bg-[#0a1628]">
-        {/* Header — sin columna Operario (en /mis-casos todos son del mismo owner) */}
-        <div className="grid grid-cols-[minmax(0,1.8fr)_100px_140px_80px_120px_80px] items-center gap-3 border-b border-blue-400/20 bg-blue-950/40 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-300/60">
+        {/* Header — sin columna Operario ni Estado (en /mis-casos todos son del mismo owner) */}
+        <div className="grid grid-cols-[minmax(0,2fr)_100px_80px_120px_80px] items-center gap-3 border-b border-blue-400/20 bg-blue-950/40 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-300/60">
           <span>Cliente</span>
           <span>Plataforma</span>
-          <span>Estado</span>
           <span className="text-right">Días</span>
           <span className="text-right">Deuda</span>
           <span className="text-right">Acción</span>
@@ -381,7 +437,7 @@ export default function MisCasosPage() {
           )}
 
           {!loading && rows.length === 0 && (
-            <EmptyState panel={activeTab} hasSearch={!!search} />
+            <EmptyState panel={activeTab as MisCasosPanel} hasSearch={!!search} />
           )}
 
           {!loading &&
@@ -428,6 +484,7 @@ export default function MisCasosPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
@@ -435,6 +492,91 @@ export default function MisCasosPage() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Subcomponentes
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** Panel de Notificaciones — se renderiza cuando el tab "Notificaciones" está activo. */
+function NotifPanel({
+  asEmail,
+  movidos,
+  recaidas,
+}: {
+  asEmail?: string;
+  movidos: import('@/lib/mis-casos-api').MovedToN2Item[];
+  recaidas: import('@/lib/mis-casos-api').RecaidaItem[];
+}) {
+  const total = movidos.length + recaidas.length;
+  const buildHref = (panel: 'mora' | 'mora-n2', email: string) => {
+    const q = new URLSearchParams();
+    q.set('search', email);
+    if (asEmail) q.set('as', asEmail);
+    return `/${panel}?${q.toString()}`;
+  };
+
+  if (total === 0) {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-blue-500/20 bg-[#0a1628] p-12 text-center">
+        <p className="text-sm text-blue-200/70">Todo en orden — sin novedades.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {movidos.length > 0 && (
+        <div className="overflow-hidden rounded-2xl border border-amber-500/20 bg-[#0a1628]">
+          <div className="border-b border-amber-400/20 bg-amber-950/30 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-300">
+            Movidos a Mora N2 · {movidos.length}
+          </div>
+          <div className="divide-y divide-amber-400/10">
+            {movidos.map((it) => (
+              <Link
+                key={`n2-${it.subscription_id}`}
+                href={buildHref('mora-n2', it.customer_email)}
+                className="block px-4 py-3 transition-colors hover:bg-amber-500/5"
+              >
+                <p className="font-medium text-amber-100">
+                  {it.customer_name || it.customer_email}
+                </p>
+                <p className="mt-0.5 text-xs text-amber-200/60">
+                  {it.customer_email}
+                  {it.current_contacted_by && (
+                    <> · ahora lo lleva <b>{it.current_contacted_by}</b></>
+                  )}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {recaidas.length > 0 && (
+        <div className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[#0a1628]">
+          <div className="border-b border-cyan-400/20 bg-cyan-950/30 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300">
+            Recaídas · {recaidas.length}
+          </div>
+          <div className="divide-y divide-cyan-400/10">
+            {recaidas.map((it) => (
+              <Link
+                key={`re-${it.subscription_id}`}
+                href={buildHref('mora', it.customer_email)}
+                className="block px-4 py-3 transition-colors hover:bg-cyan-500/5"
+              >
+                <p className="font-medium text-cyan-100">
+                  {it.customer_name || it.customer_email || 'Cliente'}
+                </p>
+                <p className="mt-0.5 text-xs text-cyan-200/60">
+                  {it.customer_email}
+                  {it.now_status && (
+                    <> · volvió a entrar en mora · <b>{it.now_status}</b></>
+                  )}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function CaseRow({
   row,
@@ -450,7 +592,7 @@ function CaseRow({
   )}`;
 
   return (
-    <div className="grid grid-cols-[minmax(0,1.8fr)_100px_140px_80px_120px_80px] items-center gap-3 border-b border-blue-400/10 px-4 py-2.5 text-sm transition-colors hover:bg-blue-500/5">
+    <div className="grid grid-cols-[minmax(0,2fr)_100px_80px_120px_80px] items-center gap-3 border-b border-blue-400/10 px-4 py-2.5 text-sm transition-colors hover:bg-blue-500/5">
       {/* Cliente: avatar + nombre + email */}
       <div className="flex min-w-0 items-center gap-2.5">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/30 to-cyan-400/30 text-[10px] font-bold text-cyan-200 ring-1 ring-cyan-400/30">
@@ -476,13 +618,6 @@ function CaseRow({
         )}
       >
         {row.platform}
-      </span>
-
-      {/* Estado (recovery_status: Pendiente, Seguimiento, Contactado, etc.) */}
-      <span className="truncate text-xs text-blue-100/90">
-        {row.recovery_status || (
-          <span className="italic text-blue-300/40">sin gestionar</span>
-        )}
       </span>
 
       {/* Días mora */}
