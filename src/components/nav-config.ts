@@ -23,7 +23,6 @@ import {
   Zap,
   User,
   GitMerge as MergeIcon,
-  Trophy,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -65,8 +64,6 @@ export const navigation: NavItem[] = [
   { label: 'Seguridad', href: '/admin/seguridad', icon: ShieldAlert, section: 'Admin' },
   { label: 'Webhooks', href: '/webhooks', icon: Webhook, section: 'Admin' },
   { label: 'MODO DIOS', href: '/admin/god-mode', icon: Zap, section: 'Admin' },
-
-  { label: 'Fútbol', href: '/juegos/futbol', icon: Trophy, section: 'Juegos' },
 ];
 
 export function groupBySection(items: NavItem[]): Record<string, NavItem[]> {
