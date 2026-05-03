@@ -82,6 +82,11 @@ export const moraApi = {
       `${BASE}/failed-payments/${encodeURIComponent(subscriptionId)}/`,
     ),
 
+  contracts: (subscriptionId: string) =>
+    api.get<{ results: import('./contract-types').Contract[] }>(
+      `/api/v1/clientes-directorio/contracts/${encodeURIComponent(subscriptionId)}/`,
+    ),
+
   retryPayment: (payload: {
     subscription_id: string;
     customer_id: string;

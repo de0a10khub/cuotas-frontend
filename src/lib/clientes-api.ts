@@ -76,6 +76,11 @@ export const clientesApi = {
       `${BASE}/failed-payments/${encodeURIComponent(subscriptionId)}/`,
     ),
 
+  contracts: (subscriptionId: string) =>
+    api.get<{ results: import('./contract-types').Contract[] }>(
+      `${BASE}/contracts/${encodeURIComponent(subscriptionId)}/`,
+    ),
+
   retryPayment: (payload: {
     subscription_id: string;
     customer_id: string;
