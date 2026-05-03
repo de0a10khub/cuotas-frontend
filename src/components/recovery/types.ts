@@ -56,7 +56,6 @@ export interface RecoveryDrawerApi {
     note: string;
   }) => Promise<{ ok: boolean; note: string | null; updated_at?: string }>;
   history: (subscription_id: string) => Promise<{ results: ActionLogEntry[] }>;
-  contracts?: (subscription_id: string) => Promise<{ results: import('@/lib/contract-types').Contract[] }>;
   // Opcionales: solo /mora los implementa.
   interactions?: (subscription_id: string) => Promise<{ results: InteractionSnapshot[] }>;
   objecionesTags?: () => Promise<{ results: ObjecionTag[] }>;

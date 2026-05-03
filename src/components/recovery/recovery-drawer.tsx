@@ -48,8 +48,6 @@ import { useAuth } from '@/lib/auth-context';
 import type { ObjecionTag } from '@/lib/clientes-types';
 import { PdfViewerModal } from '@/components/data/pdf-viewer-modal';
 import { ActionHistoryList } from './action-history-list';
-import { ContractSelector } from './contract-selector';
-import type { Contract } from '@/lib/contract-types';
 import { FailedPaymentsList } from './failed-payments-list';
 import { InteractionHistoryList } from './interaction-history-list';
 import { MoraTimeline } from './mora-timeline';
@@ -108,13 +106,6 @@ export function RecoveryDrawer({
   const [generatingContract, setGeneratingContract] = useState(false);
   const [pdfOpen, setPdfOpen] = useState(false);
 
-  // Selector de contratos: si el cliente tiene varias subs/memberships/orders,
-  // permite cambiar entre ellas. Las pestañas Pagos / Historial / Seguimiento
-  // se filtran por el contrato activo. La pestaña Gestión sigue operando sobre
-  // el sub original (porque las notas/status pertenecen a esa sub específica).
-  const [contracts, setContracts] = useState<Contract[]>([]);
-  const [activeContractId, setActiveContractId] = useState<string>('');
-
   const operatorOptions = useMemo(() => {
     const base = operators.map((o) => ({ value: o.display_name, label: o.display_name }));
     const current = (row?.recovery_contacted_by || '').trim();
@@ -136,19 +127,7 @@ export function RecoveryDrawer({
     setPaymentLink(null);
     setContractUrl(null);
     setTab('gestion');
-    setContracts([]);
-    setActiveContractId(row.subscription_id);
   }, [row?.subscription_id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Carga contratos del cliente (si hay >1, sale el selector).
-  useEffect(() => {
-    if (!open || !row || !api.contracts) return;
-    let cancel = false;
-    api.contracts(row.subscription_id)
-      .then((r) => { if (!cancel) setContracts(r.results || []); })
-      .catch(() => {});
-    return () => { cancel = true; };
-  }, [open, row?.subscription_id, api]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Carga catálogo de objeciones (solo en mora).
   useEffect(() => {
@@ -508,14 +487,6 @@ export function RecoveryDrawer({
             )}
 
             {lockState === 'owned' && (
-              <>
-              {contracts.length > 1 && (
-                <ContractSelector
-                  contracts={contracts}
-                  activeContractId={activeContractId}
-                  onChange={(c) => setActiveContractId(c.contract_id)}
-                />
-              )}
               <Tabs
                 value={tab}
                 onValueChange={(v) => setTab(v as TabKey)}
@@ -649,14 +620,14 @@ export function RecoveryDrawer({
 
                 {isMora && (
                   <TabsContent value="seguimiento">
-                    <InteractionHistoryList api={api} subscriptionId={activeContractId || row.subscription_id} />
+                    <InteractionHistoryList api={api} subscriptionId={row.subscription_id} />
                   </TabsContent>
                 )}
 
                 <TabsContent value="pagos">
                   <FailedPaymentsList
                     api={api}
-                    subscriptionId={activeContractId || row.subscription_id}
+                    subscriptionId={row.subscription_id}
                     customerId={row.customer_id}
                     platform={row.platform}
                     operators={operators}
@@ -665,7 +636,7 @@ export function RecoveryDrawer({
                 </TabsContent>
 
                 <TabsContent value="historial">
-                  <ActionHistoryList api={api} subscriptionId={activeContractId || row.subscription_id} />
+                  <ActionHistoryList api={api} subscriptionId={row.subscription_id} />
                 </TabsContent>
 
                 {isMora && (
@@ -674,7 +645,6 @@ export function RecoveryDrawer({
                   </TabsContent>
                 )}
               </Tabs>
-              </>
             )}
           </div>
         </div>
