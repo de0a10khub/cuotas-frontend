@@ -22,6 +22,7 @@ import {
   Bell,
   Zap,
   User,
+  Search,
   GitMerge as MergeIcon,
   type LucideIcon,
 } from 'lucide-react';
@@ -63,6 +64,7 @@ export const navigation: NavItem[] = [
   { label: 'LOG Operaciones', href: '/log', icon: Activity, section: 'Admin' },
   { label: 'Seguridad', href: '/admin/seguridad', icon: ShieldAlert, section: 'Admin' },
   { label: 'Webhooks', href: '/webhooks', icon: Webhook, section: 'Admin' },
+  { label: 'Revisor Cobros', href: '/admin/revisor-cobros', icon: Search, section: 'Admin' },
   { label: 'MODO DIOS', href: '/admin/god-mode', icon: Zap, section: 'Admin' },
 ];
 
