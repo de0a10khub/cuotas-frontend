@@ -140,6 +140,8 @@ export interface RecaidaItem {
   previous_recovered_at: string | null;
   now_status: string;
   customer_email?: string;
+  /** Importe del último pago confirmado tras la mora. */
+  recovered_amount?: number;
 }
 
 export interface MovedToN2Response {

@@ -563,8 +563,19 @@ function NotifPanel({
 
       {recaidas.length > 0 && (
         <div className="overflow-hidden rounded-2xl border border-emerald-500/20 bg-[#0a1628]">
-          <div className="border-b border-emerald-400/20 bg-emerald-950/30 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-300">
-            Pagaron · {recaidas.length}
+          <div className="flex items-center justify-between border-b border-emerald-400/20 bg-emerald-950/30 px-4 py-2.5">
+            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-300">
+              Pagaron · {recaidas.length}
+            </div>
+            {(() => {
+              const total = recaidas.reduce((s, it) => s + (it.recovered_amount || 0), 0);
+              if (total <= 0) return null;
+              return (
+                <div className="text-[11px] font-semibold text-emerald-200">
+                  Total · {total.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                </div>
+              );
+            })()}
           </div>
           <div className="divide-y divide-emerald-400/10">
             {recaidas.map((it) => (
@@ -573,9 +584,16 @@ function NotifPanel({
                 className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-emerald-500/5"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-emerald-100">
-                    {it.customer_name || it.customer_email || 'Cliente'}
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate font-medium text-emerald-100">
+                      {it.customer_name || it.customer_email || 'Cliente'}
+                    </p>
+                    {it.recovered_amount && it.recovered_amount > 0 ? (
+                      <span className="shrink-0 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">
+                        {it.recovered_amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                      </span>
+                    ) : null}
+                  </div>
                   <p className="mt-0.5 truncate text-xs text-emerald-200/60">
                     {it.customer_email}
                     {it.now_status && (

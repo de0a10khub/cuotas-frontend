@@ -257,9 +257,16 @@ export function NotificationsBell({ asEmail }: Props) {
                     onClick={() => setOpen(false)}
                     className="block rounded-lg px-2 py-1.5 transition-colors hover:bg-cyan-500/10"
                   >
-                    <p className="truncate text-xs font-semibold text-cyan-100">
-                      {it.customer_name || it.customer_email || 'Cliente'}
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="truncate text-xs font-semibold text-cyan-100">
+                        {it.customer_name || it.customer_email || 'Cliente'}
+                      </p>
+                      {it.recovered_amount && it.recovered_amount > 0 ? (
+                        <span className="shrink-0 text-[11px] font-bold text-cyan-200">
+                          {it.recovered_amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                        </span>
+                      ) : null}
+                    </div>
                     <p className="truncate text-[11px] text-cyan-200/70">
                       {it.previous_recovered_at ? (
                         <>recuperado {formatRelative(it.previous_recovered_at)} · </>
