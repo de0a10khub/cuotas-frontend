@@ -90,24 +90,12 @@ export function MotivationalBubble({ intervalMs = 60_000, visibleMs = 3_000 }: P
   return (
     <div
       aria-hidden="true"
-      className={`pointer-events-none fixed bottom-4 right-4 z-[60] transition-all duration-500 ${
+      className={`pointer-events-none fixed bottom-4 left-4 z-[60] transition-all duration-500 ${
         visible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
       }`}
     >
       <div className="relative flex items-end gap-2">
-        {/* Bocadillo (speech bubble) */}
-        <div className="relative mb-12 max-w-[180px]">
-          <div className="rounded-2xl border-2 border-cyan-400/40 bg-gradient-to-br from-[#0d1f3a] via-[#0a1628] to-[#0d1f3a] px-4 py-2.5 text-sm font-medium text-cyan-100 shadow-[0_0_25px_rgba(34,211,238,0.35)]">
-            {phrase}
-          </div>
-          {/* Cola del bocadillo apuntando al personaje */}
-          <div className="absolute -bottom-2 right-6 h-4 w-4 rotate-45 border-b-2 border-r-2 border-cyan-400/40 bg-gradient-to-br from-[#0a1628] to-[#0d1f3a]" />
-          {/* 3 puntos clasicos del comic */}
-          <div className="absolute -bottom-6 right-2 h-2 w-2 rounded-full border border-cyan-400/40 bg-[#0d1f3a]" />
-          <div className="absolute -bottom-9 right-0 h-1.5 w-1.5 rounded-full border border-cyan-400/40 bg-[#0d1f3a]" />
-        </div>
-
-        {/* Personaje */}
+        {/* Personaje (a la izquierda ahora) */}
         <div className="relative h-32 w-32 overflow-hidden">
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 blur-2xl" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -116,6 +104,18 @@ export function MotivationalBubble({ intervalMs = 60_000, visibleMs = 3_000 }: P
             alt=""
             className="relative h-full w-full object-contain object-bottom drop-shadow-[0_0_15px_rgba(34,211,238,0.25)]"
           />
+        </div>
+
+        {/* Bocadillo (speech bubble, a la derecha del personaje) */}
+        <div className="relative mb-12 max-w-[180px]">
+          <div className="rounded-2xl border-2 border-cyan-400/40 bg-gradient-to-br from-[#0d1f3a] via-[#0a1628] to-[#0d1f3a] px-4 py-2.5 text-sm font-medium text-cyan-100 shadow-[0_0_25px_rgba(34,211,238,0.35)]">
+            {phrase}
+          </div>
+          {/* Cola del bocadillo apuntando al personaje (a la izquierda) */}
+          <div className="absolute -bottom-2 left-6 h-4 w-4 rotate-45 border-b-2 border-l-2 border-cyan-400/40 bg-gradient-to-br from-[#0a1628] to-[#0d1f3a]" />
+          {/* 3 puntos clasicos del comic */}
+          <div className="absolute -bottom-6 left-2 h-2 w-2 rounded-full border border-cyan-400/40 bg-[#0d1f3a]" />
+          <div className="absolute -bottom-9 left-0 h-1.5 w-1.5 rounded-full border border-cyan-400/40 bg-[#0d1f3a]" />
         </div>
       </div>
     </div>
