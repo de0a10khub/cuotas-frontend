@@ -6,12 +6,59 @@ import { toast } from 'sonner';
 import { PhoneCall, Search, X } from 'lucide-react';
 
 import { fullpayApi } from '@/lib/fullpay-api';
+import { moraApi } from '@/lib/mora-api';
 import type { FullPayLead } from '@/lib/fullpay-types';
+import type { ClienteRow, Operator } from '@/lib/clientes-types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FullPayFilter, type FullPayFilters } from '@/components/full-pay/full-pay-filter';
 import { FullPayTable } from '@/components/full-pay/full-pay-table';
-import { FullPayDrawer } from '@/components/full-pay/full-pay-drawer';
+import { RecoveryDrawer } from '@/components/recovery/recovery-drawer';
+import { RECOVERY_STATUS_OPTIONS_MORA } from '@/components/recovery/styles';
+
+/**
+ * Convierte un FullPayLead al shape ClienteRow que necesita RecoveryDrawer.
+ * Reusamos el drawer de mora para que los operarios tengan el mismo flujo
+ * (Gestión, Seguimiento, Pagos, Reintentos, Mora) y queden las notas de
+ * Seguimiento registradas en op_mora_recovery_tracking.
+ */
+function fullPayLeadToClienteRow(lead: FullPayLead): ClienteRow {
+  return {
+    subscription_id: lead.subscription_id,
+    customer_id: lead.customer_id,
+    customer_name: lead.customer_name || '',
+    customer_email: lead.customer_email || '',
+    customer_phone: lead.customer_phone || '',
+    platform: lead.platform,
+    subscription_status: 'active',
+    subscription_created_at: lead.alta_date,
+    pause_collection: null,
+    days_overdue: 0,
+    paid_invoices_count: lead.paid_count || 0,
+    unpaid_invoices_count: 0,
+    unpaid_invoices_total: 0,
+    category: 'Al día',
+    open_disputes: lead.open_disputes || 0,
+    won_disputes: lead.won_disputes || 0,
+    lost_disputes: lead.lost_disputes || 0,
+    recovery_status: lead.recovery_status,
+    recovery_contacted_by: lead.recovery_operator || '',
+    recovery_comment_1: lead.recovery_comment || '',
+    recovery_comment_2: '',
+    recovery_continue_with: '',
+    recovery_locked_by: lead.recovery_locked_by,
+    recovery_lock_expires_at: lead.recovery_lock_expires_at,
+    retry_count: 0,
+    last_retry_status: null,
+    is_refinanced: false,
+    original_subscription_id: null,
+    refinance_status: null,
+    total_count: lead.total_count || 0,
+    product_name: lead.product_name,
+    paid_count: lead.paid_count,
+    paid_total: lead.paid_total,
+  };
+}
 
 export default function FullPayPage() {
   const router = useRouter();
@@ -52,7 +99,10 @@ export default function FullPayPage() {
   const [rows, setRows] = useState<FullPayLead[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [operators, setOperators] = useState<string[]>([]);
+  // operators del filtro: lista de strings (nombres) que usa el FullPayFilter
+  const [operatorNames, setOperatorNames] = useState<string[]>([]);
+  // operators del drawer: objeto Operator{id, display_name} para el RecoveryDrawer
+  const [drawerOperators, setDrawerOperators] = useState<Operator[]>([]);
   const [selected, setSelected] = useState<FullPayLead | null>(null);
 
   const load = useCallback(async () => {
@@ -75,7 +125,9 @@ export default function FullPayPage() {
   }, [load]);
 
   useEffect(() => {
-    fullpayApi.operators().then((d) => setOperators(d.results)).catch(() => setOperators([]));
+    fullpayApi.operators().then((d) => setOperatorNames(d.results)).catch(() => setOperatorNames([]));
+    // Cargar operators con shape Operator{id, display_name} para el RecoveryDrawer
+    moraApi.operators().then((d) => setDrawerOperators(d.results)).catch(() => setDrawerOperators([]));
   }, []);
 
   const handleFilterChange = (next: FullPayFilters) =>
@@ -99,8 +151,6 @@ export default function FullPayPage() {
     pushParams({ search: '', page: 1 });
   };
   const handleRowOpen = (row: FullPayLead) => setSelected(row);
-  const handleUpdated = (row: FullPayLead) =>
-    setRows((prev) => prev.map((r) => (r.subscription_id === row.subscription_id ? row : r)));
 
   return (
     <div className="relative mx-auto max-w-[1600px] space-y-5 p-4">
@@ -126,7 +176,7 @@ export default function FullPayPage() {
             <b className="text-cyan-300">{total}</b> leads
           </p>
         </div>
-        <FullPayFilter value={filters} operators={operators} onChange={handleFilterChange} />
+        <FullPayFilter value={filters} operators={operatorNames} onChange={handleFilterChange} />
       </header>
 
       {/* Buscador con lupa */}
@@ -173,11 +223,20 @@ export default function FullPayPage() {
         onRowOpen={handleRowOpen}
       />
 
-      <FullPayDrawer
-        row={selected}
+      <RecoveryDrawer
+        mode="mora"
+        api={moraApi}
+        statusOptions={RECOVERY_STATUS_OPTIONS_MORA}
+        operators={drawerOperators}
+        row={selected ? fullPayLeadToClienteRow(selected) : null}
         open={!!selected}
         onClose={() => setSelected(null)}
-        onUpdated={handleUpdated}
+        onUpdated={() => {
+          // El drawer escribe en op_mora_recovery_tracking (mora). Refrescamos
+          // la lista para que la fila Full Pay reciba los datos actualizados
+          // (al volver al servidor, /full-pay rehace su query y trae lo nuevo).
+          load();
+        }}
       />
     </div>
   );
