@@ -54,6 +54,7 @@ import { MoraTimeline } from './mora-timeline';
 import { MultiSelectTags } from './multi-select-tags';
 import { MultiContactList } from './multi-contact-list';
 import { ExternalPaymentButton } from './external-payment-button';
+import { MembershipPausePanel } from './membership-pause-panel';
 import type { DrawerMode, RecoveryDrawerApi, RecoveryRow } from './types';
 
 interface Props {
@@ -540,6 +541,9 @@ export function RecoveryDrawer({
                 </TabsList>
 
                 <TabsContent value="gestion" className="space-y-4">
+                  {/* Pausa / banner de pausa activa. Componente autocontenido */}
+                  <MembershipPausePanel subscriptionId={row.subscription_id} />
+
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <Field label="Estado de Recobro">
                       <Select value={status} onValueChange={(v) => setStatus(v || 'Pendiente')}>

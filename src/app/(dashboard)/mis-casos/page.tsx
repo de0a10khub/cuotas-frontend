@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { formatEuros } from '@/lib/format';
 import {
@@ -51,7 +52,9 @@ const TABS: ReadonlyArray<{
 /** Tab sintético "Notificaciones" — siempre visible, pinta movidos-a-N2 + recaídas
  *  como una vista más (no es un panel real ni se filtra por panels_visible). */
 const NOTIF_TAB_ID = '__notif__' as const;
-type TabId = MisCasosPanel | typeof NOTIF_TAB_ID;
+/** Tab sintético "Pendientes" — pausas activas y full-pays del operario. */
+const PENDIENTES_TAB_ID = '__pendientes__' as const;
+type TabId = MisCasosPanel | typeof NOTIF_TAB_ID | typeof PENDIENTES_TAB_ID;
 
 const PAGE_SIZE = 25;
 
@@ -102,12 +105,13 @@ export default function MisCasosPage() {
   // Si la URL pide un tab que el rol no puede ver, fallback al primer disponible.
   const requestedTab = sp.get('tab') as TabId | null;
   const isValidTab = (id: string | null): id is TabId =>
-    id === NOTIF_TAB_ID || (id != null && visibleTabs.some((t) => t.id === id));
+    id === NOTIF_TAB_ID || id === PENDIENTES_TAB_ID || (id != null && visibleTabs.some((t) => t.id === id));
   const activeTab: TabId =
     isValidTab(requestedTab)
       ? requestedTab
       : (visibleTabs[0]?.id ?? 'mora_n1');
   const isNotifTab = activeTab === NOTIF_TAB_ID;
+  const isPendientesTab = activeTab === PENDIENTES_TAB_ID;
 
   const [search, setSearch] = useState('');
   const [pendingSearch, setPendingSearch] = useState('');
@@ -183,6 +187,33 @@ export default function MisCasosPage() {
   }, [asEmail]);
 
   const notifTotal = notif.movidos.length + notif.recaidas.length;
+
+  // Pendientes: pausas activas + full-pays del operario actual.
+  interface PendienteItem {
+    pause_id: string;
+    subscription_id: string;
+    platform: string;
+    paused_at: string | null;
+    pause_until: string;
+    days_remaining: number;
+    reason: string | null;
+    fullpay: { id: string; amount_eur: number; checkout_url: string; expires_at: string } | null;
+  }
+  const [pendientes, setPendientes] = useState<PendienteItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await api.get<{ results: PendienteItem[] }>('/api/v1/mis-casos/pendientes/');
+        if (cancelled) return;
+        setPendientes(r.results || []);
+      } catch {
+        if (!cancelled) setPendientes([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [asEmail, activeTab]);
 
   // Cargamos counts de TODOS los tabs en una llamada paralela (1ª vez y al cambiar
   // de impersonación). Si el backend ya devuelve `counts` en cada list, lo usamos —
@@ -405,12 +436,38 @@ export default function MisCasosPage() {
               {notifTotal}
             </span>
           </button>
+
+          {/* Tab "Pendientes" — pausas activas + full-pays del operario */}
+          <button
+            type="button"
+            onClick={() => setTab(PENDIENTES_TAB_ID)}
+            className={cn(
+              'group relative inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all',
+              isPendientesTab
+                ? 'bg-gradient-to-br from-amber-500 to-amber-700 text-white shadow-[0_0_15px_rgba(245,158,11,0.4)]'
+                : 'text-amber-200/70 hover:bg-amber-500/10 hover:text-white',
+            )}
+          >
+            <span>Pendientes</span>
+            <span
+              className={cn(
+                'inline-flex h-5 min-w-[22px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums',
+                isPendientesTab
+                  ? 'bg-white/20 text-white'
+                  : 'bg-amber-950/40 text-amber-300/80 ring-1 ring-amber-400/30',
+              )}
+            >
+              {pendientes.length}
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* Contenido del tab activo: tabla normal o panel de Notificaciones */}
+      {/* Contenido del tab activo: tabla normal, Notificaciones o Pendientes */}
       {isNotifTab ? (
         <NotifPanel asEmail={asEmail} movidos={notif.movidos} recaidas={notif.recaidas} />
+      ) : isPendientesTab ? (
+        <PendientesPanel items={pendientes} />
       ) : (
       <div className="overflow-hidden rounded-2xl border border-blue-500/20 bg-[#0a1628]">
         {/* Header — sin columna Operario ni Estado (en /mis-casos todos son del mismo owner) */}
@@ -734,6 +791,78 @@ function EmptyState({
           ? `Sin resultados en ${label} para esa búsqueda.`
           : `No tienes casos asignados en ${label}.`}
       </p>
+    </div>
+  );
+}
+
+interface PendienteRow {
+  pause_id: string;
+  subscription_id: string;
+  platform: string;
+  paused_at: string | null;
+  pause_until: string;
+  days_remaining: number;
+  reason: string | null;
+  fullpay: { id: string; amount_eur: number; checkout_url: string; expires_at: string } | null;
+}
+
+function PendientesPanel({ items }: { items: PendienteRow[] }) {
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-amber-500/20 bg-[#0a1628] py-16 text-center text-amber-300/60">
+        <p className="text-sm">No tienes suscripciones pausadas ni Full Pays activos.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="overflow-hidden rounded-2xl border border-amber-500/20 bg-[#0a1628]">
+      <div className="border-b border-amber-400/20 bg-amber-950/30 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-300">
+        Pendientes · {items.length}
+      </div>
+      <div className="divide-y divide-amber-400/10">
+        {items.map((p) => {
+          const expira = new Date(p.pause_until).toLocaleDateString('es-ES', {
+            day: '2-digit', month: 'short', year: 'numeric',
+          });
+          return (
+            <div
+              key={p.pause_id}
+              className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-amber-500/5"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-amber-100">
+                  {p.subscription_id}
+                  <span className="ml-2 rounded-md border border-amber-400/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-200">
+                    {p.platform}
+                  </span>
+                </p>
+                <p className="mt-0.5 text-xs text-amber-200/70">
+                  ⏸ Pausada hasta <b className="text-amber-100">{expira}</b>
+                  {' · '}
+                  <span className="text-amber-200/90">{p.days_remaining} días restantes</span>
+                </p>
+                {p.reason && (
+                  <p className="mt-0.5 truncate text-[11px] text-amber-200/60">
+                    Motivo: {p.reason}
+                  </p>
+                )}
+                {p.fullpay && (
+                  <p className="mt-0.5 text-[11px] text-emerald-300/90">
+                    💰 Full Pay generado · {formatEuros(p.fullpay.amount_eur)}
+                  </p>
+                )}
+              </div>
+              <Link
+                href={`/clientes?search=${encodeURIComponent(p.subscription_id)}`}
+                className="inline-flex items-center gap-1 rounded-md border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-amber-200 transition-colors hover:bg-amber-500/20"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Abrir
+              </Link>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
