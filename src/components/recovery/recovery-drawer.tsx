@@ -143,6 +143,23 @@ export function RecoveryDrawer({
     };
   }, [isMora, api]);
 
+  // Contador de notas en Seguimiento para pintar el badge en el tab.
+  const [interactionsCount, setInteractionsCount] = useState(0);
+  useEffect(() => {
+    if (!isMora || !row?.subscription_id || !api.interactions) {
+      setInteractionsCount(0);
+      return;
+    }
+    let cancel = false;
+    api
+      .interactions(row.subscription_id)
+      .then((r) => !cancel && setInteractionsCount((r.results || []).length))
+      .catch(() => !cancel && setInteractionsCount(0));
+    return () => {
+      cancel = true;
+    };
+  }, [isMora, row?.subscription_id, api]);
+
   // Lock al abrir + libera al cerrar.
   useEffect(() => {
     if (!open || !row) return;
@@ -513,6 +530,11 @@ export function RecoveryDrawer({
                     >
                       <Clock className="h-3.5 w-3.5" />
                       Seguimiento
+                      {interactionsCount > 0 && (
+                        <span className="ml-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-amber-500/90 px-1 text-[10px] font-bold leading-none text-white">
+                          {interactionsCount}
+                        </span>
+                      )}
                     </TabsTrigger>
                   )}
                   <TabsTrigger
@@ -520,7 +542,9 @@ export function RecoveryDrawer({
                     className="gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
                   >
                     <WalletCards className="h-3.5 w-3.5" />
-                    {isMora ? `Pagos (${row.unpaid_invoices_count || 0})` : 'Pagos'}
+                    {isMora
+                      ? `Pagos (${(row.paid_invoices_count || 0) + (row.unpaid_invoices_count || 0)})`
+                      : 'Pagos'}
                   </TabsTrigger>
                   <TabsTrigger
                     value="historial"
