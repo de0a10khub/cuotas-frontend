@@ -15,6 +15,7 @@ import {
 import { AlertCircle, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logApi, type ChargeDetail, type LogEvent } from '@/lib/webhook-log-api';
+import { translateError } from '@/lib/error-translations';
 import { toast } from 'sonner';
 
 const SOURCES = [
@@ -749,11 +750,13 @@ function ChargesDialog({
               {/* === TIMELINE === */}
               <div className="space-y-2">
                 {charges.map((c, idx) => {
+                  // Prefiere ya traducido (failure_code_es / outcome_reason_es)
+                  // y si no, traduce el ingles del outcome/failure al vuelo.
                   const reason =
                     c.failure_code_es ||
                     c.outcome_reason_es ||
-                    c.outcome_seller_message ||
-                    c.failure_message ||
+                    translateError(c.outcome_seller_message) ||
+                    translateError(c.failure_message) ||
                     null;
                   return (
                     <div

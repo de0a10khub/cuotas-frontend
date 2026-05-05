@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, XCircle, Info, ChevronDown, ChevronRight, History, AlertTriangle } from 'lucide-react';
 import type { RecoveryDrawerApi } from './types';
+import { translateError } from '@/lib/error-translations';
 
 interface Props {
   api: RecoveryDrawerApi;
@@ -40,10 +41,20 @@ function humanizeAction(type: string): string {
 function extractError(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null;
   const p = payload as Record<string, unknown>;
+  // Prioridad: whop_response.error.message > error/message/etc. (los específicos
+  // de Whop suelen ser más informativos que el genérico "card_error: ...").
+  const wr = p.whop_response as Record<string, unknown> | undefined;
+  if (wr && typeof wr === 'object') {
+    const wrErr = wr.error as Record<string, unknown> | undefined;
+    if (wrErr && typeof wrErr === 'object') {
+      const msg = wrErr.message;
+      if (typeof msg === 'string' && msg.trim()) return translateError(msg);
+    }
+  }
   const candidates = ['error', 'error_message', 'message', 'failure_reason', 'decline_code'];
   for (const k of candidates) {
     const v = p[k];
-    if (typeof v === 'string' && v.trim()) return v.trim();
+    if (typeof v === 'string' && v.trim()) return translateError(v);
   }
   return null;
 }
