@@ -56,7 +56,8 @@ const MODULE_STYLES: Record<string, string> = {
   default: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
 };
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE_OPTIONS = [30, 50, 100, 300, 500, 1000] as const;
+type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 
 function defaultFilters(sp: URLSearchParams): AuditFilters {
   return {
@@ -71,11 +72,17 @@ function defaultFilters(sp: URLSearchParams): AuditFilters {
   };
 }
 
+function defaultPageSize(sp: URLSearchParams): PageSize {
+  const v = Number(sp.get('limit')) as PageSize;
+  return PAGE_SIZE_OPTIONS.includes(v) ? v : 50;
+}
+
 export default function RegistroAccionesPage() {
   const router = useRouter();
   const sp = useSearchParams();
 
   const [filters, setFilters] = useState<AuditFilters>(() => defaultFilters(sp));
+  const [pageSize, setPageSize] = useState<PageSize>(() => defaultPageSize(sp));
   const [metadata, setMetadata] = useState<AuditMetadata | null>(null);
   const [logs, setLogs] = useState<ActivityLogEntry[]>([]);
   const [total, setTotal] = useState(0);
@@ -83,11 +90,12 @@ export default function RegistroAccionesPage() {
   const [selected, setSelected] = useState<ActivityLogEntry | null>(null);
 
   // Sync filters → URL
-  const pushFilters = (next: AuditFilters) => {
+  const pushFilters = (next: AuditFilters, ps: PageSize) => {
     const q = new URLSearchParams();
     for (const [k, v] of Object.entries(next)) {
       if (v !== '' && v !== 'all' && v !== 1) q.set(k, String(v));
     }
+    if (ps !== 50) q.set('limit', String(ps));
     router.push(`/registro-acciones${q.toString() ? `?${q}` : ''}`);
   };
 
@@ -113,7 +121,7 @@ export default function RegistroAccionesPage() {
           action_type: filters.action_type,
           search: filters.search,
           page: filters.page,
-          page_size: PAGE_SIZE,
+          page_size: pageSize,
         });
         setLogs(r.results);
         setTotal(r.total_count);
@@ -134,15 +142,16 @@ export default function RegistroAccionesPage() {
     filters.action_type,
     filters.search,
     filters.page,
+    pageSize,
   ]);
 
   // Sync → URL en cambios
   useEffect(() => {
-    pushFilters(filters);
+    pushFilters(filters, pageSize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]);
+  }, [filters, pageSize]);
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / PAGE_SIZE)), [total]);
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total, pageSize]);
 
   const update = useCallback((patch: Partial<AuditFilters>) => {
     setFilters((prev) => ({ ...prev, ...patch, page: patch.page ?? 1 }));
@@ -184,10 +193,23 @@ export default function RegistroAccionesPage() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between gap-2 text-base">
             <span>Filtros de Auditoría</span>
-            <Button variant="ghost" size="sm" onClick={clear}>
-              <FilterX className="h-3.5 w-3.5" />
-              Limpiar Filtros
-            </Button>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-normal text-muted-foreground">Mostrar:</span>
+              <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v) as PageSize)}>
+                <SelectTrigger className="h-8 w-24 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="ghost" size="sm" onClick={clear}>
+                <FilterX className="h-3.5 w-3.5" />
+                Limpiar Filtros
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
