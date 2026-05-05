@@ -226,6 +226,7 @@ export default function FullPayPage() {
       <RecoveryDrawer
         mode="mora"
         api={moraApi}
+        panel="fullpay"
         statusOptions={RECOVERY_STATUS_OPTIONS_MORA}
         operators={drawerOperators}
         row={selected ? fullPayLeadToClienteRow(selected) : null}

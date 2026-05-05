@@ -268,6 +268,7 @@ export default function ClientesPage() {
       <RecoveryDrawer
         mode="clientes"
         api={clientesApi}
+        panel="clientes"
         statusOptions={RECOVERY_STATUS_OPTIONS_BASE}
         row={selected}
         operators={operators}

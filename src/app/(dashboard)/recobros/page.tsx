@@ -183,6 +183,7 @@ export default function RecobrosPage() {
       <RecoveryDrawer
         mode="mora"
         api={moraApi}
+        panel="recobros"
         statusOptions={RECOVERY_STATUS_OPTIONS_MORA}
         row={selected}
         operators={operators}

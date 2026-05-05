@@ -190,6 +190,7 @@ export default function MoraN2Page() {
       <RecoveryDrawer
         mode="mora"
         api={moraApi}
+        panel="mora_n2"
         statusOptions={RECOVERY_STATUS_OPTIONS_MORA}
         row={selected}
         operators={operators}

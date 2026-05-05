@@ -25,6 +25,9 @@ export interface RecoveryDrawerApi {
     continue_with?: string;
     comment_2?: string;
     tags?: string[];
+    /** Panel desde donde se guarda la nota (mora_n1 | mora_n2 | fullpay | clientes | recobros).
+     *  Backend lo persiste en tracking_notes.panel. */
+    panel?: string;
   }) => Promise<RecoveryRow>;
   contract: (subscription_id: string) => Promise<{ url: string | null }>;
   generateContract: (payload: {

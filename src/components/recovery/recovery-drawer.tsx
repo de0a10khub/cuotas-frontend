@@ -66,6 +66,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onUpdated?: (row: RecoveryRow) => void;
+  /** Identifica el panel donde está el operario (mora_n1, mora_n2, fullpay,
+   *  clientes, recobros). Se persiste en tracking_notes.panel para que el
+   *  tab Seguimiento muestre el origen correcto de cada nota. */
+  panel?: string;
 }
 
 type TabKey = 'gestion' | 'seguimiento' | 'pagos' | 'historial' | 'mora';
@@ -79,6 +83,7 @@ export function RecoveryDrawer({
   open,
   onClose,
   onUpdated,
+  panel,
 }: Props) {
   const { profile } = useAuth();
   const userEmail = profile?.user.email || profile?.user.username || 'anon@cuotas.local';
@@ -206,6 +211,7 @@ export function RecoveryDrawer({
         continue_with: continueWith,
         comment_2: comment2,
         tags: isMora ? tags : undefined,
+        panel: panel || (mode === 'mora' ? 'mora_n1' : 'clientes'),
       });
       toast.success('Gestión guardada');
       onUpdated?.(updated);
