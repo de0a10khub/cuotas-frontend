@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Pause, Play, Loader2, AlertCircle } from 'lucide-react';
+import { Pause, Play, Loader2, AlertCircle, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { api, ApiError } from '@/lib/api';
 import { translateError } from '@/lib/error-translations';
+import { AdminPinDialog } from '@/components/admin-pin-dialog';
+import { useAuth } from '@/lib/auth-context';
 
 const MAX_PAUSE_DAYS = 30;
 
@@ -50,12 +52,20 @@ function formatDate(iso: string): string {
 }
 
 export function MembershipPausePanel({ subscriptionId, onChanged }: Props) {
+  const { profile } = useAuth();
+  const isAdmin = profile?.roles?.some((r) => r.name === 'Admin') ?? false;
+
   const [active, setActive] = useState<ActivePause | null>(null);
   const [loading, setLoading] = useState(true);
   const [pauseOpen, setPauseOpen] = useState(false);
   const [days, setDays] = useState<string>('');
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Cancel subscription state (admin only)
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelPinOpen, setCancelPinOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!subscriptionId) return;
@@ -180,18 +190,109 @@ export function MembershipPausePanel({ subscriptionId, onChanged }: Props) {
         </div>
       )}
 
-      {/* Botón pausar (solo si NO hay pausa activa) */}
+      {/* Botones de acción cuando NO hay pausa activa */}
       {!loading && !active && (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setPauseOpen(true)}
-          className="gap-1.5"
-        >
-          <Pause className="h-3.5 w-3.5" />
-          Pausar suscripción
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setPauseOpen(true)}
+            className="gap-1.5"
+          >
+            <Pause className="h-3.5 w-3.5" />
+            Pausar suscripción
+          </Button>
+          {isAdmin && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setCancelConfirmOpen(true)}
+              className="gap-1.5 border-rose-400/40 text-rose-700 hover:bg-rose-500/10 dark:text-rose-300"
+            >
+              <X className="h-3.5 w-3.5" />
+              Cancelar suscripción
+            </Button>
+          )}
+        </div>
       )}
+
+      {/* Modal de confirmación CANCEL (admin) */}
+      <Dialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancelar suscripción</DialogTitle>
+            <DialogDescription>
+              Cancela <b>permanentemente</b> esta suscripción. Las cuotas pendientes
+              se marcarán como canceladas y no se ejecutarán más cobros automáticos.
+              <br /><br />
+              <b>Acción irreversible.</b> Solo afecta a esta suscripción concreta.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Label htmlFor="cancel-reason">Motivo (obligatorio)</Label>
+            <Textarea
+              id="cancel-reason"
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              rows={2}
+              placeholder="Cliente solicitó baja, contrato finalizado, etc."
+            />
+            <div className="rounded-md border border-rose-400/40 bg-rose-500/10 p-2 text-xs text-rose-700 dark:text-rose-300">
+              Tras confirmar se te pedirá tu PIN admin de 6 dígitos.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelConfirmOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (!cancelReason.trim()) {
+                  toast.error('Indica un motivo');
+                  return;
+                }
+                setCancelConfirmOpen(false);
+                setCancelPinOpen(true);
+              }}
+              className="bg-rose-600 hover:bg-rose-700"
+            >
+              Continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AdminPinDialog
+        open={cancelPinOpen}
+        onClose={() => setCancelPinOpen(false)}
+        scope="cancel_subscription"
+        description={`Cancelación definitiva de la suscripción ${subscriptionId}`}
+        onVerified={async (token) => {
+          setCancelPinOpen(false);
+          setSubmitting(true);
+          try {
+            await api.post('/api/v1/membership/cancel/', {
+              subscription_id: subscriptionId,
+              reason: cancelReason.trim(),
+              admin_pin_token: token,
+            });
+            toast.success('Suscripción cancelada');
+            setCancelReason('');
+            await refresh();
+            onChanged?.();
+          } catch (err) {
+            if (err instanceof ApiError) {
+              const data = err.data as { detail?: string; whop_response?: { error?: { message?: string } } };
+              const msg = translateError(data?.whop_response?.error?.message) || data?.detail || `Error ${err.status}`;
+              toast.error(msg);
+            } else {
+              toast.error('Error de red');
+            }
+          } finally {
+            setSubmitting(false);
+          }
+        }}
+      />
 
       {/* Modal pausa */}
       <Dialog open={pauseOpen} onOpenChange={setPauseOpen}>

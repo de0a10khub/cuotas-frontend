@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RecoveryDrawerApi } from './types';
+import { RefundActionButton } from './refund-action-button';
 
 interface Props {
   api: RecoveryDrawerApi;
@@ -574,6 +575,17 @@ export function FailedPaymentsList({
                     )}
                     {p.note ? 'Con nota' : 'Nota'}
                   </Button>
+                )}
+                {/* Botón devolución: visible solo a admins (el componente
+                 *  hace el check internamente). Solo aparece para pagos
+                 *  efectivamente cobrados (paid). */}
+                {tone === 'paid' && p.amount > 0 && (
+                  <RefundActionButton
+                    paymentId={p.id}
+                    platform={p.platform}
+                    amount={p.amount}
+                    onRefunded={load}
+                  />
                 )}
               </div>
             </div>
