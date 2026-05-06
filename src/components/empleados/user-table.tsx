@@ -37,6 +37,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { ResetPasswordDialog } from '@/components/empleados/reset-password-dialog';
+import { ResetAdminPinDialog } from '@/components/empleados/reset-admin-pin-dialog';
 import { EditRolesDialog } from '@/components/empleados/edit-roles-dialog';
 import type { EmpleadoUser } from '@/lib/empleados-types';
 import { empleadosApi } from '@/lib/empleados-api';
@@ -53,6 +54,7 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
   const [draft, setDraft] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [resettingPwd, setResettingPwd] = useState<EmpleadoUser | null>(null);
+  const [resettingPin, setResettingPin] = useState<EmpleadoUser | null>(null);
   const [editingRoles, setEditingRoles] = useState<EmpleadoUser | null>(null);
 
   const startEdit = (u: EmpleadoUser) => {
@@ -249,6 +251,15 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
                             <KeyRound className="mr-2 h-4 w-4" />
                             Cambiar contraseña
                           </DropdownMenuItem>
+                          {(u.roles?.includes('Admin') ?? false) && (
+                            <DropdownMenuItem
+                              onClick={() => setResettingPin(u)}
+                              className="text-amber-600"
+                            >
+                              <KeyRound className="mr-2 h-4 w-4" />
+                              Resetear PIN admin
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             onClick={() => toggleBlock(u)}
                             className={u.is_blocked ? 'text-emerald-600' : 'text-orange-600'}
@@ -286,6 +297,12 @@ export function UserTable({ users, availableRoles, onChanged }: Props) {
       <ResetPasswordDialog
         user={resettingPwd}
         onClose={() => setResettingPwd(null)}
+        onSaved={onChanged}
+      />
+
+      <ResetAdminPinDialog
+        user={resettingPin}
+        onClose={() => setResettingPin(null)}
         onSaved={onChanged}
       />
 
