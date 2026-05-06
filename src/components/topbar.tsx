@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -14,7 +15,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { MobileNav } from '@/components/mobile-nav';
-import { LogOut, User } from 'lucide-react';
+import { ChangeMyPinDialog } from '@/components/change-my-pin-dialog';
+import { LogOut, User, KeyRound } from 'lucide-react';
 
 function initials(name: string) {
   return name
@@ -32,6 +34,8 @@ export function Topbar() {
   const mainRole = profile?.roles?.[0]?.name;
   const gender = profile?.gender;
   const greeting = gender === 'M' ? 'Bienvenido,' : gender === 'F' ? 'Bienvenida,' : 'Hola,';
+  const isAdmin = profile?.roles?.some((r) => r.name === 'Admin') ?? false;
+  const [pinDialogOpen, setPinDialogOpen] = useState(false);
 
   return (
     <header className="flex h-16 items-center justify-between gap-2 border-b border-slate-200 bg-background/80 px-3 backdrop-blur sm:px-6 dark:border-slate-800">
@@ -77,6 +81,15 @@ export function Topbar() {
               <User className="mr-2 h-4 w-4" />
               Mi perfil
             </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem
+                onClick={() => setPinDialogOpen(true)}
+                className="text-cyan-200 focus:bg-cyan-500/15 focus:text-cyan-100"
+              >
+                <KeyRound className="mr-2 h-4 w-4" />
+                Cambiar mi PIN
+              </DropdownMenuItem>
+            )}
           </DropdownMenuGroup>
           <DropdownMenuSeparator className="bg-blue-500/20" />
           <DropdownMenuGroup>
@@ -91,6 +104,13 @@ export function Topbar() {
         </DropdownMenuContent>
       </DropdownMenu>
       </div>
+      {isAdmin && (
+        <ChangeMyPinDialog
+          open={pinDialogOpen}
+          onOpenChange={setPinDialogOpen}
+          isFirstTime={false}
+        />
+      )}
     </header>
   );
 }
