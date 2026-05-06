@@ -190,7 +190,7 @@ export default function CatalogoPage() {
       <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
 
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="bg-gradient-to-r from-cyan-200 via-blue-100 to-cyan-200 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
+        <h1 className="bg-gradient-to-r from-cyan-200 via-blue-100 to-cyan-200 bg-clip-text text-2xl md:text-4xl font-bold tracking-tight text-transparent">
           Catálogo de Productos
         </h1>
         <div className="flex items-center gap-2">

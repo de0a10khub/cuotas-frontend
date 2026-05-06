@@ -176,7 +176,7 @@ export default function RegistroAccionesPage() {
       <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
 
       <header>
-        <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
+        <h1 className="flex items-center gap-2.5 text-2xl md:text-3xl font-bold tracking-tight">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-400/30 ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
             📜
           </span>

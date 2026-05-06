@@ -103,7 +103,7 @@ export default function MentoriasPage() {
       <div className="pointer-events-none fixed left-1/3 top-2/3 -z-10 h-72 w-72 rounded-full bg-indigo-500/8 blur-3xl" />
 
       <header>
-        <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
+        <h1 className="flex items-center gap-2.5 text-2xl md:text-3xl font-bold tracking-tight">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-400/30 ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
             <GraduationCap className="h-5 w-5 text-cyan-300" />
           </span>
@@ -122,7 +122,7 @@ export default function MentoriasPage() {
         {!loading && kpis.map((k) => <MentorKpiCard key={k.mentor_name} kpi={k} />)}
       </div>
 
-      <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(59,130,246,0.10)]">
+      <div className="relative overflow-x-auto md:overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(59,130,246,0.10)]">
         <div className="flex flex-row items-center justify-between gap-3 border-b border-blue-500/15 bg-gradient-to-r from-blue-950/40 via-blue-900/30 to-blue-950/40 px-5 py-3">
           <h2 className="flex items-center gap-2 text-base font-bold text-white">
             <span className="text-cyan-300">🎓</span>
@@ -249,7 +249,7 @@ export default function MentoriasPage() {
 
 function MentorKpiCard({ kpi }: { kpi: MentorshipKpi }) {
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#1a2c52] p-4 shadow-[0_0_25px_rgba(59,130,246,0.10)] transition-all hover:border-cyan-400/40 hover:shadow-[0_0_40px_rgba(34,211,238,0.18)]">
+    <div className="group relative overflow-x-auto md:overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#1a2c52] p-4 shadow-[0_0_25px_rgba(59,130,246,0.10)] transition-all hover:border-cyan-400/40 hover:shadow-[0_0_40px_rgba(34,211,238,0.18)]">
       <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-500/15 blur-3xl opacity-40 transition-opacity group-hover:opacity-70" />
       <div className="relative">
         <div className="mb-3 flex items-start justify-between gap-2">

@@ -98,7 +98,7 @@ export default function CasosPorOperarioPage() {
       <div className="pointer-events-none fixed right-0 bottom-1/4 -z-10 h-96 w-96 rounded-full bg-cyan-500/8 blur-3xl" />
 
       {/* HERO */}
-      <header className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#1a2c52] p-5 shadow-[0_0_60px_rgba(59,130,246,0.15)]">
+      <header className="relative overflow-x-auto md:overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#1a2c52] p-5 shadow-[0_0_60px_rgba(59,130,246,0.15)]">
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-500/20 blur-3xl" />
         <div className="pointer-events-none absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-cyan-500/15 blur-3xl" />
 
@@ -237,7 +237,7 @@ function OperatorCard({ op }: { op: OperatorWithKPIs }) {
   return (
     <Link
       href={`/mis-casos?as=${encodeURIComponent(op.email)}`}
-      className="group relative overflow-hidden rounded-2xl border border-blue-500/20 bg-[#0a1628] p-5 transition-all hover:border-cyan-400/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.15)]"
+      className="group relative overflow-x-auto md:overflow-hidden rounded-2xl border border-blue-500/20 bg-[#0a1628] p-5 transition-all hover:border-cyan-400/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.15)]"
     >
       {/* Glow on hover */}
       <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-500/0 blur-3xl transition-all group-hover:bg-cyan-500/20" />

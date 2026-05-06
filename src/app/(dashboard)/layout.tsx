@@ -40,11 +40,11 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-screen md:h-screen md:overflow-hidden">
       <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col md:overflow-hidden">
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">{children}</main>
       </div>
       {/* Modo TEST: 1 min entre apariciones, visible 5s. Cambiar intervalMs a 300_000 para prod (5min). */}
       <MotivationalBubble intervalMs={60_000} visibleMs={5_000} />

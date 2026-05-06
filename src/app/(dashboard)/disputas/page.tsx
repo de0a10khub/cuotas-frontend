@@ -195,7 +195,7 @@ export default function DisputasPage() {
 
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 bg-gradient-to-r from-cyan-200 via-blue-100 to-cyan-200 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
+          <h1 className="flex items-center gap-2 bg-gradient-to-r from-cyan-200 via-blue-100 to-cyan-200 bg-clip-text text-2xl md:text-4xl font-bold tracking-tight text-transparent">
             <Scale className="h-7 w-7 text-cyan-300" />
             Disputas y Reembolsos
           </h1>

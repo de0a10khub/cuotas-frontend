@@ -136,7 +136,7 @@ export default function MoraN2Page() {
 
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
+          <h1 className="flex items-center gap-2.5 text-2xl md:text-3xl font-bold tracking-tight">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500/30 to-rose-400/30 ring-1 ring-amber-400/40 shadow-[0_0_15px_rgba(251,191,36,0.3)]">
               🛡️
             </span>
@@ -155,7 +155,7 @@ export default function MoraN2Page() {
         <MoraFilterHeader value={filters} onChange={handleFilterChange} hideCategory />
       </header>
 
-      <div className="relative overflow-hidden rounded-xl border border-amber-500/20 bg-gradient-to-br from-[#1a1208] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(251,191,36,0.10)]">
+      <div className="relative overflow-x-auto md:overflow-hidden rounded-xl border border-amber-500/20 bg-gradient-to-br from-[#1a1208] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(251,191,36,0.10)]">
         <div className="flex items-center justify-between border-b border-amber-500/15 bg-gradient-to-r from-amber-950/40 via-blue-900/30 to-blue-950/40 px-4 py-2.5">
           <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-300">
             ⚠️ Casos N2 — Incobrable / Abogado

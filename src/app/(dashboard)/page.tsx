@@ -233,7 +233,7 @@ export default function HomePage() {
 
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="bg-gradient-to-r from-cyan-200 via-blue-100 to-cyan-200 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
+          <h1 className="bg-gradient-to-r from-cyan-200 via-blue-100 to-cyan-200 bg-clip-text text-2xl md:text-4xl font-bold tracking-tight text-transparent">
             Cobros
           </h1>
           <p className="mt-1 text-sm text-blue-300/60">
@@ -263,7 +263,7 @@ export default function HomePage() {
       <CobrosFilterBar value={filters} onChange={pushFilters} />
 
       {/* GLOBAL — total histórico de toda Conciliación. Sección destacada */}
-      <section className="relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-indigo-950/30 to-cyan-950/40 p-5 shadow-[0_0_40px_rgba(34,211,238,0.12)]">
+      <section className="relative overflow-x-auto md:overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-blue-950/40 via-indigo-950/30 to-cyan-950/40 p-5 shadow-[0_0_40px_rgba(34,211,238,0.12)]">
         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-500/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
 
