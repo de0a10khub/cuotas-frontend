@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { MobileNav } from '@/components/mobile-nav';
 import { LogOut, User } from 'lucide-react';
 
 function initials(name: string) {
@@ -33,10 +34,13 @@ export function Topbar() {
   const greeting = gender === 'M' ? 'Bienvenido,' : gender === 'F' ? 'Bienvenida,' : 'Hola,';
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-background/80 px-6 backdrop-blur dark:border-slate-800">
-      <div>
-        <h1 className="text-sm text-slate-500 dark:text-slate-400">{greeting}</h1>
-        <p className="text-base font-semibold">{displayName}</p>
+    <header className="flex h-16 items-center justify-between gap-2 border-b border-slate-200 bg-background/80 px-3 backdrop-blur sm:px-6 dark:border-slate-800">
+      <div className="flex min-w-0 items-center gap-2">
+        <MobileNav />
+        <div className="min-w-0">
+          <h1 className="text-xs text-slate-500 sm:text-sm dark:text-slate-400">{greeting}</h1>
+          <p className="truncate text-sm font-semibold sm:text-base">{displayName}</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">

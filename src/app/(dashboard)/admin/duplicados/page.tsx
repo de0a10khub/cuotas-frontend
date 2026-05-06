@@ -92,7 +92,7 @@ export default function DuplicadosPage() {
       <div className="pointer-events-none fixed left-1/3 top-2/3 -z-10 h-72 w-72 rounded-full bg-indigo-500/8 blur-3xl" />
 
       <header>
-        <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
+        <h1 className="flex items-center gap-2.5 text-2xl md:text-3xl font-bold tracking-tight">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-400/30 ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
             🔀
           </span>
@@ -202,7 +202,7 @@ function Kpi({
     ? valueClass.replace('-600', '-300').replace('-500', '-300')
     : 'text-cyan-300';
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#1a2c52] p-4 shadow-[0_0_20px_rgba(59,130,246,0.10)] transition-all hover:border-cyan-400/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.18)]">
+    <div className="group relative overflow-x-auto md:overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#1a2c52] p-4 shadow-[0_0_20px_rgba(59,130,246,0.10)] transition-all hover:border-cyan-400/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.18)]">
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-cyan-500/15 blur-3xl opacity-40 transition-opacity group-hover:opacity-70" />
       <div className="relative flex items-center gap-3">
         <span className="text-3xl">{icon}</span>
@@ -253,7 +253,7 @@ function ActionHelp({
   const c = ACTION_COLORS[color] || ACTION_COLORS['border-l-slate-400'];
   return (
     <div
-      className={`relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#1a2c52] p-4 ${c.glow}`}
+      className={`relative overflow-x-auto md:overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#1a2c52] p-4 ${c.glow}`}
     >
       <div className={`absolute left-0 top-2 bottom-2 w-1 rounded-r-full ${c.bar}`} />
       <div className="relative space-y-2 pl-2">

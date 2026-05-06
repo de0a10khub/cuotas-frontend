@@ -145,7 +145,7 @@ export default function MoraPage() {
 
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
+          <h1 className="flex items-center gap-2.5 text-2xl md:text-3xl font-bold tracking-tight">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/30 to-cyan-400/30 ring-1 ring-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
               ⚠️
             </span>
@@ -164,7 +164,7 @@ export default function MoraPage() {
         <MoraFilterHeader value={filters} onChange={handleFilterChange} />
       </header>
 
-      <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(59,130,246,0.10)]">
+      <div className="relative overflow-x-auto md:overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-[#0a1628] via-[#0d1f3a] to-[#0a1628] shadow-[0_0_30px_rgba(59,130,246,0.10)]">
         {hasAnyFilter && (
           <div className="flex items-center justify-end border-b border-blue-500/15 bg-blue-950/40 px-4 py-2">
             <span className="rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-cyan-300">

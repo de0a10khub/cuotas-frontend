@@ -519,7 +519,7 @@ export function RecoveryDrawer({
                 <TabsList
                   className={cn(
                     'h-auto w-full gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-900',
-                    isMora && 'grid grid-cols-5',
+                    isMora && 'grid grid-cols-3 sm:grid-cols-5',
                   )}
                 >
                   <TabsTrigger

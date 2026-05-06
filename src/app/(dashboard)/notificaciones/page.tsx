@@ -41,7 +41,7 @@ export default function NotificacionesPage() {
       <header className="flex items-center gap-3">
         <Bell className="h-7 w-7 text-blue-500" />
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Notificaciones</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Notificaciones</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Pendientes del sistema que requieren tu atención.
           </p>
