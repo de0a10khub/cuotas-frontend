@@ -553,7 +553,16 @@ export function MoraTable({
                     </TableCell>
 
                     <TableCell className="text-sm">
-                      {r.recovery_contacted_by || <span className="text-slate-400">—</span>}
+                      {(() => {
+                        // Mostramos el OWNER sticky (recovery_owner_email resuelto
+                        // a display_name) — coherente con el filtro de operario.
+                        // Si no hay owner_email (rows pre-migración legacy),
+                        // fallback a recovery_contacted_by.
+                        const ownerEmail = (r.recovery_owner_email || '').trim().toLowerCase();
+                        const ownerDisplay = ownerEmail ? emailToDisplayName.get(ownerEmail) || '' : '';
+                        const display = ownerDisplay || (r.recovery_contacted_by || '').trim();
+                        return display || <span className="text-slate-400">—</span>;
+                      })()}
                     </TableCell>
 
                     <TableCell

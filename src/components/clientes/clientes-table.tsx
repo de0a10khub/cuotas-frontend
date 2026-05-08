@@ -125,6 +125,18 @@ export function ClientesTable({
     return uniq;
   }, [operators, rows]);
 
+  // email (lowercase) -> display_name. Necesario para resolver el "owner sticky"
+  // (recovery_owner_email) al display_name que pinta el dropdown de filtro.
+  // Mismo criterio que mora-table: filtramos por OWNER, no por contacted_by.
+  const emailToDisplayName = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const op of operators) {
+      const e = (op.email || '').trim().toLowerCase();
+      if (e) m.set(e, (op.display_name || '').trim());
+    }
+    return m;
+  }, [operators]);
+
   const statusOptions = useMemo(() => {
     return Array.from(new Set(rows.map((r) => r.recovery_status || 'Pendiente')));
   }, [rows]);
@@ -135,13 +147,18 @@ export function ClientesTable({
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
-      if (operatorFilter !== 'all' && (r.recovery_contacted_by || '') !== operatorFilter) return false;
+      // Resuelve el owner sticky (recovery_owner_email) a display_name; si no
+      // hay (rows legacy pre-migración), fallback a recovery_contacted_by.
+      const ownerEmail = (r.recovery_owner_email || '').trim().toLowerCase();
+      const ownerDisplay = ownerEmail ? emailToDisplayName.get(ownerEmail) || '' : '';
+      const effectiveOperator = ownerDisplay || (r.recovery_contacted_by || '').trim();
+      if (operatorFilter !== 'all' && effectiveOperator !== operatorFilter) return false;
       const rec = r.recovery_status || 'Pendiente';
       if (statusFilter !== 'all' && rec !== statusFilter) return false;
       if (subStatusFilter !== 'all' && r.subscription_status !== subStatusFilter) return false;
       return true;
     });
-  }, [rows, operatorFilter, statusFilter, subStatusFilter]);
+  }, [rows, operatorFilter, statusFilter, subStatusFilter, emailToDisplayName]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -438,7 +455,13 @@ export function ClientesTable({
                     </TableCell>
 
                     <TableCell className="text-sm">
-                      {r.recovery_contacted_by || <span className="text-slate-400">—</span>}
+                      {(() => {
+                        // Mostramos OWNER sticky (coherente con el filtro).
+                        const ownerEmail = (r.recovery_owner_email || '').trim().toLowerCase();
+                        const ownerDisplay = ownerEmail ? emailToDisplayName.get(ownerEmail) || '' : '';
+                        const display = ownerDisplay || (r.recovery_contacted_by || '').trim();
+                        return display || <span className="text-slate-400">—</span>;
+                      })()}
                     </TableCell>
 
                     <TableCell
