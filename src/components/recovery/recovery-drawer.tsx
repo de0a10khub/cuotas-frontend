@@ -546,12 +546,12 @@ export function RecoveryDrawer({
                   </TabsTrigger>
                   <TabsTrigger
                     value="seguimiento"
-                    className="gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
+                    className="relative gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
                   >
                     <Clock className="h-3.5 w-3.5" />
                     Seguimiento
                     {interactionsCount > 0 && (
-                      <span className="ml-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-amber-500/90 px-1 text-[10px] font-bold leading-none text-white">
+                      <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-1 ring-white dark:ring-slate-900">
                         {interactionsCount}
                       </span>
                     )}
