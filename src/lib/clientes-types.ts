@@ -58,6 +58,7 @@ export interface ClienteRow {
   lost_disputes: number;
   recovery_status: RecoveryStatus | string | null;
   recovery_contacted_by: string;
+  recovery_owner_email?: string | null;
   recovery_comment_1: string;
   recovery_comment_2: string;
   recovery_continue_with: string;

@@ -141,6 +141,20 @@ export function MoraTable({
     return Array.from(new Set([...fromApi, ...fromRows]));
   }, [operators, rows]);
 
+  // email (lowercase) -> display_name. Necesario para resolver el "owner sticky"
+  // (recovery_owner_email) al display_name que pinta el dropdown de filtro.
+  // El backend trae recovery_owner_email; el filtro debe matchear contra ese
+  // owner sticky, no contra recovery_contacted_by (que es el último que tocó
+  // el caso y puede haber cambiado tras una transferencia N1->N2->Recobros).
+  const emailToDisplayName = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const op of operators) {
+      const e = (op.email || '').trim().toLowerCase();
+      if (e) m.set(e, (op.display_name || '').trim());
+    }
+    return m;
+  }, [operators]);
+
   const statusOptionsInData = useMemo(
     () => Array.from(new Set(rows.map((r) => r.recovery_status || 'Pendiente'))),
     [rows],
@@ -148,9 +162,15 @@ export function MoraTable({
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
+      // Resuelve el owner sticky: si la fila tiene recovery_owner_email y lo
+      // conocemos, usamos su display_name; si no, fallback a recovery_contacted_by.
+      const ownerEmail = (r.recovery_owner_email || '').trim().toLowerCase();
+      const ownerDisplay = ownerEmail ? emailToDisplayName.get(ownerEmail) || '' : '';
+      const effectiveOperator = ownerDisplay || (r.recovery_contacted_by || '').trim();
+
       if (operatorFilter === '__none__') {
-        if ((r.recovery_contacted_by || '').trim()) return false;
-      } else if (operatorFilter !== 'all' && (r.recovery_contacted_by || '') !== operatorFilter) {
+        if (effectiveOperator) return false;
+      } else if (operatorFilter !== 'all' && effectiveOperator !== operatorFilter) {
         return false;
       }
       const rec = r.recovery_status || 'Pendiente';
@@ -164,7 +184,7 @@ export function MoraTable({
       }
       return true;
     });
-  }, [rows, operatorFilter, statusFilter, actionNeededFilter, tagsFilter]);
+  }, [rows, operatorFilter, statusFilter, actionNeededFilter, tagsFilter, emailToDisplayName]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];

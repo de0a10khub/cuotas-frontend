@@ -29,6 +29,7 @@ import {
   FileText,
   GraduationCap,
   History,
+  Layers,
   Lock,
   Mail,
   MessageSquare,
@@ -50,6 +51,7 @@ import { PdfViewerModal } from '@/components/data/pdf-viewer-modal';
 import { ActionHistoryList } from './action-history-list';
 import { FailedPaymentsList } from './failed-payments-list';
 import { InteractionHistoryList } from './interaction-history-list';
+import { InstallmentsList } from './installments-list';
 import { MoraTimeline } from './mora-timeline';
 import { MultiSelectTags } from './multi-select-tags';
 import { MultiContactList } from './multi-contact-list';
@@ -72,7 +74,7 @@ interface Props {
   panel?: string;
 }
 
-type TabKey = 'gestion' | 'seguimiento' | 'pagos' | 'historial' | 'mora';
+type TabKey = 'gestion' | 'seguimiento' | 'pagos' | 'cuotas' | 'historial' | 'mora';
 
 export function RecoveryDrawer({
   mode,
@@ -460,7 +462,7 @@ export function RecoveryDrawer({
                 amount={tcv > 0 ? Number(row.remaining_contract) || 0 : null}
                 subtitle={tcv > 0 ? `de ${formatEuros(tcv, { decimals: 0 })}` : undefined}
                 tone="slate"
-                beta
+                beta={row.platform !== 'whop-erp'}
               />
             </div>
 
@@ -519,7 +521,20 @@ export function RecoveryDrawer({
                 <TabsList
                   className={cn(
                     'h-auto w-full gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-900',
-                    isMora && 'grid grid-cols-3 sm:grid-cols-5',
+                    'grid grid-cols-2',
+                    // Cuenta dinámicamente las columnas: base 4 (gestión, seguimiento,
+                    // pagos, historial) + 1 si whop-erp (cuotas) + 1 si isMora (mora).
+                    (() => {
+                      const cols =
+                        4 +
+                        (row.platform === 'whop-erp' ? 1 : 0) +
+                        (isMora ? 1 : 0);
+                      return {
+                        4: 'sm:grid-cols-4',
+                        5: 'sm:grid-cols-5',
+                        6: 'sm:grid-cols-6',
+                      }[cols];
+                    })(),
                   )}
                 >
                   <TabsTrigger
@@ -529,20 +544,18 @@ export function RecoveryDrawer({
                     <MessageSquare className="h-3.5 w-3.5" />
                     Gestión
                   </TabsTrigger>
-                  {isMora && (
-                    <TabsTrigger
-                      value="seguimiento"
-                      className="gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
-                    >
-                      <Clock className="h-3.5 w-3.5" />
-                      Seguimiento
-                      {interactionsCount > 0 && (
-                        <span className="ml-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-amber-500/90 px-1 text-[10px] font-bold leading-none text-white">
-                          {interactionsCount}
-                        </span>
-                      )}
-                    </TabsTrigger>
-                  )}
+                  <TabsTrigger
+                    value="seguimiento"
+                    className="gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
+                  >
+                    <Clock className="h-3.5 w-3.5" />
+                    Seguimiento
+                    {interactionsCount > 0 && (
+                      <span className="ml-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-amber-500/90 px-1 text-[10px] font-bold leading-none text-white">
+                        {interactionsCount}
+                      </span>
+                    )}
+                  </TabsTrigger>
                   <TabsTrigger
                     value="pagos"
                     className="gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
@@ -552,6 +565,15 @@ export function RecoveryDrawer({
                       ? `Pagos (${(row.paid_invoices_count || 0) + (row.unpaid_invoices_count || 0)})`
                       : 'Pagos'}
                   </TabsTrigger>
+                  {row.platform === 'whop-erp' && (
+                    <TabsTrigger
+                      value="cuotas"
+                      className="gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
+                    >
+                      <Layers className="h-3.5 w-3.5" />
+                      Cuotas
+                    </TabsTrigger>
+                  )}
                   <TabsTrigger
                     value="historial"
                     className="gap-1.5 rounded-md py-1.5 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
@@ -652,11 +674,9 @@ export function RecoveryDrawer({
                   </div>
                 </TabsContent>
 
-                {isMora && (
-                  <TabsContent value="seguimiento">
-                    <InteractionHistoryList api={api} subscriptionId={row.subscription_id} />
-                  </TabsContent>
-                )}
+                <TabsContent value="seguimiento">
+                  <InteractionHistoryList api={api} subscriptionId={row.subscription_id} />
+                </TabsContent>
 
                 <TabsContent value="pagos">
                   <FailedPaymentsList
@@ -668,6 +688,15 @@ export function RecoveryDrawer({
                     showChargeAction
                   />
                 </TabsContent>
+
+                {row.platform === 'whop-erp' && (
+                  <TabsContent value="cuotas">
+                    <InstallmentsList
+                      subscriptionId={row.subscription_id}
+                      platform={row.platform}
+                    />
+                  </TabsContent>
+                )}
 
                 <TabsContent value="historial">
                   <ActionHistoryList api={api} subscriptionId={row.subscription_id} />

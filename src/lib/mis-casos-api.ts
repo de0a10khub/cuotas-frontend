@@ -188,7 +188,7 @@ export const misCasosApi = {
   /** Timeline cronológico de un cliente (eventos de mora, notas, pagos, …). */
   history: (subscriptionId: string) =>
     api.get<MoraHistoryResponse>(
-      `/api/v1/mora-history/${encodeURIComponent(subscriptionId)}/`,
+      `/api/v1/mora-directorio/history/${encodeURIComponent(subscriptionId)}/`,
     ),
 
   /** Casos que el operario llevaba y han pasado a N2 (notificación campana). */
