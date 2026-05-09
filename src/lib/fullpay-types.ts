@@ -21,6 +21,7 @@ export interface FullPayLead {
   paid_total: number;
   alta_date: string;
   days_since_alta: number;
+  last_paid_at: string | null;
   open_disputes: number;
   won_disputes: number;
   lost_disputes: number;
