@@ -393,7 +393,16 @@ export function FailedPaymentsList({
                   {ps.label}
                 </span>
                 <StatusBadge status={p.status} tone={tone} />
-                {p.refund_origin && REFUND_ORIGIN_LABELS[p.refund_origin] && (
+                {p.had_duplicate_refund && (
+                  <Badge
+                    variant="outline"
+                    className="border-emerald-300 bg-emerald-50 text-[10px] font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
+                    title="Hubo cobro duplicado y se reembolsaron los duplicados. El neto cubre la cuota — cliente al dia."
+                  >
+                    🔁 Doble cobro corregido
+                  </Badge>
+                )}
+                {p.refund_origin && !p.had_duplicate_refund && REFUND_ORIGIN_LABELS[p.refund_origin] && (
                   <Badge
                     variant="outline"
                     className={cn('text-[10px] font-semibold', REFUND_ORIGIN_LABELS[p.refund_origin].cls)}

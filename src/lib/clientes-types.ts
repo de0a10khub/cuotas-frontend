@@ -205,6 +205,9 @@ export interface FailedPayment {
    *  - 'unknown'            Whop refund (origen no rastreado)
    */
   refund_origin?: string | null;
+  /** True si la cuota tenia status=refunded pero el neto cobrado cubre el importe
+   * (caso doble/triple cobro corregido por reembolso de duplicados). */
+  had_duplicate_refund?: boolean;
   attempt_count: number;
   assigned_operator_id: string | null;
 
