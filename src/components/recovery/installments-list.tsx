@@ -19,6 +19,8 @@ interface InstallmentItem {
   amount_eur: number;
   due_date: string | null;
   status: string;
+  raw_status?: string;
+  had_duplicate_refund?: boolean;
   paid_at: string | null;
 }
 
@@ -66,6 +68,12 @@ const STATUS_STYLES: Record<string, { bg: string; fg: string; Icon: typeof Check
     fg: 'text-slate-400 dark:text-slate-500',
     Icon: Circle,
     label: 'Cancelada',
+  },
+  refunded: {
+    bg: 'bg-amber-50 dark:bg-amber-950/40',
+    fg: 'text-amber-700 dark:text-amber-300',
+    Icon: AlertTriangle,
+    label: 'Reembolsada',
   },
 };
 
@@ -203,13 +211,22 @@ export function InstallmentsList({ subscriptionId, platform }: Props) {
                   <td className="px-3 py-2">
                     <span
                       className={cn(
-                        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                        'group/dup relative inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
                         style.bg,
                         style.fg,
+                        it.had_duplicate_refund && 'cursor-help',
                       )}
+                      title={
+                        it.had_duplicate_refund
+                          ? 'Pagada — hubo cobro duplicado y se reembolsaron los duplicados. El neto cubre la cuota.'
+                          : undefined
+                      }
                     >
                       <Icon className="h-3 w-3" />
                       {style.label}
+                      {it.had_duplicate_refund && (
+                        <span className="ml-1 text-[9px] font-medium opacity-75">(dup. refund)</span>
+                      )}
                     </span>
                   </td>
                   <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
