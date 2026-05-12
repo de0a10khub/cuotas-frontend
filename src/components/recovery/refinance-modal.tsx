@@ -222,17 +222,15 @@ export function RefinanceModal({
                 <Copy className="h-3.5 w-3.5" />
                 Copiar
               </Button>
-              <Button
-                asChild
-                size="sm"
-                variant="outline"
-                className="flex-1 gap-1"
+              <a
+                href={resultUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-input bg-background px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground h-9"
               >
-                <a href={resultUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Abrir
-                </a>
-              </Button>
+                <ExternalLink className="h-3.5 w-3.5" />
+                Abrir
+              </a>
             </div>
           </div>
         )}
