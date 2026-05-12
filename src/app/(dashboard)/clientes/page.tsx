@@ -46,6 +46,11 @@ function personToRow(p: PersonRow): ClienteRow {
     lost_disputes: p.lost_disputes,
     recovery_status: p.recovery_status,
     recovery_contacted_by: p.recovery_contacted_by || '',
+    // Los 2 owners stickies (N1 y Recobrame) — antes se omitian del mapeo y
+    // por eso /clientes mostraba "ultimo que toco" (Ana) en lugar del owner
+    // sticky (Estefania) — bug detectado 2026-05-11.
+    recovery_owner_email: p.recovery_owner_email ?? null,
+    recovery_owner_email_recobrame: p.recovery_owner_email_recobrame ?? null,
     recovery_comment_1: p.recovery_comment_1 || '',
     recovery_comment_2: p.recovery_comment_2 || '',
     recovery_continue_with: p.recovery_continue_with || '',

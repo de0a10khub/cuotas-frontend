@@ -32,6 +32,12 @@ const ACTION_LABELS: Record<string, string> = {
   MANUAL_RECOVERY: 'Recuperación manual',
   PAYMENT_LINK_GENERATED: 'Cambio de tarjeta — link generado',
   PAYMENT_FAILED: 'Cobro fallido',
+  // REFACTOR 2026-05-12
+  PANEL_CHANGE: 'Cambio de panel (Mora → Recobrame)',
+  LEGACY_NOTES_SNAPSHOT: 'Notas migradas al historial',
+  OPERATOR_ASSIGNED: 'Operario asignado',
+  TAG_ADDED: 'Etiqueta añadida',
+  TAG_REMOVED: 'Etiqueta quitada',
 };
 
 function humanizeAction(type: string): string {

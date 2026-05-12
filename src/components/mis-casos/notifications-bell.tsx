@@ -122,11 +122,11 @@ export function NotificationsBell({ asEmail }: Props) {
 
   const total = movidos.length + recaidas.length;
 
-  const moraN2Href = useCallback((email: string) => {
+  const recobrosHref = useCallback((email: string) => {
     const q = new URLSearchParams();
     q.set('search', email);
     if (asEmail) q.set('as', asEmail);
-    return `/mora-n2?${q.toString()}`;
+    return `/recobros?${q.toString()}`;
   }, [asEmail]);
 
   const moraN1Href = useCallback((email: string) => {
@@ -208,18 +208,18 @@ export function NotificationsBell({ asEmail }: Props) {
               </div>
             )}
 
-            {/* Sección: Movidos a N2 */}
+            {/* Sección: Movidos a Recobrame */}
             {movidos.length > 0 && (
               <Section
                 icon={<AlertTriangle className="h-3.5 w-3.5 text-amber-300" />}
-                title="Movidos a Mora N2"
+                title="Movidos a Recobrame"
                 count={movidos.length}
                 tone="amber"
               >
                 {movidos.map((it) => (
                   <Link
                     key={`n2-${it.subscription_id}`}
-                    href={moraN2Href(it.customer_email)}
+                    href={recobrosHref(it.customer_email)}
                     onClick={() => setOpen(false)}
                     className="block rounded-lg px-2 py-1.5 transition-colors hover:bg-amber-500/10"
                   >

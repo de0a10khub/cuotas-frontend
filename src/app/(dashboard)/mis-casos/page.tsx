@@ -44,8 +44,10 @@ const TABS: ReadonlyArray<{
   /** Color de acento para el tab activo. */
   accent: string;
 }> = [
-  { id: 'mora_n1', label: 'Mora N1', panelHref: '/mora', accent: 'cyan' },
-  { id: 'mora_n2', label: 'Mora N2', panelHref: '/mora-n2', accent: 'orange' },
+  { id: 'mora_n1', label: 'Mora', panelHref: '/mora', accent: 'cyan' },
+  // REFACTOR 2026-05-12: tab "Mora N2" eliminado. Notificaciones legacy con
+  // id='mora_n2' siguen siendo aceptadas en el tipo MisCasosPanel pero
+  // visualmente caen en "Recobrame".
   { id: 'recobros', label: 'Recobrame', panelHref: '/recobros', accent: 'violet' },
 ] as const;
 
@@ -561,7 +563,7 @@ function NotifPanel({
   recaidas: import('@/lib/mis-casos-api').RecaidaItem[];
 }) {
   const total = movidos.length + recaidas.length;
-  const buildHref = (panel: 'mora' | 'mora-n2', email: string) => {
+  const buildHref = (panel: 'mora' | 'recobros', email: string) => {
     const q = new URLSearchParams();
     q.set('search', email);
     if (asEmail) q.set('as', asEmail);
@@ -581,7 +583,7 @@ function NotifPanel({
       {movidos.length > 0 && (
         <div className="overflow-hidden rounded-2xl border border-amber-500/20 bg-[#0a1628]">
           <div className="border-b border-amber-400/20 bg-amber-950/30 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-300">
-            Movidos a Mora N2 · {movidos.length}
+            Movidos a Recobrame · {movidos.length}
           </div>
           <div className="divide-y divide-amber-400/10">
             {movidos.map((it) => (
@@ -601,12 +603,12 @@ function NotifPanel({
                   </p>
                   {it.moved_at && (
                     <p className="mt-1 text-[11px] text-amber-200/50">
-                      Movido a N2: <b className="text-amber-100/80">{formatNotifDate(it.moved_at)}</b>
+                      Movido a Recobrame: <b className="text-amber-100/80">{formatNotifDate(it.moved_at)}</b>
                     </p>
                   )}
                 </div>
                 <Link
-                  href={buildHref('mora-n2', it.customer_email)}
+                  href={buildHref('recobros', it.customer_email)}
                   className="inline-flex items-center gap-1 rounded-md border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-amber-200 transition-colors hover:bg-amber-500/20"
                 >
                   <ExternalLink className="h-3 w-3" />

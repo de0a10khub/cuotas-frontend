@@ -59,6 +59,8 @@ export interface ClienteRow {
   recovery_status: RecoveryStatus | string | null;
   recovery_contacted_by: string;
   recovery_owner_email?: string | null;
+  /** Owner sticky del panel /recobrame — separado del owner N1 (refactor 2026-05-12). */
+  recovery_owner_email_recobrame?: string | null;
   recovery_comment_1: string;
   recovery_comment_2: string;
   recovery_continue_with: string;
@@ -144,6 +146,8 @@ export interface PersonRow {
   product_name: string | null;
   recovery_status: RecoveryStatus | string | null;
   recovery_contacted_by: string | null;
+  recovery_owner_email?: string | null;
+  recovery_owner_email_recobrame?: string | null;
   recovery_comment_1: string | null;
   recovery_comment_2: string | null;
   recovery_continue_with: string | null;

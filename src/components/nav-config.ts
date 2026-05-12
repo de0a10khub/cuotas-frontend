@@ -24,6 +24,7 @@ import {
   User,
   Search,
   GitMerge as MergeIcon,
+  Repeat,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -48,8 +49,9 @@ export const navigation: NavItem[] = [
 
   { label: 'Duplicados', href: '/admin/duplicados', icon: MergeIcon, section: 'Admin Datos' },
 
-  { label: 'Mora N1', href: '/mora', icon: AlertTriangle, section: 'Mora' },
-  { label: 'Mora N2', href: '/mora-n2', icon: ShieldAlert, section: 'Mora' },
+  { label: 'Mora', href: '/mora', icon: AlertTriangle, section: 'Mora' },
+  // REFACTOR 2026-05-12: Mora N2 eliminada. Casos Incobrable/Abogado y los
+  // que cruzan 25 dias se ven todos en Recobrame.
   { label: 'Mora stats', href: '/mora-stats', icon: BarChart3, section: 'Mora' },
   { label: 'Recobrame', href: '/recobros', icon: RefreshCcw, section: 'Mora' },
   { label: 'Registro acciones', href: '/registro-acciones', icon: History, section: 'Mora' },
@@ -57,6 +59,7 @@ export const navigation: NavItem[] = [
   { label: 'Datos', href: '/datos', icon: FileText, section: 'Reportes' },
   { label: 'Disputas', href: '/disputas', icon: Scale, section: 'Reportes' },
   { label: 'Operaciones', href: '/operaciones', icon: Briefcase, section: 'Reportes' },
+  { label: 'Refinanciación', href: '/refinanciacion', icon: Repeat, section: 'Reportes' },
 
   { label: 'Catálogo', href: '/catalogo', icon: Package, section: 'Admin' },
   { label: 'Empleados', href: '/empleados', icon: UsersRound, section: 'Admin' },

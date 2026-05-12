@@ -74,7 +74,13 @@ export default function RecobrosPage() {
         page,
         page_size: pageSize,
       });
-      setRows(data.results);
+      // En /recobros la columna Operario debe pintar el owner sticky DE RECOBRAME
+      // (recovery_owner_email_recobrame), no el de N1. La tabla compartida
+      // (MoraTable) lee recovery_owner_email, asi que mapeamos antes de pasar.
+      setRows(data.results.map((r) => ({
+        ...r,
+        recovery_owner_email: r.recovery_owner_email_recobrame ?? null,
+      })));
       setTotal(data.total_count);
     } catch {
       toast.error('Error cargando recobros');
