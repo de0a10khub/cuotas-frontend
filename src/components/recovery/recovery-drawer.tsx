@@ -475,7 +475,6 @@ export function RecoveryDrawer({
                 amount={tcv > 0 ? Number(row.remaining_contract) || 0 : null}
                 subtitle={tcv > 0 ? `de ${formatEuros(tcv, { decimals: 0 })}` : undefined}
                 tone="slate"
-                beta={row.platform !== 'whop-erp'}
               />
             </div>
 
