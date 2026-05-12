@@ -756,8 +756,10 @@ export function RecoveryDrawer({
         customerPhone={row.customer_phone}
         debtRemainingEur={Number(row.remaining_contract ?? row.unpaid_invoices_total ?? 0)}
         onSuccess={() => {
-          // Refresh tras crear refinanciacion
-          onUpdated?.();
+          // Refresh tras crear refinanciacion. Pasamos la row actual sin
+          // cambios — el reload de la tabla padre lo dispara igual aunque el
+          // shape no haya cambiado.
+          if (row) onUpdated?.(row);
         }}
       />
     </Sheet>
