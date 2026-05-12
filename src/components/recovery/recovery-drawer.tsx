@@ -39,6 +39,7 @@ import {
   WalletCards,
   Link as LinkIcon,
   Copy,
+  Repeat,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -56,6 +57,7 @@ import { MoraTimeline } from './mora-timeline';
 import { MultiSelectTags } from './multi-select-tags';
 import { MultiContactList } from './multi-contact-list';
 import { ExternalPaymentButton } from './external-payment-button';
+import { RefinanceModal } from './refinance-modal';
 import { MembershipPausePanel } from './membership-pause-panel';
 import type { DrawerMode, RecoveryDrawerApi, RecoveryRow } from './types';
 
@@ -111,6 +113,7 @@ export function RecoveryDrawer({
   const [paymentLink, setPaymentLink] = useState<string | null>(null);
   const [contractUrl, setContractUrl] = useState<string | null>(null);
   const [generatingLink, setGeneratingLink] = useState(false);
+  const [refinanceOpen, setRefinanceOpen] = useState(false);
   const [generatingContract, setGeneratingContract] = useState(false);
   const [pdfOpen, setPdfOpen] = useState(false);
 
@@ -388,6 +391,16 @@ export function RecoveryDrawer({
               >
                 <CreditCard className="h-4 w-4" />
                 Cambio Tarjeta
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setRefinanceOpen(true)}
+                title="Crear plan refinanciado con cuotas y descuento custom"
+                className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
+              >
+                <Repeat className="h-4 w-4" />
+                Refinanciar
               </Button>
               <Button
                 size="sm"
@@ -731,6 +744,21 @@ export function RecoveryDrawer({
         title={`Contrato · ${row.customer_name}`}
         description={row.subscription_id}
         onClose={() => setPdfOpen(false)}
+      />
+
+      <RefinanceModal
+        open={refinanceOpen}
+        onClose={() => setRefinanceOpen(false)}
+        subscriptionId={row.subscription_id}
+        platform={row.platform}
+        customerEmail={row.customer_email}
+        customerName={row.customer_name || ''}
+        customerPhone={row.customer_phone}
+        debtRemainingEur={Number(row.remaining_contract ?? row.unpaid_invoices_total ?? 0)}
+        onSuccess={() => {
+          // Refresh tras crear refinanciacion
+          onUpdated?.();
+        }}
       />
     </Sheet>
   );
