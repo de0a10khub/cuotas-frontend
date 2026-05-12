@@ -71,6 +71,7 @@ export function RefinanTable({ rows, onUpdated }: Props) {
             <TableHead>Original</TableHead>
             <TableHead className="text-center">→</TableHead>
             <TableHead>Nueva</TableHead>
+            <TableHead>Fecha refi</TableHead>
             <TableHead className="text-right">Importe</TableHead>
             <TableHead className="text-right">Ahorro</TableHead>
             <TableHead>Estado</TableHead>
@@ -116,6 +117,13 @@ export function RefinanTable({ rows, onUpdated }: Props) {
                     {r.new_installments} {r.new_installments === 1 ? 'cuota' : 'cuotas'}
                   </span>
                 </div>
+              </TableCell>
+              <TableCell className="text-xs font-mono text-muted-foreground whitespace-nowrap">
+                {r.refinance_date
+                  ? new Date(r.refinance_date).toLocaleDateString('es-ES', {
+                      day: '2-digit', month: '2-digit', year: 'numeric',
+                    })
+                  : '-'}
               </TableCell>
               <TableCell className="text-right font-mono text-xs">
                 {formatEuros((r.new_amount || 0) / 100)}
