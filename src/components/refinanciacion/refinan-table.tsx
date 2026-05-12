@@ -126,7 +126,7 @@ export function RefinanTable({ rows, onUpdated }: Props) {
               <TableCell>
                 <Select
                   value={r.refinance_status || 'pending'}
-                  onValueChange={(v) => handleStatusChange(r.id, v)}
+                  onValueChange={(v) => { if (v) handleStatusChange(r.id, v); }}
                   disabled={updating === r.id}
                 >
                   <SelectTrigger className="h-7 w-32 text-xs">
