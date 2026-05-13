@@ -47,7 +47,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatEuros } from '@/lib/format';
 import { useAuth } from '@/lib/auth-context';
-import type { ObjecionTag } from '@/lib/clientes-types';
+import type { ObjecionTag, Operator } from '@/lib/clientes-types';
 import { PdfViewerModal } from '@/components/data/pdf-viewer-modal';
 import { ActionHistoryList } from './action-history-list';
 import { FailedPaymentsList } from './failed-payments-list';
@@ -64,7 +64,7 @@ import type { DrawerMode, RecoveryDrawerApi, RecoveryRow } from './types';
 interface Props {
   mode: DrawerMode;
   api: RecoveryDrawerApi;
-  operators: { id: string; display_name: string }[];
+  operators: Operator[];
   statusOptions: string[];
   row: RecoveryRow | null;
   open: boolean;
@@ -117,20 +117,51 @@ export function RecoveryDrawer({
   const [generatingContract, setGeneratingContract] = useState(false);
   const [pdfOpen, setPdfOpen] = useState(false);
 
+  // Owner sticky por panel: /recobros usa recovery_owner_email_recobrame,
+  // /clientes y /mora_n1 usan recovery_owner_email. El listado ya muestra
+  // estos owners stickies (clientes/page.tsx:49-53). El drawer debe
+  // pre-seleccionar el MISMO owner — antes mostraba recovery_contacted_by
+  // (último que tocó, ej. "Ana") y discrepaba con el listado (sticky N1, ej.
+  // "Estefanía"). Bug detectado 2026-05-13 con ivan.lauti0998@gmail.com.
+  const stickyOwnerEmail = useMemo(() => {
+    if (!row) return null;
+    if (panel === 'recobros') return row.recovery_owner_email_recobrame || null;
+    return row.recovery_owner_email || null;
+  }, [row, panel]);
+
+  // Mapeo email sticky → display_name del operario para preseleccionar
+  // el Select de "Operario asignado".
+  const stickyDisplayName = useMemo(() => {
+    if (!stickyOwnerEmail) return '';
+    const op = operators.find(
+      (o) => o.email?.toLowerCase() === stickyOwnerEmail.toLowerCase(),
+    );
+    return op?.display_name || '';
+  }, [stickyOwnerEmail, operators]);
+
   const operatorOptions = useMemo(() => {
     const base = operators.map((o) => ({ value: o.display_name, label: o.display_name }));
+    // Si el sticky owner es alguien que ya no está en la lista de operarios
+    // activos (rotación de personal), lo añadimos manualmente para que no
+    // desaparezca del Select.
+    if (stickyDisplayName && !base.some((o) => o.value === stickyDisplayName)) {
+      base.push({ value: stickyDisplayName, label: `${stickyDisplayName} (anterior)` });
+    }
+    // Fallback legacy: si no hay sticky pero sí "último que tocó", también
+    // lo añadimos como anterior.
     const current = (row?.recovery_contacted_by || '').trim();
     if (current && !base.some((o) => o.value === current)) {
       base.push({ value: current, label: `${current} (anterior)` });
     }
     return base;
-  }, [operators, row?.recovery_contacted_by]);
+  }, [operators, stickyDisplayName, row?.recovery_contacted_by]);
 
   // Sincroniza form cuando cambia la fila.
   useEffect(() => {
     if (!row) return;
     setStatus(row.recovery_status || 'Pendiente');
-    setContactedBy(row.recovery_contacted_by || '');
+    // Prioridad: sticky owner del panel actual > último que tocó (legacy).
+    setContactedBy(stickyDisplayName || row.recovery_contacted_by || '');
     setComment1(row.recovery_comment_1 || '');
     setContinueWith(row.recovery_continue_with || '');
     setComment2(row.recovery_comment_2 || '');
@@ -138,7 +169,7 @@ export function RecoveryDrawer({
     setPaymentLink(null);
     setContractUrl(null);
     setTab('gestion');
-  }, [row?.subscription_id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [row?.subscription_id, stickyDisplayName]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Carga catálogo de objeciones (solo en mora).
   useEffect(() => {
