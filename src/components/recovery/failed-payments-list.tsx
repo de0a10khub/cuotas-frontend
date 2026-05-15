@@ -104,10 +104,14 @@ function sameDay(a: string | null | undefined, b: string | null | undefined): bo
 }
 
 function daysBetween(a: string, b: string): number {
+  // Diff con SIGNO: positivo si b posterior a a (cobro tarde), negativo si
+  // b anterior a a (cobro adelantado). El llamante decide si mostrar
+  // "tarde" (>0) o "anticipado" (<0). Antes usaba Math.abs y siempre
+  // pintaba "tarde" aunque fuera cobro adelantado (bug Marta).
   const da = new Date(a).getTime();
   const db = new Date(b).getTime();
   if (!Number.isFinite(da) || !Number.isFinite(db)) return 0;
-  return Math.round(Math.abs(db - da) / (1000 * 60 * 60 * 24));
+  return Math.round((db - da) / (1000 * 60 * 60 * 24));
 }
 
 const PLATFORM_STYLE = {
