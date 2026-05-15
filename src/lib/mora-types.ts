@@ -24,6 +24,9 @@ export interface InteractionSnapshot {
   /** Panel desde el que se escribió la nota: fullpay/mora_n1/mora_n2/recobros. */
   panel?: string;
   author_email?: string;
+  /** Cambio explícito de operario asignado, formato "anterior → nuevo".
+   *  Solo presente si el operario reasignó el caso en este guardado. */
+  assignment_change?: string;
 }
 
 export interface MoraListResponse {

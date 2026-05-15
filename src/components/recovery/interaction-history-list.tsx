@@ -91,8 +91,11 @@ export function InteractionHistoryList({ api, subscriptionId }: Props) {
               {new Date(item.created_at).toLocaleString('es-ES')}
             </span>
           </div>
-          {(item.comment_1 || item.comment_2 || item.continue_with) && (
+          {(item.comment_1 || item.comment_2 || item.continue_with || item.assignment_change) && (
             <div className="mt-2 space-y-1.5 text-xs">
+              {item.assignment_change && (
+                <Snippet label="Reasignado" value={item.assignment_change} highlight />
+              )}
               {item.comment_1 && (
                 <Snippet label="C1" value={item.comment_1} />
               )}
