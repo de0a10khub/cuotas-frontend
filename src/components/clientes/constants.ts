@@ -18,6 +18,7 @@ export const PLATFORM_OPTIONS: { value: 'all' | Platform; label: string }[] = [
   { value: 'stripe', label: '💳 Stripe' },
   { value: 'whop', label: '🎮 Whop Nativo' },
   { value: 'whop-erp', label: '📦 Whop ERP' },
+  { value: 'hotmart', label: '🔥 Hotmart' },
 ];
 
 export const DISPUTE_OPTIONS = [

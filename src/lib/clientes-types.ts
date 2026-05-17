@@ -9,7 +9,7 @@ export type AgingCategory =
   | 'Crónicas'
   | 'Incobrable';
 
-export type Platform = 'stripe' | 'whop' | 'whop-erp';
+export type Platform = 'stripe' | 'whop' | 'whop-erp' | 'hotmart';
 
 export type DisputeState = 'open' | 'won' | 'lost';
 

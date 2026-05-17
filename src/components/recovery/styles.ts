@@ -151,6 +151,10 @@ export const PLATFORM_STYLES: Record<string, { className: string; label: string 
     className: 'bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-200',
     label: 'Whop ERP',
   },
+  hotmart: {
+    className: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-200',
+    label: 'Hotmart',
+  },
 };
 
 export function categoryFromDays(days: number | null | undefined): AgingCategory {
