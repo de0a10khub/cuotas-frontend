@@ -61,7 +61,7 @@ export default function MoraPage() {
         if (v === '' || v === 'all' || v === undefined || v === null) q.delete(k);
         else q.set(k, String(v));
       }
-      router.push(`/mora${q.toString() ? `?${q}` : ''}`);
+      router.replace(`/mora${q.toString() ? `?${q}` : ''}`);
     },
     [router, sp, filters.category, filters.platform, filters.dispute_state, search, page, pageSize],
   );

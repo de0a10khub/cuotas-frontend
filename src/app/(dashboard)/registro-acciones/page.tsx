@@ -96,7 +96,7 @@ export default function RegistroAccionesPage() {
       if (v !== '' && v !== 'all' && v !== 1) q.set(k, String(v));
     }
     if (ps !== 50) q.set('limit', String(ps));
-    router.push(`/registro-acciones${q.toString() ? `?${q}` : ''}`);
+    router.replace(`/registro-acciones${q.toString() ? `?${q}` : ''}`);
   };
 
   // Carga metadata una vez

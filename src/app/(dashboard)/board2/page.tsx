@@ -99,7 +99,7 @@ export default function Board2Page() {
       if (v === undefined || v === '' || v === 'all' || v === 'mtd' || v === 'invoice') q.delete(k);
       else q.set(k, v);
     }
-    router.push(`/board2${q.toString() ? `?${q}` : ''}`);
+    router.replace(`/board2${q.toString() ? `?${q}` : ''}`);
   };
 
   const fetchAll = useCallback(async () => {

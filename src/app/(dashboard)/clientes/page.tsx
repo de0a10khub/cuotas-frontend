@@ -122,7 +122,7 @@ export default function ClientesPage() {
         if (v === '' || v === 'all' || v === undefined || v === null) q.delete(k);
         else q.set(k, String(v));
       }
-      router.push(`/clientes${q.toString() ? `?${q}` : ''}`);
+      router.replace(`/clientes${q.toString() ? `?${q}` : ''}`);
     },
     [router, sp, filters.category, filters.platform, filters.dispute_state, search, page, pageSize],
   );

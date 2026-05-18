@@ -57,7 +57,7 @@ export default function MentoriasPage() {
         if (!v || v === 'all') q.delete(k);
         else q.set(k, v);
       }
-      router.push(`/mentorias${q.toString() ? `?${q}` : ''}`);
+      router.replace(`/mentorias${q.toString() ? `?${q}` : ''}`);
     },
     [router, sp],
   );

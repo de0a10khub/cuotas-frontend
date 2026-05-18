@@ -139,7 +139,7 @@ export default function DisputasPage() {
         if (!v || v === 'all') q.delete(k);
         else q.set(k, v);
       }
-      router.push(`/disputas${q.toString() ? `?${q}` : ''}`);
+      router.replace(`/disputas${q.toString() ? `?${q}` : ''}`);
     },
     [router, sp],
   );

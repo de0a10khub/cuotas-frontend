@@ -52,7 +52,7 @@ export default function RecobrosPage() {
         if (v === '' || v === 'all' || v === undefined || v === null) q.delete(k);
         else q.set(k, String(v));
       }
-      router.push(`/recobros${q.toString() ? `?${q}` : ''}`);
+      router.replace(`/recobros${q.toString() ? `?${q}` : ''}`);
     },
     [router, sp, filters.platform, filters.dispute_state, search, page, pageSize],
   );

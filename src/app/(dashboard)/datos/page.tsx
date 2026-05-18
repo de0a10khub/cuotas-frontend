@@ -54,7 +54,7 @@ export default function DatosPage() {
       if (!v || v === 'purchases') q.delete(k);
       else q.set(k, v);
     }
-    router.push(`/datos${q.toString() ? `?${q}` : ''}`);
+    router.replace(`/datos${q.toString() ? `?${q}` : ''}`);
   };
 
   useEffect(() => {

@@ -91,7 +91,7 @@ export default function FullPayPage() {
         if (v === '' || v === 'all' || v === undefined || v === null) q.delete(k);
         else q.set(k, String(v));
       }
-      router.push(`/full-pay${q.toString() ? `?${q}` : ''}`);
+      router.replace(`/full-pay${q.toString() ? `?${q}` : ''}`);
     },
     [router, sp, filters.platform, filters.status, filters.operator, search, page, pageSize],
   );
