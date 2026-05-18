@@ -409,30 +409,37 @@ export function RecoveryDrawer({
 
             {/* Acciones rápidas */}
             <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handlePaymentLink}
-                disabled={generatingLink}
-                title={
-                  row.platform === 'whop-erp'
-                    ? 'Genera link de pago de la cuota pendiente. La nueva tarjeta se guarda para futuros cobros.'
-                    : undefined
-                }
-              >
-                <CreditCard className="h-4 w-4" />
-                Cambio Tarjeta
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setRefinanceOpen(true)}
-                title="Crear plan refinanciado con cuotas y descuento custom"
-                className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
-              >
-                <Repeat className="h-4 w-4" />
-                Refinanciar
-              </Button>
+              {/* Hotmart: no se aplican cambio de tarjeta / refinanciacion /
+                  pago externo porque el flujo de cobros lo gestiona Hotmart
+                  (Sequra incluido). Solo dejamos contrato. */}
+              {row.platform !== 'hotmart' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handlePaymentLink}
+                  disabled={generatingLink}
+                  title={
+                    row.platform === 'whop-erp'
+                      ? 'Genera link de pago de la cuota pendiente. La nueva tarjeta se guarda para futuros cobros.'
+                      : undefined
+                  }
+                >
+                  <CreditCard className="h-4 w-4" />
+                  Cambio Tarjeta
+                </Button>
+              )}
+              {row.platform !== 'hotmart' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setRefinanceOpen(true)}
+                  title="Crear plan refinanciado con cuotas y descuento custom"
+                  className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
+                >
+                  <Repeat className="h-4 w-4" />
+                  Refinanciar
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="outline"
@@ -453,10 +460,12 @@ export function RecoveryDrawer({
                   Abrir contrato
                 </Button>
               )}
-              <ExternalPaymentButton
-                subscriptionId={row.subscription_id}
-                defaultAmountEur={Number(row.unpaid_invoices_total) || 0}
-              />
+              {row.platform !== 'hotmart' && (
+                <ExternalPaymentButton
+                  subscriptionId={row.subscription_id}
+                  defaultAmountEur={Number(row.unpaid_invoices_total) || 0}
+                />
+              )}
             </div>
 
             {paymentLink && (
