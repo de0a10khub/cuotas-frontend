@@ -5,6 +5,16 @@ import path from 'path';
 // Se incluye en CSP connect-src para que las peticiones XHR no se bloqueen.
 const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL || 'https://cuotas-backend.onrender.com';
 
+// El drawer /clientes embebe PDFs de contratos en <iframe>:
+//   - ERP-checkout: https://checkout.de0a10k.com/rust-api/products/orders/<id>/contract
+//   - Hotmart:      https://cuotas-backend.onrender.com/api/v1/hotmart/contract/<UUID>/
+// Sin frame-src en CSP, el browser cae al default-src 'self' y los bloquea
+// con "Este contenido esta bloqueado". Listamos explicitamente los dominios.
+const FRAME_SRC_ORIGINS = [
+  API_ORIGIN,
+  'https://checkout.de0a10k.com',
+];
+
 // Content-Security-Policy.
 // - script-src incluye 'unsafe-inline' y 'unsafe-eval' porque Next.js
 //   inyecta scripts inline para hidratación; sin esos flags se rompe la app.
@@ -24,6 +34,7 @@ const csp = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   `connect-src 'self' ${API_ORIGIN}`,
+  `frame-src 'self' ${FRAME_SRC_ORIGINS.join(' ')}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
