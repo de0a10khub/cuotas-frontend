@@ -346,27 +346,41 @@ export function FailedPaymentsList({
           showBothDates && scheduled && paidAt ? daysBetween(scheduled, paidAt) : 0;
         const ps = platformStyle(p.platform);
 
-        // Detección de cadena Stripe bloqueada: si una invoice queda en
-        // 'open'/'failed' y agota retries, Stripe pone la sub en 'unpaid' y
-        // la siguiente cuota del ciclo nace en 'draft' con auto_advance=false
-        // (no la cobra). Pagar la vieja desbloquea la draft automáticamente.
+        // Cadena Stripe bloqueada: cuando una invoice agota los retries,
+        // Stripe pone la suscripción en 'unpaid' y las cuotas siguientes
+        // nacen en 'draft' (auto_advance=false, no las cobra). La cuota más
+        // antigua sin pagar SÍ es cobrable: el backend finaliza la draft
+        // antes de cobrarla, y al pagarla se desbloquean las posteriores.
+        // OJO: si la sub ya estaba 'unpaid', hasta la más antigua nace en
+        // 'draft' — por eso el blocker considera open/failed/draft (antes
+        // solo miraba open/failed y dejaba sin botón a clientes con TODAS
+        // las cuotas pendientes en draft, ej. Cristian Damas).
         const blockerScheduled =
           items
             .filter((x) => {
               const t = classifyStatus(x.status);
-              return t === 'open' || t === 'failed';
+              return t === 'open' || t === 'failed' || t === 'draft';
             })
             .map((x) => x.due_date || x.created_at || '')
             .filter((d) => !!d)
             .sort()[0] || null;
         const hasAnyDraft = items.some((x) => classifyStatus(x.status) === 'draft');
-        const isBlockedDraft =
-          tone === 'draft' && !!blockerScheduled && !!scheduled && scheduled > blockerScheduled;
-        const isBlocker =
-          (tone === 'open' || tone === 'failed') &&
-          hasAnyDraft &&
+        // La cuota más antigua sin pagar (sea open/failed/draft) es la cobrable.
+        const isChargeTarget =
+          (tone === 'open' || tone === 'failed' || tone === 'draft') &&
           !!scheduled &&
           scheduled === blockerScheduled;
+        // Una draft está bloqueada solo si NO es la más antigua sin pagar.
+        const isBlockedDraft =
+          tone === 'draft' && !!blockerScheduled && !!scheduled && scheduled > blockerScheduled;
+        // ¿Hay cuotas posteriores sin pagar que se desbloquean al cobrar esta?
+        const hasFollowingUnpaid = items.some((x) => {
+          const t = classifyStatus(x.status);
+          if (t !== 'open' && t !== 'failed' && t !== 'draft') return false;
+          const d = x.due_date || x.created_at || '';
+          return !!d && !!blockerScheduled && d > blockerScheduled;
+        });
+        const isBlocker = isChargeTarget && hasAnyDraft && hasFollowingUnpaid;
 
         return (
           <li
@@ -557,7 +571,7 @@ export function FailedPaymentsList({
                     Link de pago
                   </a>
                 )}
-                {showChargeAction && tone !== 'paid' && tone !== 'draft' && (
+                {showChargeAction && tone !== 'paid' && (tone !== 'draft' || isChargeTarget) && (
                   <Button
                     size="sm"
                     variant="outline"
