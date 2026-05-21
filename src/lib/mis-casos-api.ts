@@ -69,6 +69,8 @@ export interface OperatorWithKPIs {
   n_casos_recobros: number;
   n_casos_full_pay?: number;
   n_casos_clientes: number;
+  /** Casos que el operario recuperó (cliente pagó) en el mes consultado. */
+  n_casos_recuperados: number;
   total_casos: number;
   deuda_total_eur: number;
 }
@@ -78,6 +80,10 @@ export interface OperatorsSummaryResponse {
   /** Totales del equipo (suma de operarios). */
   team_total_casos?: number;
   team_total_deuda_eur?: number;
+  /** Mes consultado (YYYY-MM) — eco del backend. */
+  month?: string;
+  /** Recuperados del equipo en el mes consultado. */
+  team_total_recuperados?: number;
 }
 
 export interface OperatorDetailResponse {
@@ -177,8 +183,12 @@ export const misCasosApi = {
       })}`,
     ),
 
-  summary: () =>
-    api.get<OperatorsSummaryResponse>('/api/v1/casos-por-operario/summary/'),
+  summary: (month?: string) =>
+    api.get<OperatorsSummaryResponse>(
+      `/api/v1/casos-por-operario/summary/${
+        month ? `?month=${encodeURIComponent(month)}` : ''
+      }`,
+    ),
 
   operatorDetail: (email: string) =>
     api.get<OperatorDetailResponse>(

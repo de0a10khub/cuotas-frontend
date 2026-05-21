@@ -7,7 +7,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Search, Users, Briefcase, Wallet } from 'lucide-react';
+import {
+  Search,
+  Users,
+  Briefcase,
+  Wallet,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+} from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -41,23 +49,55 @@ function gradientForEmail(email: string): string {
   return palette[Math.abs(h) % palette.length];
 }
 
+// ── Helpers de mes ──────────────────────────────────────────────────────────
+const MONTH_NAMES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+
+// El contador de Recuperados solo es fiable desde 2026-05 (antes hubo un
+// barrido masivo inicial). No se permite navegar a meses anteriores.
+const RECUPERADOS_FLOOR_MONTH = '2026-05';
+
+/** Mes actual como 'YYYY-MM'. */
+function currentMonth(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Desplaza un 'YYYY-MM' en `delta` meses. */
+function shiftMonth(ym: string, delta: number): string {
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** 'YYYY-MM' → 'Mayo 2026'. */
+function monthLabel(ym: string): string {
+  const [y, m] = ym.split('-').map(Number);
+  return `${MONTH_NAMES[m - 1] ?? ''} ${y}`;
+}
+
 export default function CasosPorOperarioPage() {
   const [operators, setOperators] = useState<OperatorWithKPIs[]>([]);
   const [teamTotalCasos, setTeamTotalCasos] = useState<number | null>(null);
   const [teamTotalDeuda, setTeamTotalDeuda] = useState<number | null>(null);
+  const [teamTotalRecuperados, setTeamTotalRecuperados] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [month, setMonth] = useState<string>(currentMonth);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const r = await misCasosApi.summary();
+        const r = await misCasosApi.summary(month);
         if (cancelled) return;
         setOperators(r.results || []);
         setTeamTotalCasos(r.team_total_casos ?? null);
         setTeamTotalDeuda(r.team_total_deuda_eur ?? null);
+        setTeamTotalRecuperados(r.team_total_recuperados ?? null);
       } catch {
         if (!cancelled) {
           toast.error('Error cargando operarios');
@@ -70,7 +110,7 @@ export default function CasosPorOperarioPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [month]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -86,11 +126,18 @@ export default function CasosPorOperarioPage() {
   const computedTotals = useMemo(() => {
     const casos = operators.reduce((s, o) => s + (o.total_casos || 0), 0);
     const deuda = operators.reduce((s, o) => s + (o.deuda_total_eur || 0), 0);
-    return { casos, deuda };
+    const recuperados = operators.reduce(
+      (s, o) => s + (o.n_casos_recuperados || 0),
+      0,
+    );
+    return { casos, deuda, recuperados };
   }, [operators]);
 
   const totalCasos = teamTotalCasos ?? computedTotals.casos;
   const totalDeuda = teamTotalDeuda ?? computedTotals.deuda;
+  const totalRecuperados = teamTotalRecuperados ?? computedTotals.recuperados;
+  const isCurrentMonth = month >= currentMonth();
+  const atFloorMonth = month <= RECUPERADOS_FLOOR_MONTH;
 
   return (
     <div className="relative mx-auto max-w-[1500px] space-y-5 p-4">
@@ -128,8 +175,33 @@ export default function CasosPorOperarioPage() {
           </div>
         </div>
 
+        {/* Selector de mes — el contador de Recuperados es de este mes */}
+        <div className="relative mt-5 flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => setMonth((m) => shiftMonth(m, -1))}
+            disabled={atFloorMonth}
+            aria-label="Mes anterior"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400/30 bg-blue-950/40 text-blue-200 transition-colors hover:bg-blue-500/15 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="min-w-[150px] text-center text-sm font-semibold capitalize text-blue-100">
+            {monthLabel(month)}
+          </span>
+          <button
+            type="button"
+            onClick={() => setMonth((m) => shiftMonth(m, 1))}
+            disabled={isCurrentMonth}
+            aria-label="Mes siguiente"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400/30 bg-blue-950/40 text-blue-200 transition-colors hover:bg-blue-500/15 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+
         {/* KPIs equipo */}
-        <div className="relative mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="relative mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <KpiPill
             label="Operarios"
             value={loading ? '—' : String(operators.length)}
@@ -141,6 +213,12 @@ export default function CasosPorOperarioPage() {
             value={loading ? '—' : new Intl.NumberFormat('es-ES').format(totalCasos)}
             tone="cyan"
             icon={<Briefcase className="h-4 w-4" />}
+          />
+          <KpiPill
+            label="Recuperados"
+            value={loading ? '—' : new Intl.NumberFormat('es-ES').format(totalRecuperados)}
+            tone="emerald"
+            icon={<CheckCircle2 className="h-4 w-4" />}
           />
           <KpiPill
             label="Deuda total"
@@ -188,7 +266,7 @@ function KpiPill({
 }: {
   label: string;
   value: string;
-  tone: 'blue' | 'cyan' | 'violet';
+  tone: 'blue' | 'cyan' | 'violet' | 'emerald';
   icon: React.ReactNode;
 }) {
   const palette = {
@@ -209,6 +287,12 @@ function KpiPill({
       bg: 'bg-violet-500/10',
       text: 'text-violet-200',
       label: 'text-violet-300/70',
+    },
+    emerald: {
+      ring: 'border-emerald-400/30',
+      bg: 'bg-emerald-500/10',
+      text: 'text-emerald-200',
+      label: 'text-emerald-300/70',
     },
   }[tone];
 
@@ -282,6 +366,17 @@ function OperatorCard({ op }: { op: OperatorWithKPIs }) {
 
       {/* Separator */}
       <div className="relative my-3 h-px bg-gradient-to-r from-transparent via-blue-400/20 to-transparent" />
+
+      {/* Recuperados del mes — destacado */}
+      <div className="relative mb-2 flex items-center justify-between rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-2.5 py-1.5">
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-200">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Recuperados del mes
+        </span>
+        <span className="font-mono text-base font-bold tabular-nums text-emerald-300">
+          {op.n_casos_recuperados ?? 0}
+        </span>
+      </div>
 
       {/* Breakdown por panel */}
       <ul className="relative space-y-1 text-xs">
