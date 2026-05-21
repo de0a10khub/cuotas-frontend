@@ -19,6 +19,8 @@ export interface FullPayLead {
   product_name: string | null;
   paid_count: number;
   paid_total: number;
+  total_contract_value: number;
+  remaining_contract: number;
   alta_date: string;
   days_since_alta: number;
   last_paid_at: string | null;

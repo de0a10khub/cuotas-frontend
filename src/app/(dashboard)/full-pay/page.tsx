@@ -57,6 +57,8 @@ function fullPayLeadToClienteRow(lead: FullPayLead): ClienteRow {
     product_name: lead.product_name,
     paid_count: lead.paid_count,
     paid_total: lead.paid_total,
+    total_contract_value: lead.total_contract_value,
+    remaining_contract: lead.remaining_contract,
   };
 }
 
