@@ -157,10 +157,16 @@ export function RecoveryDrawer({
   }, [operators, stickyDisplayName, row?.recovery_contacted_by]);
 
   // Sincroniza form cuando cambia la fila.
+  // OJO: solo dependemos de subscription_id, NO de stickyDisplayName.
+  // Antes incluía stickyDisplayName como dep — si la lista de operarios
+  // tardaba en cargar, stickyDisplayName cambiaba de '' a 'X' después de
+  // abrir el drawer, este effect se re-ejecutaba y RESETEABA el form,
+  // borrando lo que el operario acababa de elegir en el dropdown.
+  // Si el sticky aún no está resuelto al abrir, caemos a recovery_contacted_by
+  // (que el backend ya popula con el sticky cuando existe).
   useEffect(() => {
     if (!row) return;
     setStatus(row.recovery_status || 'Pendiente');
-    // Prioridad: sticky owner del panel actual > último que tocó (legacy).
     setContactedBy(stickyDisplayName || row.recovery_contacted_by || '');
     setComment1(row.recovery_comment_1 || '');
     setContinueWith(row.recovery_continue_with || '');
@@ -169,7 +175,23 @@ export function RecoveryDrawer({
     setPaymentLink(null);
     setContractUrl(null);
     setTab('gestion');
-  }, [row?.subscription_id, stickyDisplayName]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [row?.subscription_id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cuando la lista de operarios termina de cargar y resuelve el sticky,
+  // pre-rellenamos contactedBy SOLO si el operario aún no eligió nada.
+  // Si ya cambió el dropdown a algo distinto, no lo pisamos.
+  useEffect(() => {
+    if (!row) return;
+    if (!stickyDisplayName) return;
+    setContactedBy((prev) => {
+      const prevTrim = (prev || '').trim();
+      const fallback = (row.recovery_contacted_by || '').trim();
+      // Solo rellenar si el campo está vacío o coincide con el fallback
+      // anterior (= el usuario NO ha tocado el dropdown todavía).
+      if (!prevTrim || prevTrim === fallback) return stickyDisplayName;
+      return prev;
+    });
+  }, [stickyDisplayName, row?.subscription_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Carga catálogo de objeciones (solo en mora).
   useEffect(() => {
