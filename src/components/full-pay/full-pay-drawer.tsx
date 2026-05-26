@@ -130,8 +130,14 @@ export function FullPayDrawer({ row, open, onClose, onUpdated }: Props) {
       toast.success('Gestión guardada');
       onUpdated?.(updated);
       onClose();
-    } catch {
-      toast.error('No se pudo guardar');
+    } catch (e: unknown) {
+      const err = e as { status?: number; data?: { detail?: string; message?: string } } | null;
+      const status = err?.status;
+      const detail =
+        err?.data?.detail ?? err?.data?.message ?? (e instanceof Error ? e.message : null);
+      const desc = status ? `HTTP ${status}${detail ? ` — ${detail}` : ''}` : detail || undefined;
+      toast.error('No se pudo guardar', desc ? { description: desc, duration: 12000 } : undefined);
+      console.error('[full-pay handleSave] error', { status, detail, raw: e });
     } finally {
       setSaving(false);
     }
