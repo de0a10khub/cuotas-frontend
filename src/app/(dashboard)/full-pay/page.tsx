@@ -107,18 +107,23 @@ export default function FullPayPage() {
   const [drawerOperators, setDrawerOperators] = useState<Operator[]>([]);
   const [selected, setSelected] = useState<FullPayLead | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (opts: { silent?: boolean } = {}) => {
+    // silent=true: refresh sin mostrar skeleton. Los rows se actualizan
+    // in-place, el DOM no se rehace y el scroll no salta arriba.
+    // Lo usamos al guardar una gestión (operarios pedían no perder posición).
+    if (!opts.silent) setLoading(true);
     try {
       const data = await fullpayApi.list({ ...filters, search, page, page_size: pageSize });
       setRows(data.results);
       setTotal(data.total_count);
     } catch {
       toast.error('Error cargando leads');
-      setRows([]);
-      setTotal(0);
+      if (!opts.silent) {
+        setRows([]);
+        setTotal(0);
+      }
     } finally {
-      setLoading(false);
+      if (!opts.silent) setLoading(false);
     }
   }, [filters.platform, filters.status, filters.operator, search, page, pageSize]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -238,7 +243,8 @@ export default function FullPayPage() {
           // El drawer escribe en op_mora_recovery_tracking (mora). Refrescamos
           // la lista para que la fila Full Pay reciba los datos actualizados
           // (al volver al servidor, /full-pay rehace su query y trae lo nuevo).
-          load();
+          // silent=true: sin skeleton → el scroll no salta al inicio.
+          load({ silent: true });
         }}
       />
     </div>
