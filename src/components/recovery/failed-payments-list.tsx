@@ -162,6 +162,7 @@ export function FailedPaymentsList({
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [payLinkingId, setPayLinkingId] = useState<string | null>(null);
+  const [payLinkUrl, setPayLinkUrl] = useState<string | null>(null);
 
   // Modal de nota: pago seleccionado + draft text + saving flag.
   const [noteEditing, setNoteEditing] = useState<FailedPayment | null>(null);
@@ -289,10 +290,7 @@ export function FailedPaymentsList({
       });
       if (r.url) {
         await navigator.clipboard.writeText(r.url).catch(() => {});
-        toast.success('Link de pago generado y copiado', {
-          description: r.url,
-          duration: 15000,
-        });
+        setPayLinkUrl(r.url);
       } else {
         toast.error('No se pudo generar el link de pago');
       }
@@ -362,6 +360,53 @@ export function FailedPaymentsList({
           </Button>
           <Button onClick={saveNote} disabled={noteSaving}>
             {noteSaving ? 'Guardando…' : 'Guardar'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    <Dialog open={!!payLinkUrl} onOpenChange={(open) => !open && setPayLinkUrl(null)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Link de pago generado</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Cópialo y mándaselo al cliente para que pague esa cuota. Ya está copiado al portapapeles.
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={payLinkUrl ?? ''}
+              onFocus={(e) => e.currentTarget.select()}
+              className="flex-1 rounded-md border bg-muted/40 px-2 py-1.5 font-mono text-xs"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                if (!payLinkUrl) return;
+                navigator.clipboard.writeText(payLinkUrl).catch(() => {});
+                toast.success('Copiado');
+              }}
+            >
+              Copiar
+            </Button>
+          </div>
+        </div>
+        <DialogFooter>
+          {payLinkUrl && (
+            <a
+              href={payLinkUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1')}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Abrir
+            </a>
+          )}
+          <Button size="sm" onClick={() => setPayLinkUrl(null)}>
+            Cerrar
           </Button>
         </DialogFooter>
       </DialogContent>
