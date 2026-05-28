@@ -62,6 +62,8 @@ function personToRow(p: PersonRow): ClienteRow {
     original_subscription_id: null,
     refinance_status: null,
     total_count: p.n_contracts,
+    n_contracts: p.n_contracts,
+    contracts: p.contracts,
     product_name: p.product_name,
     paid_count: p.paid_count,
     paid_total: p.paid_total,

@@ -91,6 +91,10 @@ export interface ClienteRow {
   address?: string | null;
   /** true = contrato firmado, false = sin firmar (celda naranja), null = sin señal (whop nativo). */
   contract_signed?: boolean | null;
+  /** Nº de contratos reales del cliente (vista agrupada). >1 = multi-contrato. */
+  n_contracts?: number;
+  /** Contratos del cliente (vista agrupada) — para el aviso de multi-contrato en el drawer. */
+  contracts?: PersonContract[];
   /** En /mora: puede ser 'needs_response' | 'under_review' | null. */
   dispute_kind?: 'needs_response' | 'under_review' | null;
 }

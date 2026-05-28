@@ -471,6 +471,12 @@ export function RecoveryDrawer({
                 <FileText className="h-4 w-4" />
                 Contrato
               </Button>
+              {(row.n_contracts ?? 0) > 1 && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+                  <Layers className="h-3.5 w-3.5" />
+                  {row.n_contracts} contratos
+                </span>
+              )}
               {contractUrl && (
                 <Button
                   size="sm"
@@ -489,6 +495,31 @@ export function RecoveryDrawer({
                 />
               )}
             </div>
+
+            {(row.n_contracts ?? 0) > 1 && (
+              <div className="space-y-1.5 rounded-lg border border-amber-300 bg-amber-50/70 p-2.5 text-xs dark:border-amber-800/60 dark:bg-amber-950/30">
+                <p className="flex items-center gap-1 font-semibold text-amber-800 dark:text-amber-200">
+                  <Layers className="h-3.5 w-3.5" />
+                  Este cliente tiene {row.n_contracts} contratos
+                </p>
+                {row.contracts && row.contracts.filter((c) => !c.is_access_only).length > 0 && (
+                  <ul className="space-y-0.5 font-mono text-[11px] text-amber-900 dark:text-amber-200/90">
+                    {row.contracts
+                      .filter((c) => !c.is_access_only)
+                      .map((c) => (
+                        <li key={c.subscription_id}>
+                          • {c.platform} · {c.product_name || 's/ producto'} · {c.subscription_id}
+                        </li>
+                      ))}
+                  </ul>
+                )}
+                <p className="text-amber-700 dark:text-amber-300/90">
+                  Se generan 2 contratos al pagar por 2 vías distintas. Si necesitas enviarle el
+                  contrato al cliente, <strong>contacta a JP</strong> para que te diga cuál es el
+                  correcto antes de enviarlo.
+                </p>
+              </div>
+            )}
 
             {paymentLink && (
               <div className="flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50/60 p-2.5 text-xs dark:border-indigo-900/50 dark:bg-indigo-950/30">
