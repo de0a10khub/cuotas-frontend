@@ -423,9 +423,25 @@ export function ClientesTable({
                       {(page - 1) * pageSize + idx + 1}
                     </TableCell>
 
-                    <TableCell className="max-w-[180px] cursor-copy hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20">
+                    <TableCell
+                      className={cn(
+                        'max-w-[180px] cursor-copy hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20',
+                        // Naranja = contrato sin firmar (contract_signed === false).
+                        // null (whop nativo, sin señal) no se pinta.
+                        r.contract_signed === false &&
+                          'bg-orange-100 dark:bg-orange-950/50',
+                      )}
+                      title={r.contract_signed === false ? 'Contrato sin firmar' : undefined}
+                    >
                       <div className="min-w-0">
-                        <p className="truncate font-medium">{r.customer_name || '—'}</p>
+                        <p className="truncate font-medium">
+                          {r.customer_name || '—'}
+                          {r.contract_signed === false && (
+                            <span className="ml-1 text-[10px] font-semibold text-orange-700 dark:text-orange-300">
+                              ⚠ sin contrato
+                            </span>
+                          )}
+                        </p>
                         <Copyable
                           value={r.customer_email}
                           className="text-[10px] text-slate-500"

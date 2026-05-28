@@ -89,6 +89,8 @@ export interface ClienteRow {
   objeciones_tags?: ObjecionTag[];
   dni?: string | null;
   address?: string | null;
+  /** true = contrato firmado, false = sin firmar (celda naranja), null = sin señal (whop nativo). */
+  contract_signed?: boolean | null;
   /** En /mora: puede ser 'needs_response' | 'under_review' | null. */
   dispute_kind?: 'needs_response' | 'under_review' | null;
 }
