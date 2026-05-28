@@ -10,7 +10,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select';
 import {
   Dialog,
@@ -554,9 +553,11 @@ export function FailedPaymentsList({
                     }
                     disabled={assigningId === p.id}
                   >
-                    <SelectTrigger className="h-7 min-w-[130px] gap-1 border-sky-300/50 bg-sky-50/50 text-[11px] dark:border-sky-800/50 dark:bg-sky-950/30">
-                      <UserCog className="h-3 w-3 text-sky-500" />
-                      <SelectValue placeholder="Nadie" />
+                    <SelectTrigger className="h-7 w-[140px] gap-1 border-sky-300/50 bg-sky-50/50 text-[11px] dark:border-sky-800/50 dark:bg-sky-950/30">
+                      <UserCog className="h-3 w-3 shrink-0 text-sky-500" />
+                      <span className="truncate">
+                        {operators.find((o) => o.id === p.assigned_operator_id)?.display_name || 'Nadie'}
+                      </span>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__" className="text-xs text-muted-foreground">
@@ -618,7 +619,7 @@ export function FailedPaymentsList({
                 )}
                 {/* Generar link de pago de la cuota impaga para mandar al cliente.
                     Funciona en stripe / whop / whop-erp. */}
-                {api.installmentPayLink && tone !== 'paid' && (
+                {api.installmentPayLink && tone !== 'paid' && !isBlockedDraft && (
                   <Button
                     size="sm"
                     variant="outline"
