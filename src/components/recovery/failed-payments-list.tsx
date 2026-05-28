@@ -330,6 +330,17 @@ export function FailedPaymentsList({
     );
   }
 
+  // Basura visual: ocultamos facturas anuladas (void/canceled) y cargos
+  // fallidos (reintentos pasados, no accionables — la cuota real accionable es
+  // la invoice 'open'). Dejamos pagadas + cuotas pendientes reales para no
+  // romper recobros.
+  const visibleItems = items.filter((p) => {
+    const s = (p.status || '').toLowerCase();
+    if (s === 'void' || s === 'canceled' || s === 'cancelled') return false;
+    if (classifyStatus(p.status) === 'failed') return false;
+    return true;
+  });
+
   return (
     <>
     <Dialog open={!!noteEditing} onOpenChange={(open) => !open && setNoteEditing(null)}>
@@ -412,7 +423,7 @@ export function FailedPaymentsList({
       </DialogContent>
     </Dialog>
     <ul className="space-y-2.5">
-      {items.map((p) => {
+      {visibleItems.map((p) => {
         const tone = classifyStatus(p.status);
         const scheduled = p.due_date || p.created_at;
         const paidAt = p.paid_at || null;
