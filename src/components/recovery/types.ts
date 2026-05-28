@@ -41,6 +41,15 @@ export interface RecoveryDrawerApi {
     customer_id: string;
     platform: string;
   }) => Promise<{ url: string }>;
+  /** Genera link de PAGO de una cuota impaga concreta (para mandar al cliente). */
+  installmentPayLink?: (payload: {
+    subscription_id: string;
+    customer_id: string;
+    platform: string;
+    item_id?: string;
+    amount_cents?: number;
+    email?: string;
+  }) => Promise<{ url: string }>;
   failedPayments: (subscription_id: string) => Promise<{ results: FailedPayment[] }>;
   retryPayment: (payload: {
     subscription_id: string;

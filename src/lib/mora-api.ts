@@ -67,6 +67,15 @@ export const moraApi = {
     tags?: string[];
   }) => api.post<MoraRow>(`${BASE}/tracking/upsert/`, payload),
 
+  installmentPayLink: (payload: {
+    subscription_id: string;
+    customer_id: string;
+    platform: string;
+    item_id?: string;
+    amount_cents?: number;
+    email?: string;
+  }) => api.post<{ url: string }>(`${BASE}/installment-pay-link/`, payload),
+
   history: (subscriptionId: string) =>
     api.get<{ results: ActionLogEntry[] }>(
       `${BASE}/history/${encodeURIComponent(subscriptionId)}/`,

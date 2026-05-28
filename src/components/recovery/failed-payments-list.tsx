@@ -162,6 +162,7 @@ export function FailedPaymentsList({
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [payLinkingId, setPayLinkingId] = useState<string | null>(null);
 
   // Modal de nota: pago seleccionado + draft text + saving flag.
   const [noteEditing, setNoteEditing] = useState<FailedPayment | null>(null);
@@ -273,6 +274,37 @@ export function FailedPaymentsList({
       toast.error('Error al reintentar', { description: msg });
     } finally {
       setRetryingId(null);
+    }
+  };
+
+  const genPayLink = async (item: FailedPayment) => {
+    if (!api.installmentPayLink) return;
+    setPayLinkingId(item.id);
+    try {
+      const r = await api.installmentPayLink({
+        subscription_id: subscriptionId,
+        customer_id: customerId,
+        platform: item.platform || platform,
+        item_id: item.id,
+        amount_cents: Math.round((Number(item.amount) || 0) * 100),
+      });
+      if (r.url) {
+        await navigator.clipboard.writeText(r.url).catch(() => {});
+        toast.success('Link de pago generado y copiado', {
+          description: r.url,
+          duration: 15000,
+        });
+      } else {
+        toast.error('No se pudo generar el link de pago');
+      }
+    } catch (e: unknown) {
+      const detail =
+        (e as { data?: { detail?: string } } | null)?.data?.detail ??
+        (e instanceof Error ? e.message : null);
+      toast.error('No se pudo generar el link de pago',
+        detail ? { description: detail, duration: 12000 } : undefined);
+    } finally {
+      setPayLinkingId(null);
     }
   };
 
@@ -582,6 +614,24 @@ export function FailedPaymentsList({
                       className={retryingId === p.id ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'}
                     />
                     Reintentar
+                  </Button>
+                )}
+                {/* Generar link de pago de la cuota impaga para mandar al cliente.
+                    Funciona en stripe / whop / whop-erp. */}
+                {api.installmentPayLink && tone !== 'paid' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={payLinkingId === p.id}
+                    onClick={() => genPayLink(p)}
+                    className="border-emerald-400 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/60"
+                  >
+                    {payLinkingId === p.id ? (
+                      <RotateCw className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    )}
+                    Generar link de pago
                   </Button>
                 )}
                 {api.paymentNote && (
