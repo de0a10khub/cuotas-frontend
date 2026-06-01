@@ -330,14 +330,15 @@ export function FailedPaymentsList({
     );
   }
 
-  // Basura visual: ocultamos facturas anuladas (void/canceled) y cargos
-  // fallidos (reintentos pasados, no accionables — la cuota real accionable es
-  // la invoice 'open'). Dejamos pagadas + cuotas pendientes reales para no
-  // romper recobros.
+  // Basura visual: ocultamos facturas anuladas (void/canceled) siempre, y
+  // cargos fallidos SOLO de Stripe (en Stripe el failed es ruido de retries
+  // de una invoice 'open' que ya representa la cuota; mostrarlo duplica).
+  // Para Whop-ERP y Whop nativo el failed ES la propia cuota fallida (no hay
+  // invoice paralela) y SI debe verse: es la mora real del cliente.
   const visibleItems = items.filter((p) => {
     const s = (p.status || '').toLowerCase();
     if (s === 'void' || s === 'canceled' || s === 'cancelled') return false;
-    if (classifyStatus(p.status) === 'failed') return false;
+    if (classifyStatus(p.status) === 'failed' && p.platform === 'stripe') return false;
     return true;
   });
 
