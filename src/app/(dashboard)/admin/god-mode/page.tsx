@@ -126,6 +126,9 @@ export default function GodModePage() {
   const [confirmText, setConfirmText] = useState('');
   const [jobId, setJobId] = useState<string | null>(null);
   const [job, setJob] = useState<JobStatus | null>(null);
+  // 2026-06-03: filtro plataformas. Default solo Whop + Whop-ERP (excluye Stripe).
+  // Para volver a las 3 plataformas, desactivar el toggle (se manda null al backend).
+  const [excludeStripe, setExcludeStripe] = useState(true);
   // Animación de zapazo: relámpago full-screen + boot lines tras pulsar LANZAR
   const [zapazo, setZapazo] = useState(false);
   // Feed log streaming — append-only, terminal style
@@ -136,7 +139,8 @@ export default function GodModePage() {
   const loadPreview = async () => {
     setLoadingPreview(true);
     try {
-      const r = await api.post<PreviewResponse>('/api/v1/admin/god-mode/preview/');
+      const body = excludeStripe ? { platforms: ['whop', 'whop-erp'] } : {};
+      const r = await api.post<PreviewResponse>('/api/v1/admin/god-mode/preview/', body);
       setPreview(r);
     } catch {
       toast.error('No se pudo cargar el preview');
@@ -145,7 +149,8 @@ export default function GodModePage() {
     }
   };
 
-  useEffect(() => { loadPreview(); }, []);
+  // Recarga el preview cuando cambia el toggle de plataformas.
+  useEffect(() => { loadPreview(); }, [excludeStripe]);
 
   // Recuperar jobId persistido tras refresh / navegación. El backend mantiene
   // el job en memoria hasta que termine, así que reconectamos polling.
@@ -219,8 +224,10 @@ export default function GodModePage() {
     setLogFeed([]);
     seenIdsRef.current = new Set();
     try {
+      const startBody = excludeStripe ? { platforms: ['whop', 'whop-erp'] } : {};
       const r = await api.post<{ job_id: string; total: number; total_amount_eur: number }>(
         '/api/v1/admin/god-mode/start/',
+        startBody,
       );
       setJobId(r.job_id);
       setJob(null);
@@ -456,8 +463,24 @@ export default function GodModePage() {
           </div>
         </div>
 
+        {/* FILTRO PLATAFORMAS */}
+        <div className="mt-6 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-slate-900/60 px-4 py-2.5 backdrop-blur">
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm text-amber-100">
+            <input
+              type="checkbox"
+              checked={excludeStripe}
+              onChange={(e) => setExcludeStripe(e.target.checked)}
+              disabled={isRunning}
+              className="h-4 w-4 cursor-pointer accent-amber-500"
+            />
+            <span className="font-mono text-xs uppercase tracking-wider text-amber-300/80">
+              Solo Whop + Whop-ERP (excluye Stripe)
+            </span>
+          </label>
+        </div>
+
         {/* THE BUTTON */}
-        <div className="relative mt-10">
+        <div className="relative mt-6">
           {/* pulse rings */}
           {!isRunning && (
             <>
