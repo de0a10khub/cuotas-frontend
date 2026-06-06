@@ -410,6 +410,11 @@ export function ClientesTable({
               sorted.map((r, idx) => {
                 const isLocked = !!r.recovery_locked_by;
                 const catStyle = CATEGORY_STYLES[r.category] ?? CATEGORY_STYLES[categoryFromDays(r.days_overdue)];
+                // Distintivo Hotmart sin contrato firmado: degradado rojo
+                // suave izquierda→derecha en TODA la fila. Solo aplica si la
+                // unica plataforma del cliente es Hotmart (no multi) y la
+                // señal contract_signed es false (no null = sin señal).
+                const isHotmartUnsigned = r.platform === 'hotmart' && r.contract_signed === false;
                 return (
                   <TableRow
                     key={r.subscription_id}
@@ -417,7 +422,10 @@ export function ClientesTable({
                     className={cn(
                       'cursor-pointer',
                       isLocked && 'bg-slate-50 opacity-80 dark:bg-slate-900/40',
+                      isHotmartUnsigned && !isLocked &&
+                        'bg-gradient-to-r from-red-100 via-red-50/60 to-transparent dark:from-red-950/40 dark:via-red-900/20 dark:to-transparent',
                     )}
+                    title={isHotmartUnsigned ? 'Hotmart sin contrato firmado' : undefined}
                   >
                     <TableCell className="text-center text-xs text-slate-400">
                       {(page - 1) * pageSize + idx + 1}
