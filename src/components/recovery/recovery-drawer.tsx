@@ -117,17 +117,14 @@ export function RecoveryDrawer({
   const [generatingContract, setGeneratingContract] = useState(false);
   const [pdfOpen, setPdfOpen] = useState(false);
 
-  // Owner sticky por panel: /recobros usa recovery_owner_email_recobrame,
-  // /clientes y /mora_n1 usan recovery_owner_email. El listado ya muestra
-  // estos owners stickies (clientes/page.tsx:49-53). El drawer debe
-  // pre-seleccionar el MISMO owner — antes mostraba recovery_contacted_by
-  // (último que tocó, ej. "Ana") y discrepaba con el listado (sticky N1, ej.
-  // "Estefanía"). Bug detectado 2026-05-13 con ivan.lauti0998@gmail.com.
+  // REFACTOR 2026-06-08: owner sticky UNICO (recovery_owner_email).
+  // Antes habia dos columnas separadas — N1 (recovery_owner_email) y recobros
+  // (recovery_owner_email_recobrame). Ahora un cliente tiene un solo operario
+  // asignado que lo lleva entre paneles sin cambio automatico.
   const stickyOwnerEmail = useMemo(() => {
     if (!row) return null;
-    if (panel === 'recobros') return row.recovery_owner_email_recobrame || null;
     return row.recovery_owner_email || null;
-  }, [row, panel]);
+  }, [row]);
 
   // Mapeo email sticky → display_name del operario para preseleccionar
   // el Select de "Operario asignado".
