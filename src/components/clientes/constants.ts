@@ -19,6 +19,7 @@ export const PLATFORM_OPTIONS: { value: 'all' | Platform; label: string }[] = [
   { value: 'whop', label: '🎮 Whop Nativo' },
   { value: 'whop-erp', label: '📦 Whop ERP' },
   { value: 'hotmart', label: '🔥 Hotmart' },
+  { value: 'copecart', label: '🛒 CopeCart' },
 ];
 
 export const DISPUTE_OPTIONS = [

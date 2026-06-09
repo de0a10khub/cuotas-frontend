@@ -17,6 +17,8 @@ export const MORA_PLATFORM_OPTIONS: { value: 'all' | Platform; label: string }[]
   { value: 'stripe', label: '💳 Stripe' },
   { value: 'whop', label: '🎮 Whop Nativo' },
   { value: 'whop-erp', label: '📦 Whop ERP' },
+  { value: 'hotmart', label: '🔥 Hotmart' },
+  { value: 'copecart', label: '🛒 CopeCart' },
 ];
 
 export const MORA_DISPUTE_OPTIONS: { value: 'all' | MoraDisputeState; label: string }[] = [

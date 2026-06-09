@@ -155,6 +155,10 @@ export const PLATFORM_STYLES: Record<string, { className: string; label: string 
     className: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-200',
     label: 'Hotmart',
   },
+  copecart: {
+    className: 'bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-200',
+    label: 'CopeCart',
+  },
 };
 
 export function categoryFromDays(days: number | null | undefined): AgingCategory {
