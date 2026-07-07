@@ -275,7 +275,7 @@ export default function HomePage() {
               </span>
               <div>
                 <h2 className="bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
-                  Total Histórico
+                  Total Histórico.
                 </h2>
                 <span className="inline-block rounded-md bg-cyan-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300 ring-1 ring-cyan-400/30">
                   Toda la Conciliación
