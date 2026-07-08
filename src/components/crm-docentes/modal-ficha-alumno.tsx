@@ -163,7 +163,15 @@ export function ModalFichaAlumno({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+      <DialogContent
+        className={
+          // Fuerza el ancho con `!` porque shadcn base trae `sm:max-w-sm` (384px)
+          // que sobrescribiría nuestros valores. Responsive: móvil = casi ancho
+          // completo, escritorio hasta 900px (~ prototipo).
+          '!max-w-[95vw] sm:!max-w-[560px] md:!max-w-[780px] lg:!max-w-[900px] ' +
+          'max-h-[90vh] overflow-y-auto p-6 leading-relaxed'
+        }
+      >
         <DialogHeader>
           <DialogTitle className="text-xl">
             {loading || !data ? 'Cargando…' : data.customer_name || data.customer_email}
@@ -185,11 +193,11 @@ export function ModalFichaAlumno({
             </div>
 
             {/* Nota implicación */}
-            <div className="mt-4">
+            <div className="mt-6">
               <Label className="text-[10.5px] font-bold uppercase text-muted-foreground">
                 Nota de implicación — ¿está poniendo el trabajo?
               </Label>
-              <div className="mt-2 flex flex-wrap gap-1.5">
+              <div className="mt-2 flex flex-wrap gap-2">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
                   <button
                     key={n}
@@ -220,10 +228,10 @@ export function ModalFichaAlumno({
               </div>
             </div>
 
-            {/* Grid: llamada | pruebas+comentarios */}
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Registrar llamada */}
-              <div className="rounded-xl border bg-muted/30 p-4">
+            {/* Grid: llamada | pruebas+comentarios — 2 col en escritorio */}
+            <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
+              {/* Registrar llamada + historial */}
+              <div className="rounded-xl border bg-muted/30 p-5">
                 <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   📞 Registrar llamada / interacción
                 </div>
@@ -303,7 +311,7 @@ export function ModalFichaAlumno({
               {/* Pruebas + comentarios */}
               <div className="space-y-4">
                 {/* Pruebas */}
-                <div className="rounded-xl border bg-muted/30 p-4">
+                <div className="rounded-xl border bg-muted/30 p-5">
                   <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     📎 Pruebas de trabajo
                   </div>
@@ -342,7 +350,7 @@ export function ModalFichaAlumno({
                 </div>
 
                 {/* Comentarios */}
-                <div className="rounded-xl border bg-muted/30 p-4">
+                <div className="rounded-xl border bg-muted/30 p-5">
                   <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     💬 Comentarios del equipo
                   </div>
