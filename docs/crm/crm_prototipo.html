@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Éxito del Alumno</title>
+<style>
+:root{
+ --bg:#0b1220;--panel:#111a2e;--panel2:#16223c;--borde:rgba(148,163,184,.14);
+ --texto:#e8edf7;--gris:#8fa0bd;--azul:#4f8cff;--vio:#8b5cf6;--verde:#22c55e;--ambar:#f59e0b;--rojo:#ef4444;
+ --grad:linear-gradient(135deg,#4f8cff 0%,#8b5cf6 100%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,'Inter','Segoe UI',Roboto,sans-serif;background:radial-gradient(1200px 600px at 80% -10%,#1a2a4d 0%,var(--bg) 55%);color:var(--texto);font-size:14px;min-height:100vh}
+header{padding:18px 28px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;border-bottom:1px solid var(--borde);backdrop-filter:blur(8px)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo .ic{width:38px;height:38px;border-radius:12px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 6px 18px rgba(79,140,255,.35)}
+header h1{font-size:16px;font-weight:800;letter-spacing:.2px}
+header .sub{font-size:11px;color:var(--gris)}
+nav{display:flex;gap:6px;margin-left:auto;background:var(--panel);padding:5px;border-radius:14px;border:1px solid var(--borde)}
+nav button{background:transparent;border:none;color:var(--gris);padding:8px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;transition:.15s}
+nav button.act{background:var(--grad);color:#fff;box-shadow:0 4px 14px rgba(79,140,255,.35)}
+.btn{background:var(--grad);color:#fff;border:none;padding:9px 16px;border-radius:12px;cursor:pointer;font-weight:700;font-size:13px;box-shadow:0 4px 14px rgba(79,140,255,.3);transition:.15s}
+.btn:hover{transform:translateY(-1px)}
+.btn.sec{background:var(--panel2);box-shadow:none;border:1px solid var(--borde)}
+.btn.peq{padding:6px 12px;font-size:12px}
+.btn.rojo{background:linear-gradient(135deg,#ef4444,#b91c1c)} .btn.verde{background:linear-gradient(135deg,#22c55e,#15803d)} .btn.ambar{background:linear-gradient(135deg,#f59e0b,#b45309)} .btn.vio{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
+main{padding:22px 28px;max-width:1560px;margin:0 auto}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:var(--panel);border:1px solid var(--borde);border-radius:16px;padding:16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad);opacity:.7}
+.kpi .v{font-size:26px;font-weight:800}
+.kpi .l{font-size:11px;color:var(--gris);margin-top:3px;line-height:1.35}
+.kpi.mal::before{background:linear-gradient(90deg,#ef4444,#f59e0b)}
+.kpi.mal .v{color:var(--rojo)}
+.cols{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:start}
+@media(max-width:1100px){.cols{grid-template-columns:repeat(2,1fr)}}
+.col{background:var(--panel);border:1px solid var(--borde);border-radius:16px;padding:12px;min-height:110px}
+.col h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--gris);margin:4px 6px 12px;display:flex;justify-content:space-between;align-items:center}
+.col h3 .n{background:var(--grad);color:#fff;border-radius:10px;padding:1px 9px;font-size:11px}
+.tarj{background:var(--panel2);border:1px solid var(--borde);border-radius:14px;padding:12px;margin-bottom:10px;cursor:pointer;transition:.15s}
+.tarj:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.35);border-color:rgba(79,140,255,.4)}
+.tarj .nom{font-weight:700;font-size:13.5px}
+.tarj .met{font-size:11px;color:var(--gris);margin-top:3px}
+.tarj .fila{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.chip{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.3px}
+.c-verde{background:rgba(34,197,94,.15);color:#4ade80} .c-ambar{background:rgba(245,158,11,.15);color:#fbbf24} .c-rojo{background:rgba(239,68,68,.18);color:#f87171} .c-gris{background:rgba(148,163,184,.15);color:#a8b6cf} .c-vio{background:rgba(139,92,246,.18);color:#a78bfa} .c-azul{background:rgba(79,140,255,.15);color:#7fabff}
+.nota{width:28px;height:28px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12.5px;color:#fff}
+.vencida{border-color:rgba(239,68,68,.55);box-shadow:0 0 0 1px rgba(239,68,68,.35)}
+table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:16px;overflow:hidden;border:1px solid var(--borde)}
+th{background:rgba(79,140,255,.08);color:var(--gris);text-align:left;padding:12px 14px;font-size:10.5px;text-transform:uppercase;letter-spacing:.7px}
+td{padding:12px 14px;border-top:1px solid var(--borde);font-size:13px}
+tr:hover td{background:rgba(79,140,255,.05);cursor:pointer}
+/* docentes */
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.doc-card{background:var(--panel);border:1px solid var(--borde);border-radius:18px;padding:18px;position:relative;overflow:hidden}
+.doc-card .rank{position:absolute;top:14px;right:16px;font-size:22px;opacity:.85}
+.doc-card h3{font-size:16px;font-weight:800}
+.doc-card .rol{font-size:11px;color:var(--gris);margin-bottom:14px}
+.morobar{height:10px;background:rgba(148,163,184,.15);border-radius:20px;overflow:hidden;margin:6px 0 4px}
+.morobar>div{height:100%;border-radius:20px;transition:width .4s}
+.doc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.mini{background:var(--panel2);border:1px solid var(--borde);border-radius:12px;padding:10px;text-align:center}
+.mini .v{font-size:17px;font-weight:800}
+.mini .l{font-size:9.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.moropct{font-size:30px;font-weight:800}
+/* modal */
+.velo{position:fixed;inset:0;background:rgba(4,8,18,.7);display:none;align-items:flex-start;justify-content:center;padding:30px 16px;z-index:50;overflow-y:auto;backdrop-filter:blur(4px)}
+.velo.on{display:flex}
+.modal{background:var(--panel);border:1px solid var(--borde);border-radius:20px;width:100%;max-width:900px;padding:26px}
+.modal h2{font-size:20px;font-weight:800}
+.mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+@media(max-width:820px){.mgrid{grid-template-columns:1fr}}
+.sec{border:1px solid var(--borde);border-radius:16px;padding:16px;background:var(--panel2)}
+.sec h4{font-size:11px;text-transform:uppercase;color:var(--gris);margin-bottom:12px;letter-spacing:.7px}
+.item{border-left:3px solid var(--azul);padding:7px 11px;margin-bottom:8px;background:rgba(79,140,255,.06);border-radius:0 10px 10px 0;font-size:12.5px;line-height:1.45}
+.item .m{color:var(--gris);font-size:11px}
+.item a{color:#7fabff;font-weight:700;text-decoration:none}
+label{font-size:10.5px;font-weight:800;color:var(--gris);display:block;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.5px}
+input,select,textarea{width:100%;padding:9px 11px;border:1px solid var(--borde);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--texto)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul)}
+.notas10{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
+.notas10 button{width:32px;height:32px;border-radius:10px;border:1px solid var(--borde);background:var(--bg);color:var(--gris);cursor:pointer;font-weight:800;transition:.12s}
+.notas10 button:hover{border-color:var(--azul)}
+.notas10 button.sel{color:#fff;border:none;transform:scale(1.12)}
+.acciones{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--grad);color:#fff;padding:13px 20px;border-radius:14px;font-weight:700;display:none;z-index:99;box-shadow:0 10px 30px rgba(79,140,255,.4)}
+.pago-chip{display:inline-flex;align-items:center;gap:5px}
+.dot{width:8px;height:8px;border-radius:50%}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="ic">🎓</div><div><h1>CRM · Éxito del Alumno</h1><div class="sub">Onboarding · Seguimiento · Retención — conectado al ERP en tiempo real</div></div></div>
+  <nav>
+    <button class="act" onclick="vista('pipeline',this)">Pipeline</button>
+    <button onclick="vista('alumnos',this)">Alumnos</button>
+    <button onclick="vista('docentes',this)">Docentes</button>
+  </nav>
+  <button class="btn" onclick="simularVenta()">⚡ Venta nueva</button>
+</header>
+<main>
+  <div class="kpis" id="kpis"></div>
+  <div id="v-pipeline"></div>
+  <div id="v-alumnos" style="display:none"></div>
+  <div id="v-docentes" style="display:none"></div>
+</main>
+
+<div class="velo" id="velo" onclick="if(event.target===this)cerrar()"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATOS DEMO (en producción: API del ERP; estadoPago viene de las cuotas reales) =====
+const COACHES=['Flor','Medina','Yanara'];
+const DOCENTES=['Alejandro','Lucila','Felipe'];
+const hoy=()=>new Date().toISOString().slice(0,10);
+const dias=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+let SEQ=100;
+// estadoPago: 'al_dia' | 'impago'  · cuotasImpagadas: nº — EN PRODUCCIÓN SE LEE DEL ERP (cuotas vencidas no pagadas)
+let alumnos=[
+ {id:1,nombre:'Marcos Jara',email:'marcos@mail.com',producto:'Mentoría 2K',alta:dias(-1),fase:'nuevo',estado:'activo',nota:null,coach:'Flor',docente:null,proxima:hoy(),estadoPago:'al_dia',cuotasImpagadas:0,llamadas:[],comentarios:[],pruebas:[]},
+ {id:2,nombre:'Sara González',email:'sara@mail.com',producto:'Mentoría 3K',alta:dias(-3),fase:'onboarding',estado:'activo',nota:8,coach:'Medina',docente:null,proxima:dias(1),estadoPago:'al_dia',cuotasImpagadas:0,llamadas:[{tipo:'Llamada 1',fecha:dias(-2),enlace:'https://zoom.us/rec/123',resultado:'Asistió',notas:'Quiere agencia de automatización. Victoria pactada: primer agente día 5.'}],comentarios:[{autor:'Medina',fecha:dias(-2),texto:'Perfil técnico, va rápido.'}],pruebas:[]},
+ {id:3,nombre:'Iván Torres',email:'ivan@mail.com',producto:'Mentoría 2K',alta:dias(-20),fase:'docente',estado:'activo',nota:7,coach:'Flor',docente:'Alejandro',proxima:dias(3),estadoPago:'al_dia',cuotasImpagadas:0,llamadas:[{tipo:'Llamada 1',fecha:dias(-19),enlace:'https://zoom.us/rec/a1',resultado:'Asistió',notas:'Objetivo: SaaS con IA.'},{tipo:'Llamada 2',fecha:dias(-14),enlace:'https://zoom.us/rec/a2',resultado:'Asistió',notas:'Primer agente montado ✔'},{tipo:'Quincenal',fecha:dias(-11),enlace:'https://zoom.us/rec/a3',resultado:'Asistió',notas:'Oferta definida, 10 prospectos.'}],comentarios:[],pruebas:[{fecha:dias(-12),desc:'Captura del agente funcionando',enlace:'https://drive.google.com/prueba1'}]},
+ {id:4,nombre:'Lucía Pérez',email:'lucia@mail.com',producto:'Mentoría 2K',alta:dias(-35),fase:'docente',estado:'riesgo',nota:4,coach:'Yanara',docente:'Lucila',proxima:dias(-4),estadoPago:'impago',cuotasImpagadas:1,llamadas:[{tipo:'Llamada 1',fecha:dias(-34),enlace:'https://zoom.us/rec/b1',resultado:'Asistió',notas:'Poco tiempo disponible.'},{tipo:'Llamada 2',fecha:dias(-28),enlace:'https://zoom.us/rec/b2',resultado:'No asistió',notas:'Reagendada.'},{tipo:'Quincenal',fecha:dias(-18),enlace:'https://zoom.us/rec/b3',resultado:'Asistió',notas:'Mencionó dudas con el dinero ⚠'}],comentarios:[{autor:'Lucila',fecha:dias(-18),texto:'Escalar a retención.'}],pruebas:[]},
+ {id:5,nombre:'Pedro Sanz',email:'pedro@mail.com',producto:'Mentoría 3K',alta:dias(-50),fase:'perdido',estado:'perdido',nota:2,coach:'Flor',docente:'Alejandro',proxima:null,estadoPago:'impago',cuotasImpagadas:3,llamadas:[{tipo:'Llamada 1',fecha:dias(-49),enlace:'https://zoom.us/rec/c1',resultado:'Asistió',notas:''},{tipo:'Llamada 2',fecha:dias(-44),enlace:'',resultado:'No asistió',notas:'No responde.'}],comentarios:[{autor:'Flor',fecha:dias(-40),texto:'3 intentos sin respuesta.'}],pruebas:[]},
+ {id:6,nombre:'Alba Romero',email:'alba@mail.com',producto:'Mentoría 2K',alta:dias(-40),fase:'docente',estado:'activo',nota:9,coach:'Medina',docente:'Lucila',proxima:dias(6),estadoPago:'al_dia',cuotasImpagadas:0,llamadas:[{tipo:'Llamada 1',fecha:dias(-39),enlace:'https://zoom.us/rec/d1',resultado:'Asistió',notas:''},{tipo:'Llamada 2',fecha:dias(-33),enlace:'https://zoom.us/rec/d2',resultado:'Asistió',notas:''},{tipo:'Quincenal',fecha:dias(-8),enlace:'https://zoom.us/rec/d3',resultado:'Asistió',notas:'Primer cliente cerrado 🎉'}],comentarios:[],pruebas:[{fecha:dias(-8),desc:'Factura de su primer cliente',enlace:'https://drive.google.com/f1'}]},
+ {id:7,nombre:'Diego Marín',email:'diego@mail.com',producto:'Mentoría 2K',alta:dias(-45),fase:'docente',estado:'activo',nota:6,coach:'Flor',docente:'Felipe',proxima:dias(2),estadoPago:'al_dia',cuotasImpagadas:0,llamadas:[{tipo:'Llamada 1',fecha:dias(-44),enlace:'https://zoom.us/rec/e1',resultado:'Asistió',notas:''},{tipo:'Llamada 2',fecha:dias(-38),enlace:'https://zoom.us/rec/e2',resultado:'Asistió',notas:''}],comentarios:[],pruebas:[]},
+ {id:8,nombre:'Noa Castillo',email:'noa@mail.com',producto:'Mentoría 3K',alta:dias(-42),fase:'docente',estado:'riesgo',nota:3,coach:'Yanara',docente:'Felipe',proxima:dias(-2),estadoPago:'impago',cuotasImpagadas:2,llamadas:[{tipo:'Llamada 1',fecha:dias(-41),enlace:'https://zoom.us/rec/f1',resultado:'Asistió',notas:''},{tipo:'Llamada 2',fecha:dias(-36),enlace:'https://zoom.us/rec/f2',resultado:'Asistió',notas:''},{tipo:'Quincenal',fecha:dias(-20),enlace:'',resultado:'No asistió',notas:'Sin respuesta'}],comentarios:[],pruebas:[]},
+];
+
+// ===== HELPERS =====
+const colNota=n=>n==null?'#64748b':n>=7?'#22c55e':n>=5?'#f59e0b':'#ef4444';
+const chipEstado=e=>e==='activo'?'<span class="chip c-verde">ACTIVO</span>':e==='riesgo'?'<span class="chip c-ambar">EN RIESGO</span>':'<span class="chip c-rojo">PERDIDO</span>';
+const chipPago=a=>a.estadoPago==='al_dia'?'<span class="chip c-azul pago-chip"><span class="dot" style="background:#4ade80"></span>PAGA</span>':`<span class="chip c-rojo pago-chip"><span class="dot" style="background:#f87171"></span>IMPAGO ×${a.cuotasImpagadas}</span>`;
+const vencida=a=>a.proxima&&a.proxima<hoy()&&a.fase!=='perdido';
+const nOnb=a=>a.llamadas.filter(l=>l.resultado==='Asistió').length;
+// PLAN DE LLAMADAS: mes 1 = semanal (llamadas 1-4, días 2/9/16/23) · después = quincenal
+function planLlamadas(a){
+ const d=Math.floor((new Date()-new Date(a.alta))/86400000);
+ const hechas=nOnb(a);
+ const semanales=[2,9,16,23].map((due,i)=>({num:i+1,due,esperada:d>=due,hecha:hechas>i}));
+ const qEsperadas=d>30?Math.floor((d-30)/14)+ (d>=37?0:0):0;
+ const qHechas=Math.max(0,hechas-4);
+ const atrasadas=semanales.filter(x=>x.esperada&&!x.hecha).length + Math.max(0,(d>30?Math.max(0,Math.floor((d-23)/14)):0)-qHechas);
+ return {semanales,hechas,qHechas,atrasadas,d};
+}
+function dotsLlamadas(a){
+ const p=planLlamadas(a);
+ const dot=s=>{
+  const bg=s.hecha?'#22c55e':(s.esperada?'#ef4444':'rgba(148,163,184,.25)');
+  const glow=s.hecha?'box-shadow:0 0 6px rgba(34,197,94,.6);':(s.esperada?'box-shadow:0 0 6px rgba(239,68,68,.5);':'');
+  return `<span title="Llamada ${s.num} (día ${s.due})" style="width:20px;height:20px;border-radius:50%;background:${bg};${glow}color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800">${s.hecha?s.num:(s.esperada?'!':s.num)}</span>`;
+ };
+ return `<div style="display:flex;gap:5px;align-items:center;margin-top:8px">
+  ${p.semanales.map(dot).join('')}
+  <span style="font-size:10px;color:var(--gris);margin:0 2px">→</span>
+  <span class="chip ${p.qHechas>0?'c-verde':'c-gris'}" title="Llamadas quincenales tras el mes 1">Q×${p.qHechas}</span>
+  ${p.atrasadas>0&&a.fase!=='perdido'?`<span class="chip c-rojo">${p.atrasadas} atrasada${p.atrasadas>1?'s':''}</span>`:''}
+ </div>`;
+}
+const colMoro=p=>p<25?'#22c55e':p<40?'#f59e0b':'#ef4444';
+
+// MOROSIDAD POR DOCENTE: % de sus alumnos asignados con impago (en producción: cuotas vencidas impagadas del ERP)
+function statsDocente(d){
+ const asignados=alumnos.filter(a=>a.docente===d);
+ const morosos=asignados.filter(a=>a.estadoPago==='impago');
+ const notas=asignados.filter(a=>a.nota!=null);
+ const llamadasOk=asignados.filter(a=>!vencida(a)).length;
+ const conPruebas=asignados.filter(a=>a.pruebas.length>0).length;
+ const s={n:asignados.length, morosos:morosos.length,
+  pct:asignados.length?Math.round(100*morosos.length/asignados.length):0,
+  notaMedia:notas.length?(notas.reduce((s,a)=>s+a.nota,0)/notas.length):0,
+  alDiaLlamadas:asignados.length?Math.round(100*llamadasOk/asignados.length):100,
+  pctPruebas:asignados.length?Math.round(100*conPruebas/asignados.length):0,
+  asignados};
+ // SCORE 1-100 — imposible de maquillar: 50% pagos (ERP), 25% implicación alumnos, 15% llamadas al día, 10% pruebas de trabajo
+ s.sPagos=Math.round((100-s.pct)*0.5);
+ s.sImplicacion=Math.round(s.notaMedia*10*0.25);
+ s.sLlamadas=Math.round(s.alDiaLlamadas*0.15);
+ s.sPruebas=Math.round(s.pctPruebas*0.10);
+ s.score=s.n?Math.max(1,Math.min(100,s.sPagos+s.sImplicacion+s.sLlamadas+s.sPruebas)):0;
+ s.tier=s.score>=85?{t:'ELITE',c:'#22d3ee',icon:'💎'}:s.score>=70?{t:'PRO',c:'#22c55e',icon:'🔥'}:s.score>=50?{t:'MEDIO',c:'#f59e0b',icon:'⚡'}:{t:'EN RIESGO',c:'#ef4444',icon:'🚨'};
+ s.enRiesgo=s.score<50||(s.notaMedia>0&&s.notaMedia<5);
+ s.notaMediaTxt=notas.length?s.notaMedia.toFixed(1):'—';
+ return s;
+}
+function anillo(score,color){
+ const r=44,c=2*Math.PI*r,off=c*(1-score/100);
+ return `<svg width="110" height="110" viewBox="0 0 110 110">
+  <circle cx="55" cy="55" r="${r}" fill="none" stroke="rgba(148,163,184,.15)" stroke-width="9"/>
+  <circle cx="55" cy="55" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round"
+   stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 55 55)" style="filter:drop-shadow(0 0 6px ${color})"/>
+  <text x="55" y="52" text-anchor="middle" font-size="26" font-weight="800" fill="#e8edf7">${score}</text>
+  <text x="55" y="70" text-anchor="middle" font-size="9" fill="#8fa0bd" letter-spacing="1">NIVEL</text>
+ </svg>`;
+}
+
+function kpis(){
+ const act=alumnos.filter(a=>a.fase!=='perdido');
+ const sin24=alumnos.filter(a=>a.fase==='nuevo').length;
+ const venc=alumnos.filter(vencida).length;
+ const riesgo=alumnos.filter(a=>a.estado==='riesgo').length;
+ const morosos=alumnos.filter(a=>a.estadoPago==='impago').length;
+ const moroPct=alumnos.length?Math.round(100*morosos/alumnos.length):0;
+ const notas=act.filter(a=>a.nota!=null);
+ const media=notas.length?(notas.reduce((s,a)=>s+a.nota,0)/notas.length).toFixed(1):'—';
+ document.getElementById('kpis').innerHTML=`
+  <div class="kpi"><div class="v">${act.length}</div><div class="l">Alumnos activos</div></div>
+  <div class="kpi ${moroPct>=25?'mal':''}"><div class="v">${moroPct}%</div><div class="l">Morosidad global · objetivo &lt;25%</div></div>
+  <div class="kpi ${sin24?'mal':''}"><div class="v">${sin24}</div><div class="l">Nuevos sin 1ª llamada (alerta 24h)</div></div>
+  <div class="kpi ${venc?'mal':''}"><div class="v">${venc}</div><div class="l">Llamadas vencidas</div></div>
+  <div class="kpi ${riesgo?'mal':''}"><div class="v">${riesgo}</div><div class="l">En riesgo</div></div>
+  <div class="kpi"><div class="v">${media}</div><div class="l">Nota media de implicación</div></div>`;
+}
+
+function tarjeta(a){
+ return `<div class="tarj ${vencida(a)?'vencida':''}" onclick="abrir(${a.id})">
+  <div class="nom">${a.nombre}</div>
+  <div class="met">${a.producto} · alta ${a.alta}</div>
+  <div class="met">${a.docente?'Docente: '+a.docente:'Coach: '+(a.coach||'—')}</div>
+  <div class="fila">${chipEstado(a.estado)} ${chipPago(a)}
+   <span class="nota" style="background:${colNota(a.nota)}">${a.nota??'–'}</span></div>
+  ${a.fase!=='perdido'?dotsLlamadas(a):''}
+  ${a.proxima&&a.fase!=='perdido'?`<div class="met" style="margin-top:6px;${vencida(a)?'color:#f87171;font-weight:700':''}">📞 Próxima: ${a.proxima}${vencida(a)?' · VENCIDA':''}</div>`:''}
+ </div>`;
+}
+
+function pipeline(){
+ const cols=[['nuevo','🆕 Nuevo'],['onboarding','📋 Onboarding'],['docente','🎓 Con docente'],['riesgoCol','⚠️ En riesgo'],['perdido','❌ Perdido']];
+ const grupo=k=>k==='riesgoCol'?alumnos.filter(a=>a.estado==='riesgo'&&a.fase!=='perdido'):k==='onboarding'||k==='docente'?alumnos.filter(a=>a.fase===k&&a.estado!=='riesgo'):alumnos.filter(a=>a.fase===k);
+ document.getElementById('v-pipeline').innerHTML=`<div class="cols">${cols.map(([k,t])=>{const g=grupo(k);return `<div class="col"><h3>${t}<span class="n">${g.length}</span></h3>${g.map(tarjeta).join('')||'<div style="text-align:center;color:#64748b;font-size:12px;padding:14px">vacío</div>'}</div>`}).join('')}</div>`;
+}
+
+function tablaAlumnos(){
+ document.getElementById('v-alumnos').innerHTML=`<table><tr><th>Alumno</th><th>Producto</th><th>Fase</th><th>Estado</th><th>Pago</th><th>Nota</th><th>Llamadas</th><th>Equipo</th><th>Próxima</th></tr>
+ ${alumnos.map(a=>`<tr onclick="abrir(${a.id})"><td><b>${a.nombre}</b><br><span style="color:var(--gris);font-size:11px">${a.email}</span></td><td>${a.producto}</td><td style="text-transform:uppercase;font-size:11px;font-weight:800;color:var(--gris)">${a.fase}</td><td>${chipEstado(a.estado)}</td><td>${chipPago(a)}</td><td><span class="nota" style="background:${colNota(a.nota)}">${a.nota??'–'}</span></td><td>${a.llamadas.length}</td><td style="font-size:12px">${a.coach||'—'} / ${a.docente||'—'}</td><td style="${vencida(a)?'color:#f87171;font-weight:700':''}">${a.proxima??'—'}</td></tr>`).join('')}</table>`;
+}
+
+function barra(label,val,max,color){
+ const p=Math.round(100*val/max);
+ return `<div style="margin-bottom:7px">
+  <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--gris);margin-bottom:3px"><span>${label}</span><b style="color:${color}">${val}/${max}</b></div>
+  <div class="morobar" style="height:7px"><div style="width:${Math.max(p,2)}%;background:${color}"></div></div></div>`;
+}
+function vistaDocentes(){
+ const stats=DOCENTES.map(d=>({d,...statsDocente(d)})).sort((x,y)=>y.score-x.score);
+ const medallas=['🥇','🥈','🥉'];
+ document.getElementById('v-docentes').innerHTML=`
+ <div style="margin-bottom:14px;color:var(--gris);font-size:12.5px">🎮 <b style="color:var(--texto)">Nivel de cada docente (1-100)</b> — calculado automáticamente: 50% pagos de su cartera (ERP), 25% implicación de sus alumnos, 15% llamadas al día, 10% pruebas de trabajo. <b style="color:#f87171">Aquí no se puede mentir:</b> los pagos los dice el ERP y las llamadas o están grabadas o no existen. Nivel &lt;50 o alumnos con nota media &lt;5 = docente EN RIESGO.</div>
+ <div class="doc-grid">
+ ${stats.map((s,i)=>`
+  <div class="doc-card" style="${s.enRiesgo?'border-color:rgba(239,68,68,.6);box-shadow:0 0 24px rgba(239,68,68,.15)':''}">
+   <div class="rank">${medallas[i]||''}</div>
+   <div style="display:flex;gap:16px;align-items:center">
+    ${anillo(s.score,s.tier.c)}
+    <div style="flex:1">
+     <h3>${s.d}</h3>
+     <div class="rol">${s.n} alumnos en cartera</div>
+     <span class="chip" style="background:${s.tier.c}22;color:${s.tier.c};font-size:12px;padding:5px 12px">${s.tier.icon} ${s.tier.t}</span>
+     ${s.enRiesgo?'<div style="margin-top:8px;font-size:11px;color:#f87171;font-weight:800">🚨 REVISAR: nivel bajo — cartera en peligro</div>':''}
+    </div>
+   </div>
+   <div style="margin-top:16px">
+    ${barra('💰 Pagos de su cartera (morosidad '+s.pct+'%)',s.sPagos,50,colMoro(s.pct))}
+    ${barra('📈 Implicación alumnos (media '+s.notaMediaTxt+'/10)',s.sImplicacion,25,colNota(s.notaMedia||null))}
+    ${barra('📞 Llamadas al día ('+s.alDiaLlamadas+'%)',s.sLlamadas,15,s.alDiaLlamadas>=80?'#22c55e':'#ef4444')}
+    ${barra('📎 Pruebas de trabajo ('+s.pctPruebas+'% alumnos)',s.sPruebas,10,s.pctPruebas>=50?'#22c55e':'#f59e0b')}
+   </div>
+   <div class="doc-stats">
+    <div class="mini"><div class="v" style="color:${colMoro(s.pct)}">${s.pct}%</div><div class="l">Morosidad</div></div>
+    <div class="mini"><div class="v" style="color:${colNota(s.notaMedia||null)}">${s.notaMediaTxt}</div><div class="l">Nota alumnos</div></div>
+    <div class="mini"><div class="v">${s.morosos}</div><div class="l">Impagos</div></div>
+   </div>
+   <details style="margin-top:14px"><summary style="cursor:pointer;font-size:12px;color:var(--gris);font-weight:700">Ver sus ${s.n} alumnos</summary>
+   <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">${s.asignados.map(tarjeta).join('')||'<div style="color:#64748b;font-size:12px">Sin alumnos</div>'}</div></details>
+  </div>`).join('')}
+ </div>`;
+}
+
+function vista(v,btn){
+ document.querySelectorAll('nav button').forEach(b=>b.classList.remove('act'));btn.classList.add('act');
+ ['pipeline','alumnos','docentes'].forEach(x=>document.getElementById('v-'+x).style.display=x===v?'':'none');
+ render();
+}
+function render(){kpis();pipeline();tablaAlumnos();vistaDocentes();}
+
+// ===== FICHA =====
+let actual=null;
+function abrir(id){
+ actual=alumnos.find(a=>a.id===id);const a=actual;
+ const n=nOnb(a);
+ const tipoLlamada=n<4?`Llamada ${n+1}`:'Quincenal';
+ document.getElementById('modal').innerHTML=`
+ <div class="mhead">
+  <div><h2>${a.nombre}</h2><div style="color:var(--gris);font-size:12px;margin-top:2px">${a.email} · ${a.producto} · alta ${a.alta}</div>
+  <div style="margin-top:8px">${chipEstado(a.estado)} ${chipPago(a)} <span class="chip c-vio">${a.fase.toUpperCase()}</span> <span class="chip c-gris">${a.docente?'Docente: '+a.docente:'Coach: '+a.coach}</span></div></div>
+  <button class="btn sec" onclick="cerrar()">✕</button>
+ </div>
+ <div style="margin-top:14px"><label>Nota de implicación — ¿está poniendo el trabajo?</label>
+  <div class="notas10">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="${a.nota===n?'sel':''}" style="${a.nota===n?'background:'+colNota(n):''}" onclick="ponerNota(${n})">${n}</button>`).join('')}</div></div>
+ <div class="mgrid">
+  <div class="sec"><h4>📞 Registrar llamada — ${tipoLlamada}</h4>
+   <label>Enlace a la grabación (obligatorio)</label><input id="f-enlace" placeholder="https://zoom.us/rec/...">
+   <label>Resultado</label><select id="f-res"><option>Asistió</option><option>No asistió</option><option>Reagendada</option></select>
+   <label>Notas</label><textarea id="f-notas" rows="2" placeholder="Qué se habló, acuerdos, próximo paso..."></textarea>
+   <div class="acciones"><button class="btn" onclick="registrarLlamada('${tipoLlamada}')">Guardar llamada</button></div>
+   <div style="margin-top:16px"><h4>Historial (${a.llamadas.length})</h4>
+   ${a.llamadas.map(l=>`<div class="item"><b>${l.tipo}</b> · ${l.fecha} · ${l.resultado} ${l.enlace?`· <a href="${l.enlace}" target="_blank">🎥 grabación</a>`:''}<br>${l.notas||''}</div>`).join('')||'<div class="item">Sin llamadas aún</div>'}</div>
+  </div>
+  <div>
+   <div class="sec" style="margin-bottom:14px"><h4>📎 Pruebas de trabajo</h4>
+    ${a.pruebas.map(p=>`<div class="item">${p.fecha} · ${p.desc} · <a href="${p.enlace}" target="_blank">ver</a></div>`).join('')||'<div class="item">Sin pruebas subidas</div>'}
+    <label>Descripción</label><input id="p-desc" placeholder="Ej: captura del agente funcionando">
+    <label>Enlace</label><input id="p-enlace" placeholder="https://...">
+    <div class="acciones"><button class="btn peq" onclick="agregarPrueba()">Añadir prueba</button></div>
+   </div>
+   <div class="sec"><h4>💬 Comentarios del equipo</h4>
+    ${a.comentarios.map(c=>`<div class="item"><span class="m">${c.autor} · ${c.fecha}</span><br>${c.texto}</div>`).join('')||'<div class="item">Sin comentarios</div>'}
+    <textarea id="c-texto" rows="2" placeholder="Añadir comentario..."></textarea>
+    <div class="acciones"><button class="btn peq" onclick="agregarComentario()">Comentar</button></div>
+   </div>
+   <div class="acciones" style="margin-top:14px">
+    ${a.fase!=='perdido'?`<button class="btn rojo peq" onclick="marcarPerdido()">Marcar PERDIDO</button>`:`<button class="btn verde peq" onclick="recuperar()">Recuperar</button>`}
+    ${a.estado==='activo'&&a.fase!=='perdido'?`<button class="btn ambar peq" onclick="marcarRiesgo()">EN RIESGO</button>`:''}
+    ${a.fase==='onboarding'&&nOnb(a)>=1?`<button class="btn vio peq" onclick="pasarADocente()">Pasar a docente →</button>`:''}
+    <button class="btn sec peq" onclick="togglePago()">${a.estadoPago==='al_dia'?'⚠ Simular impago (ERP)':'✓ Simular pago (ERP)'}</button>
+   </div>
+  </div>
+ </div>`;
+ document.getElementById('velo').classList.add('on');
+}
+function cerrar(){document.getElementById('velo').classList.remove('on');render();}
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',2600);}
+
+function registrarLlamada(tipo){
+ const enlace=document.getElementById('f-enlace').value.trim();
+ if(!enlace){alert('El enlace a la grabación es obligatorio. Sin grabación no hay llamada.');return;}
+ const res=document.getElementById('f-res').value;
+ actual.llamadas.push({tipo,fecha:hoy(),enlace,resultado:res,notas:document.getElementById('f-notas').value.trim()});
+ if(actual.fase==='nuevo')actual.fase='onboarding';
+ if(res==='Asistió'){
+   const hechas=nOnb(actual);
+   if(tipo==='Llamada 2'){pasarADocente(true);actual.proxima=dias(7);toast('✅ Onboarding completado → traspasado a '+actual.docente+' · Llamada 3 en 7 días');}
+   else if(tipo==='Llamada 4'){actual.proxima=dias(14);toast('✅ Mes 1 completado (4/4 llamadas) 🏆 → cadencia quincenal');}
+   else if(tipo==='Quincenal'){actual.proxima=dias(14);toast('✅ Registrada · próxima quincenal en 14 días');}
+   else{actual.proxima=dias(7);toast('✅ '+tipo+' registrada · siguiente en 7 días');}
+ } else {actual.proxima=dias(1);toast('⚠ No asistió → reintento mañana');}
+ abrir(actual.id);
+}
+function pasarADocente(silencio){
+ actual.fase='docente';
+ if(!actual.docente)actual.docente=DOCENTES[actual.id%DOCENTES.length];
+ actual.proxima=dias(14);
+ if(!silencio){toast('🎓 Traspasado a '+actual.docente);abrir(actual.id);}
+}
+function ponerNota(n){actual.nota=n;if(n<=4&&actual.estado==='activo'){actual.estado='riesgo';toast('⚠ Nota ≤4 → EN RIESGO automático');}abrir(actual.id);}
+function marcarPerdido(){const m=prompt('Motivo de la pérdida (obligatorio):');if(!m)return;actual.fase='perdido';actual.estado='perdido';actual.proxima=null;actual.comentarios.push({autor:'Sistema',fecha:hoy(),texto:'PERDIDO — '+m});cerrar();}
+function recuperar(){actual.fase='onboarding';actual.estado='riesgo';actual.proxima=hoy();actual.comentarios.push({autor:'Sistema',fecha:hoy(),texto:'Reactivado — entra por Mes 1 nuevo'});abrir(actual.id);}
+function marcarRiesgo(){actual.estado='riesgo';actual.comentarios.push({autor:'Sistema',fecha:hoy(),texto:'Marcado EN RIESGO'});abrir(actual.id);}
+function agregarComentario(){const t=document.getElementById('c-texto').value.trim();if(!t)return;actual.comentarios.push({autor:'Yo',fecha:hoy(),texto:t});abrir(actual.id);}
+function agregarPrueba(){const d=document.getElementById('p-desc').value.trim(),e=document.getElementById('p-enlace').value.trim();if(!d||!e){alert('Descripción y enlace obligatorios');return;}actual.pruebas.push({fecha:hoy(),desc:d,enlace:e});abrir(actual.id);}
+function togglePago(){ // simula lo que el ERP actualizará solo
+ if(actual.estadoPago==='al_dia'){actual.estadoPago='impago';actual.cuotasImpagadas=1;if(actual.estado==='activo')actual.estado='riesgo';toast('⚠ Impago detectado (ERP) → EN RIESGO + morosidad del docente actualizada');}
+ else{actual.estadoPago='al_dia';actual.cuotasImpagadas=0;toast('✓ Pago al día → morosidad del docente actualizada');}
+ abrir(actual.id);
+}
+const NOMBRES=['Elena Ruiz','Javi Molina','Carmen Vega','Raúl Ortega','Nadia Ferrer','Hugo Prat'];
+function simularVenta(){
+ const n=NOMBRES[SEQ%NOMBRES.length];
+ alumnos.unshift({id:++SEQ,nombre:n,email:n.split(' ')[0].toLowerCase()+'@mail.com',producto:Math.random()>.5?'Mentoría 2K':'Mentoría 3K',alta:hoy(),fase:'nuevo',estado:'activo',nota:null,coach:COACHES[SEQ%COACHES.length],docente:null,proxima:hoy(),estadoPago:'al_dia',cuotasImpagadas:0,llamadas:[],comentarios:[{autor:'Sistema',fecha:hoy(),texto:'Alta automática (webhook). Asignado a '+COACHES[SEQ%COACHES.length]+'. Contactar en <24h.'}],pruebas:[]});
+ toast('⚡ Venta nueva → expediente asignado a '+COACHES[SEQ%COACHES.length]);
+ render();
+}
+render();
+</script>
+</body>
+</html>
