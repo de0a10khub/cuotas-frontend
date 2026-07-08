@@ -1,0 +1,165 @@
+/**
+ * Tipos TypeScript del módulo CRM Docentes.
+ *
+ * Deben coincidir con los serializers de apps/crm_docentes/serializers.py
+ * del backend. Cuando cambies el backend, actualiza estos tipos.
+ */
+
+// ============================================================================
+// ENUMS (deben coincidir con TextChoices de Django)
+// ============================================================================
+
+export type Fase = 'nuevo' | 'onboarding' | 'docente' | 'perdido';
+export type Estado = 'activo' | 'riesgo' | 'perdido';
+export type PagosVisibilidad = 'visibles' | 'externos';
+
+export type InteractionTipo =
+  | 'llamada_1' | 'llamada_2' | 'llamada_3' | 'llamada_4'
+  | 'quincenal' | 'mensaje' | 'email' | 'correccion';
+
+export type InteractionResultado = 'asistio' | 'no_asistio' | 'reagendada' | 'na';
+
+export type TaskTipo =
+  | 'llamada_1' | 'llamada_2' | 'llamada_3' | 'llamada_4'
+  | 'quincenal' | 'alerta_24h';
+
+export type TaskEstado = 'pendiente' | 'hecha' | 'vencida' | 'cancelada';
+
+export type Tier = 'ELITE' | 'PRO' | 'MEDIO' | 'EN_RIESGO' | 'SIN_CARTERA';
+
+// ============================================================================
+// DTOs de la API
+// ============================================================================
+
+export interface Interaction {
+  id: string;
+  tipo: InteractionTipo;
+  fecha: string;             // ISO 8601
+  enlace_grabacion: string;
+  resultado: InteractionResultado;
+  notas: string;
+  metadata: Record<string, unknown>;
+  autor: string | null;
+  autor_nombre: string;
+  created_at: string;
+}
+
+export interface WorkProof {
+  id: string;
+  descripcion: string;
+  enlace: string;
+  fecha: string;
+  subida_por: string | null;
+  subida_por_nombre: string;
+  created_at: string;
+}
+
+export interface Comentario {
+  id: string;
+  texto: string;
+  autor: string | null;
+  autor_nombre: string;
+  autor_sistema: string;
+  created_at: string;
+}
+
+export interface CaseTask {
+  id: string;
+  tipo: TaskTipo;
+  vence: string;             // YYYY-MM-DD
+  estado: TaskEstado;
+  completada_en: string | null;
+  created_at: string;
+}
+
+export interface NotaHistorialItem {
+  id: string;
+  nota_anterior: number | null;
+  nota_nueva: number;
+  razon: string;
+  autor: string | null;
+  autor_nombre: string;
+  fecha: string;
+}
+
+export interface OnboardingCaseList {
+  id: string;
+  customer: string;
+  customer_email: string;
+  customer_name: string;
+  producto_nombre: string;
+  fase: Fase;
+  estado: Estado;
+  pagos_visibilidad: PagosVisibilidad;
+  nota_implicacion: number | null;
+  proxima_llamada_vence: string | null;
+  es_vencido: boolean;
+  total_llamadas_hechas: number;
+  total_pruebas: number;
+  created_at: string;
+}
+
+export interface OnboardingCaseDetail extends OnboardingCaseList {
+  motivo_baja: string;
+  metadata: Record<string, unknown>;
+  updated_at: string;
+  interacciones: Interaction[];
+  pruebas: WorkProof[];
+  comentarios: Comentario[];
+  tareas: CaseTask[];
+  nota_historial: NotaHistorialItem[];
+}
+
+export interface DocenteScore {
+  docente_id: string | null;
+  total_alumnos: number;
+  alumnos_con_pagos_visibles: number;
+  morosos: number;
+  morosidad_pct: number;
+  nota_media: number;
+  pct_llamadas_al_dia: number;
+  pct_alumnos_con_pruebas: number;
+  s_pagos: number;
+  s_nota: number;
+  s_llamadas: number;
+  s_pruebas: number;
+  score: number;
+  tier: Tier;
+  en_riesgo: boolean;
+}
+
+export interface KPIs {
+  activos: number;
+  morosidad_pct: number;
+  nuevos_sin_primera_llamada: number;
+  llamadas_vencidas: number;
+  en_riesgo: number;
+  nota_media: number | null;
+}
+
+// ============================================================================
+// Bodies de creación
+// ============================================================================
+
+export interface InteractionCreateBody {
+  tipo: InteractionTipo;
+  resultado: InteractionResultado;
+  enlace_grabacion?: string;
+  notas?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface WorkProofCreateBody {
+  descripcion: string;
+  enlace: string;
+  fecha?: string;
+}
+
+export interface ComentarioCreateBody {
+  texto: string;
+}
+
+export interface NotaChangeBody {
+  nota_nueva: number;
+  razon?: string;
+}

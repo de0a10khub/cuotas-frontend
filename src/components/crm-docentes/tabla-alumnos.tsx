@@ -1,0 +1,82 @@
+'use client';
+
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import type { OnboardingCaseList } from '@/lib/crm-docentes-types';
+import { EstadoChip, NotaChip, PagoChip } from './estado-chips';
+
+export function TablaAlumnos({
+  cases,
+  onOpen,
+}: {
+  cases: OnboardingCaseList[];
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <div className="overflow-x-auto rounded-xl border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Alumno</TableHead>
+            <TableHead>Producto</TableHead>
+            <TableHead>Fase</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead>Pago</TableHead>
+            <TableHead>Nota</TableHead>
+            <TableHead>Llamadas</TableHead>
+            <TableHead>Pruebas</TableHead>
+            <TableHead>Próxima</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {cases.map((c) => (
+            <TableRow
+              key={c.id}
+              onClick={() => onOpen(c.id)}
+              className="cursor-pointer"
+            >
+              <TableCell>
+                <div className="font-semibold">{c.customer_name || '—'}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {c.customer_email}
+                </div>
+              </TableCell>
+              <TableCell className="text-[13px]">{c.producto_nombre}</TableCell>
+              <TableCell className="text-[11px] font-bold uppercase text-muted-foreground">
+                {c.fase}
+              </TableCell>
+              <TableCell>
+                <EstadoChip estado={c.estado} />
+              </TableCell>
+              <TableCell>
+                <PagoChip visibilidad={c.pagos_visibilidad} />
+              </TableCell>
+              <TableCell>
+                <NotaChip nota={c.nota_implicacion} />
+              </TableCell>
+              <TableCell className="tabular-nums">
+                {c.total_llamadas_hechas}
+              </TableCell>
+              <TableCell className="tabular-nums">
+                {c.total_pruebas}
+              </TableCell>
+              <TableCell
+                className={
+                  c.es_vencido ? 'font-bold text-red-500' : 'text-muted-foreground'
+                }
+              >
+                {c.proxima_llamada_vence ?? '—'}
+              </TableCell>
+            </TableRow>
+          ))}
+          {cases.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={9} className="py-6 text-center text-muted-foreground">
+                Sin expedientes que mostrar.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
