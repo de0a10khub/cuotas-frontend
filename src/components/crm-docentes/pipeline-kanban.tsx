@@ -5,9 +5,10 @@ import type { OnboardingCaseList } from '@/lib/crm-docentes-types';
 import { CardAlumno } from './card-alumno';
 
 const COLUMNAS: Array<{ key: string; title: string; icon: string }> = [
-  { key: 'nuevo', title: 'Nuevo', icon: '🆕' },
-  { key: 'onboarding', title: 'Onboarding', icon: '📋' },
-  { key: 'docente', title: 'Con docente', icon: '🎓' },
+  { key: 'onboarding_1', title: 'Onboarding 1', icon: '🚀' },
+  { key: 'docente_primera_reunion', title: 'Docente · 1ª reunión', icon: '🤝' },
+  { key: 'onboarding_2_control', title: 'Onboarding 2 · Control D4', icon: '🔍' },
+  { key: 'docente_seguimiento', title: 'Docente · Seguimiento', icon: '🎓' },
   { key: 'riesgo', title: 'En riesgo', icon: '⚠️' },
   { key: 'perdido', title: 'Perdido', icon: '❌' },
 ];
@@ -20,11 +21,19 @@ export function PipelineKanban({
   onOpen: (id: string) => void;
 }) {
   const grupos: Record<string, OnboardingCaseList[]> = {
-    nuevo: [],
-    onboarding: [],
-    docente: [],
+    onboarding_1: [],
+    docente_primera_reunion: [],
+    onboarding_2_control: [],
+    docente_seguimiento: [],
     riesgo: [],
     perdido: [],
+  };
+
+  // Mapeo de fases legacy a nuevas (por si aparecen expedientes viejos sin migrar)
+  const mapLegacy: Record<string, string> = {
+    nuevo: 'onboarding_1',
+    onboarding: 'onboarding_1',
+    docente: 'docente_seguimiento',
   };
 
   for (const c of cases) {
@@ -32,17 +41,14 @@ export function PipelineKanban({
       grupos.perdido.push(c);
     } else if (c.estado === 'riesgo') {
       grupos.riesgo.push(c);
-    } else if (c.fase === 'nuevo') {
-      grupos.nuevo.push(c);
-    } else if (c.fase === 'onboarding') {
-      grupos.onboarding.push(c);
-    } else if (c.fase === 'docente') {
-      grupos.docente.push(c);
+    } else {
+      const key = mapLegacy[c.fase] ?? c.fase;
+      (grupos[key] ?? grupos.onboarding_1).push(c);
     }
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {COLUMNAS.map((col) => {
         const items = grupos[col.key] ?? [];
         return (

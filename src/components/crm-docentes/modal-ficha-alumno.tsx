@@ -251,11 +251,10 @@ export function ModalFichaAlumno({
                 <Select value={callTipo} onValueChange={(v) => setCallTipo(v as InteractionTipo)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="llamada_1">Llamada 1</SelectItem>
-                    <SelectItem value="llamada_2">Llamada 2</SelectItem>
-                    <SelectItem value="llamada_3">Llamada 3</SelectItem>
-                    <SelectItem value="llamada_4">Llamada 4</SelectItem>
-                    <SelectItem value="quincenal">Quincenal</SelectItem>
+                    <SelectItem value="llamada_1">🚀 Onboarding 1 (Lucila)</SelectItem>
+                    <SelectItem value="primera_reunion">🤝 1ª reunión (docente)</SelectItem>
+                    <SelectItem value="control_dia_4">🔍 Control día 4 (Lucila)</SelectItem>
+                    <SelectItem value="seguimiento">🎓 Seguimiento (docente)</SelectItem>
                     <SelectItem value="mensaje">Mensaje</SelectItem>
                     <SelectItem value="email">Email</SelectItem>
                     <SelectItem value="correccion">Corrección</SelectItem>

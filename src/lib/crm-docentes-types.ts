@@ -9,19 +9,36 @@
 // ENUMS (deben coincidir con TextChoices de Django)
 // ============================================================================
 
-export type Fase = 'nuevo' | 'onboarding' | 'docente' | 'perdido';
+export type Fase =
+  | 'onboarding_1'
+  | 'docente_primera_reunion'
+  | 'onboarding_2_control'
+  | 'docente_seguimiento'
+  | 'perdido'
+  // Legacy (por si aparecen en histórico)
+  | 'nuevo' | 'onboarding' | 'docente';
 export type Estado = 'activo' | 'riesgo' | 'perdido';
 export type PagosVisibilidad = 'visibles' | 'externos';
 
 export type InteractionTipo =
-  | 'llamada_1' | 'llamada_2' | 'llamada_3' | 'llamada_4'
-  | 'quincenal' | 'mensaje' | 'email' | 'correccion';
+  | 'llamada_1'
+  | 'primera_reunion'
+  | 'control_dia_4'
+  | 'seguimiento'
+  | 'mensaje' | 'email' | 'correccion'
+  // Legacy
+  | 'llamada_2' | 'llamada_3' | 'llamada_4' | 'quincenal';
 
 export type InteractionResultado = 'asistio' | 'no_asistio' | 'reagendada' | 'na';
 
 export type TaskTipo =
-  | 'llamada_1' | 'llamada_2' | 'llamada_3' | 'llamada_4'
-  | 'quincenal' | 'alerta_24h';
+  | 'llamada_1'
+  | 'primera_reunion'
+  | 'control_dia_4'
+  | 'seguimiento'
+  | 'alerta_24h'
+  // Legacy
+  | 'llamada_2' | 'llamada_3' | 'llamada_4' | 'quincenal';
 
 export type TaskEstado = 'pendiente' | 'hecha' | 'vencida' | 'cancelada';
 
