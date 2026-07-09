@@ -164,9 +164,11 @@ export function MiAgenda({
 
   return (
     <div className="mx-auto max-w-[1200px]">
-      {/* Selector de agenda — solo visible para Admin. Los coach/docente
-          ven directamente su propia cola. */}
-      {isAdmin && (
+      {/* Selector de agenda. El backend ya protege que solo Admin pueda
+          consultar la agenda de otros; para docentes/coach el backend
+          ignora ?profile_id y devuelve la propia. Mostramos el selector
+          siempre para no depender de que /me/ resuelva rápido. */}
+      {opcionesDocentes.length > 0 && (
         <Card className="mb-4 p-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
