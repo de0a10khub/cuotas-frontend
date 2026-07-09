@@ -76,83 +76,93 @@ function MedallaOPosicion({ posicion }: { posicion: number }) {
 }
 
 function DesgloseDocente({ s }: { s: DocenteScore }) {
+  const nota = Number(s.nota_media) || 0;
+  const mora = Number(s.morosidad_pct) || 0;
+  const pctLl = Number(s.pct_llamadas_al_dia) || 0;
+  const pctPr = Number(s.pct_alumnos_con_pruebas) || 0;
   return (
     <>
       <Barra
-        label={`💰 Pagos de su cartera (morosidad ${s.morosidad_pct}%)`}
-        val={s.s_pagos}
+        label={`💰 Pagos de su cartera (morosidad ${mora}%)`}
+        val={Number(s.s_pagos) || 0}
         max={50}
-        color={moroColor(s.morosidad_pct)}
+        color={moroColor(mora)}
       />
       <Barra
-        label={`📈 Implicación alumnos (media ${s.nota_media.toFixed(1)}/10, solo notas suyas)`}
-        val={s.s_nota}
+        label={`📈 Implicación alumnos (media ${nota.toFixed(1)}/10, solo notas suyas)`}
+        val={Number(s.s_nota) || 0}
         max={25}
-        color={notaColor(s.nota_media)}
+        color={notaColor(nota)}
       />
       <Barra
-        label={`📞 Reuniones al día (${s.pct_llamadas_al_dia}%)`}
-        val={s.s_llamadas}
+        label={`📞 Reuniones al día (${pctLl}%)`}
+        val={Number(s.s_llamadas) || 0}
         max={15}
-        color={s.pct_llamadas_al_dia >= 80 ? '#22c55e' : '#ef4444'}
+        color={pctLl >= 80 ? '#22c55e' : '#ef4444'}
       />
       <Barra
-        label={`📎 Pruebas de trabajo (${s.pct_alumnos_con_pruebas}% alumnos)`}
-        val={s.s_pruebas}
+        label={`📎 Pruebas de trabajo (${pctPr}% alumnos)`}
+        val={Number(s.s_pruebas) || 0}
         max={10}
-        color={s.pct_alumnos_con_pruebas >= 50 ? '#22c55e' : '#f59e0b'}
+        color={pctPr >= 50 ? '#22c55e' : '#f59e0b'}
       />
     </>
   );
 }
 
-function DesgloseOnboardingBloque({ d }: { d: DesgloseOnboarding }) {
+function DesgloseOnboardingBloque({ d }: { d: Partial<DesgloseOnboarding> | undefined }) {
+  const safe = d || {};
+  const pctContacto = Number(safe.pct_contactados_24h) || 0;
+  const pctExped = Number(safe.pct_expediente_completo) || 0;
+  const pctControl = Number(safe.pct_control_d4_efectivo) || 0;
+  const pctActiv = Number(safe.pct_activacion_r1) || 0;
+  const mediana = safe.mediana_dias_traspaso ?? null;
   return (
     <>
       <Barra
-        label={`🕒 Contacto <24h (${d.pct_contactados_24h}%)`}
-        val={d.contacto_24h_pts}
+        label={`🕒 Contacto <24h (${pctContacto}%)`}
+        val={Number(safe.contacto_24h_pts) || 0}
         max={20}
-        color={pctColor(d.pct_contactados_24h)}
+        color={pctColor(pctContacto)}
       />
       <Barra
         label={
-          d.mediana_dias_traspaso !== null
-            ? `🚀 Velocidad embudo (mediana ${d.mediana_dias_traspaso}d hasta docente)`
+          mediana !== null
+            ? `🚀 Velocidad embudo (mediana ${mediana}d hasta docente)`
             : '🚀 Velocidad embudo (sin datos aún)'
         }
-        val={d.velocidad_embudo_pts}
+        val={Number(safe.velocidad_embudo_pts) || 0}
         max={20}
         color={
-          d.mediana_dias_traspaso === null
+          mediana === null
             ? '#64748b'
-            : d.mediana_dias_traspaso <= 3
+            : mediana <= 3
               ? '#22c55e'
-              : d.mediana_dias_traspaso <= 4
+              : mediana <= 4
                 ? '#f59e0b'
                 : '#ef4444'
         }
       />
       <Barra
-        label={`📋 Expediente completo al traspaso (${d.pct_expediente_completo}%)`}
-        val={d.expediente_completo_pts}
+        label={`📋 Expediente completo al traspaso (${pctExped}%)`}
+        val={Number(safe.expediente_completo_pts) || 0}
         max={20}
-        color={pctColor(d.pct_expediente_completo)}
+        color={pctColor(pctExped)}
       />
       <Barra
-        label={`🔍 Control Día 4 real (${d.pct_control_d4_efectivo}%)`}
-        val={d.control_dia_4_pts}
+        label={`🔍 Control Día 4 real (${pctControl}%)`}
+        val={Number(safe.control_dia_4_pts) || 0}
         max={20}
-        color={pctColor(d.pct_control_d4_efectivo)}
+        color={pctColor(pctControl)}
       />
       <Barra
-        label={`🎯 Activación (asisten R1 docente) (${d.pct_activacion_r1}%)`}
-        val={d.activacion_reunion_1_pts}
+        label={`🎯 Activación (asisten R1 docente) (${pctActiv}%)`}
+        val={Number(safe.activacion_reunion_1_pts) || 0}
         max={20}
         color={
-          d.pct_activacion_r1 >= 85
+          pctActiv >= 85
             ? '#22c55e'
-            : d.pct_activacion_r1 >= 70
+            : pctActiv >= 70
               ? '#f59e0b'
               : '#ef4444'
         }
@@ -181,9 +191,13 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {scores.map((s) => {
           const color = tierColor(s.tier);
-          const enRiesgo = s.en_riesgo;
-          const delta = s.nivel_anterior !== null ? s.nivel - s.nivel_anterior : null;
+          const enRiesgo = Boolean(s.en_riesgo);
+          const nivel = Number(s.nivel ?? s.score ?? 0);
+          const posicion = Number(s.posicion ?? 0);
+          const tendencia = (s.tendencia ?? 'debut') as Tendencia;
+          const delta = s.nivel_anterior != null ? nivel - Number(s.nivel_anterior) : null;
           const esCoach = s.rol === 'coach_onboarding';
+          const totalAlumnos = Number(s.total_alumnos ?? 0);
           return (
             <Card
               key={s.docente_id || s.email || Math.random()}
@@ -196,22 +210,22 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
             >
               {/* Cabecera: medalla + tendencia */}
               <div className="absolute right-3 top-3 flex items-center gap-1">
-                <MedallaOPosicion posicion={s.posicion} />
+                <MedallaOPosicion posicion={posicion} />
               </div>
 
               <div className="flex items-center gap-4">
                 <div style={{ color }}>
-                  <ScoreRing score={s.nivel} color={color} />
+                  <ScoreRing score={nivel} color={color} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <div className="truncate text-lg font-extrabold">
                       {s.display_name || `Docente ${(s.docente_id || '').slice(0, 8)}`}
                     </div>
-                    <TendenciaChip tendencia={s.tendencia} delta={delta} />
+                    <TendenciaChip tendencia={tendencia} delta={delta} />
                   </div>
                   <div className="mb-2 text-[11px] text-muted-foreground">
-                    {esCoach ? '🎯 Coach Onboarding' : '🎓 Docente'} · {s.total_alumnos} alumnos
+                    {esCoach ? '🎯 Coach Onboarding' : '🎓 Docente'} · {totalAlumnos} alumnos
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span
@@ -239,7 +253,7 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
               {/* Desglose */}
               <div className="mt-4">
                 {esCoach
-                  ? <DesgloseOnboardingBloque d={s.desglose as DesgloseOnboarding} />
+                  ? <DesgloseOnboardingBloque d={s.desglose as Partial<DesgloseOnboarding> | undefined} />
                   : <DesgloseDocente s={s} />}
               </div>
 
@@ -249,9 +263,9 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
                   <div className="rounded-lg border p-2 text-center">
                     <div
                       className="text-[16px] font-extrabold"
-                      style={{ color: moroColor(s.morosidad_pct) }}
+                      style={{ color: moroColor(Number(s.morosidad_pct) || 0) }}
                     >
-                      {s.morosidad_pct}%
+                      {Number(s.morosidad_pct) || 0}%
                     </div>
                     <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
                       Morosidad
@@ -260,9 +274,9 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
                   <div className="rounded-lg border p-2 text-center">
                     <div
                       className="text-[16px] font-extrabold"
-                      style={{ color: notaColor(s.nota_media) }}
+                      style={{ color: notaColor(Number(s.nota_media) || 0) }}
                     >
-                      {s.nota_media > 0 ? s.nota_media.toFixed(1) : '—'}
+                      {(Number(s.nota_media) || 0) > 0 ? (Number(s.nota_media) || 0).toFixed(1) : '—'}
                     </div>
                     <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
                       Nota alumnos
@@ -270,7 +284,7 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
                   </div>
                   <div className="rounded-lg border p-2 text-center">
                     <div className="text-[16px] font-extrabold">
-                      {s.morosos}
+                      {Number(s.morosos) || 0}
                     </div>
                     <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
                       Impagos
