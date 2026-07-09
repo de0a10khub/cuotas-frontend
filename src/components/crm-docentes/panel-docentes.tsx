@@ -59,9 +59,7 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
 
       {scores.length === 0 && (
         <Card className="p-6 text-center text-sm text-muted-foreground">
-          Todavía no hay docentes con alumnos asignados. La asignación se
-          activará en la Fase 2 — mientras tanto los expedientes viven en la
-          cola general por fase.
+          El panel Docentes está inicializándose. Recarga en unos segundos.
         </Card>
       )}
 
@@ -88,9 +86,10 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
                 </div>
                 <div className="flex-1">
                   <div className="text-lg font-extrabold">
-                    Docente {s.docente_id?.slice(0, 8) ?? '—'}
+                    {s.display_name || `Docente ${s.docente_id?.slice(0, 8) ?? '—'}`}
                   </div>
                   <div className="mb-3 text-[11px] text-muted-foreground">
+                    {s.rol === 'coach_onboarding' ? '🎯 Coach Onboarding · ' : '🎓 Docente · '}
                     {s.total_alumnos} alumnos en cartera
                   </div>
                   <span

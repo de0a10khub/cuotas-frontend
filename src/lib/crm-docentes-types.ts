@@ -126,6 +126,10 @@ export interface DocenteScore {
   score: number;
   tier: Tier;
   en_riesgo: boolean;
+  // Solo devuelto por /docentes/scores/ (no por calcular_score directo)
+  display_name?: string;
+  email?: string;
+  rol?: 'coach_onboarding' | 'docente';
 }
 
 export interface KPIs {
