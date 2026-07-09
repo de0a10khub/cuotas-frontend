@@ -40,6 +40,7 @@ export function ModalFichaAlumno({
   const [callEnlace, setCallEnlace] = useState('');
   const [callResultado, setCallResultado] = useState<InteractionResultado>('asistio');
   const [callNotas, setCallNotas] = useState('');
+  const [siguienteCita, setSiguienteCita] = useState('');
 
   const [proofDesc, setProofDesc] = useState('');
   const [proofUrl, setProofUrl] = useState('');
@@ -80,10 +81,18 @@ export function ModalFichaAlumno({
         resultado: callResultado,
         enlace_grabacion: callEnlace.trim(),
         notas: callNotas.trim(),
+        ...(siguienteCita
+          ? { siguiente_cita_fecha_hora: new Date(siguienteCita).toISOString() }
+          : {}),
       });
-      toast.success('Llamada registrada.');
+      toast.success(
+        siguienteCita
+          ? 'Llamada registrada + siguiente cita agendada 🎯'
+          : 'Llamada registrada.'
+      );
       setCallEnlace('');
       setCallNotas('');
+      setSiguienteCita('');
       await refresh();
       onChanged?.();
     } catch (e) {
@@ -287,6 +296,18 @@ export function ModalFichaAlumno({
                   value={callNotas}
                   onChange={(e) => setCallNotas(e.target.value)}
                 />
+                <Label className="mt-2 flex items-center gap-2 text-[10.5px] font-bold uppercase text-muted-foreground">
+                  🎯 Siguiente cita (opcional — regla de oro)
+                </Label>
+                <Input
+                  type="datetime-local"
+                  value={siguienteCita}
+                  onChange={(e) => setSiguienteCita(e.target.value)}
+                  placeholder="Agendar la siguiente antes de colgar"
+                />
+                <div className="mt-1 text-[10px] text-muted-foreground">
+                  Si la rellenas, la próxima reunión nace ya en verde (agendada).
+                </div>
                 <div className="mt-3">
                   <Button onClick={guardarLlamada} size="sm">Guardar (append-only)</Button>
                 </div>

@@ -13,10 +13,12 @@ import { PipelineKanban } from '@/components/crm-docentes/pipeline-kanban';
 import { TablaAlumnos } from '@/components/crm-docentes/tabla-alumnos';
 import { PanelDocentes } from '@/components/crm-docentes/panel-docentes';
 import { ModalFichaAlumno } from '@/components/crm-docentes/modal-ficha-alumno';
+import { MiAgenda } from '@/components/crm-docentes/mi-agenda';
 
-type Tab = 'pipeline' | 'alumnos' | 'docentes';
+type Tab = 'pipeline' | 'alumnos' | 'docentes' | 'agenda';
 
 const TABS: Array<{ key: Tab; label: string }> = [
+  { key: 'agenda', label: '📅 Mi agenda' },
   { key: 'pipeline', label: 'Pipeline' },
   { key: 'alumnos', label: 'Alumnos' },
   { key: 'docentes', label: 'Docentes' },
@@ -101,6 +103,7 @@ export default function CrmDocentesPage() {
       <KpisBar kpis={kpis} loading={loading} />
 
       {/* Vistas */}
+      {tab === 'agenda' && <MiAgenda onOpenAlumno={onOpenAlumno} />}
       {tab === 'pipeline' && <PipelineKanban cases={cases} onOpen={onOpenAlumno} />}
       {tab === 'alumnos' && <TablaAlumnos cases={cases} onOpen={onOpenAlumno} />}
       {tab === 'docentes' && <PanelDocentes scores={scores} />}

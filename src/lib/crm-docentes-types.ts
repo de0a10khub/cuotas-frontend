@@ -93,6 +93,13 @@ export interface CaseTask {
   dias_para_vencer: number;
   color_estado: 'verde' | 'ambar' | 'rojo' | 'gris' | 'ambar_historico';
   registrada_fuera_de_plazo: boolean;
+  agendada: boolean;
+  cita_fecha_hora: string | null;
+  agendada_en: string | null;
+  // Datos del alumno (solo se rellenan en /mi-agenda/)
+  case_id?: string;
+  customer_name?: string;
+  customer_email?: string;
 }
 
 export interface NotaHistorialItem {
@@ -152,6 +159,9 @@ export interface DocenteScore {
   en_riesgo: boolean;
   tareas_vencidas: number;
   tareas_fuera_plazo: number;
+  tareas_pendientes: number;
+  tareas_agendadas: number;
+  pct_agendadas: number;
   // Solo devuelto por /docentes/scores/ (no por calcular_score directo)
   display_name?: string;
   email?: string;
@@ -178,6 +188,8 @@ export interface InteractionCreateBody {
   enlace_grabacion?: string;
   notas?: string;
   metadata?: Record<string, unknown>;
+  /** ISO 8601 (regla de oro: agendar la siguiente antes de colgar la actual). */
+  siguiente_cita_fecha_hora?: string;
 }
 
 export interface WorkProofCreateBody {

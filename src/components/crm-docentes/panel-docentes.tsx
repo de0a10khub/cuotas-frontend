@@ -185,6 +185,25 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
                   </div>
                 </div>
               </div>
+
+              {/* % agendadas — indicador preventivo */}
+              <div className="mt-3 rounded-lg border p-2">
+                <div className="mb-1 flex items-center justify-between text-[10.5px] text-muted-foreground">
+                  <span>📅 Agenda: {s.tareas_agendadas ?? 0} / {s.tareas_pendientes ?? 0} agendadas</span>
+                  <b style={{ color: (s.pct_agendadas ?? 0) >= 80 ? '#22c55e' : (s.pct_agendadas ?? 0) >= 50 ? '#f59e0b' : '#ef4444' }}>
+                    {s.pct_agendadas ?? 0}%
+                  </b>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-slate-500/15">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${Math.max(s.pct_agendadas ?? 0, 2)}%`,
+                      backgroundColor: (s.pct_agendadas ?? 0) >= 80 ? '#22c55e' : (s.pct_agendadas ?? 0) >= 50 ? '#f59e0b' : '#ef4444',
+                    }}
+                  />
+                </div>
+              </div>
             </Card>
           );
         })}

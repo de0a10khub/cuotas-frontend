@@ -103,6 +103,30 @@ export function quitarRiesgo(caseId: string): Promise<OnboardingCaseDetail> {
   return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/quitar-riesgo/`, {});
 }
 
+// ============================================================================
+// AGENDA
+// ============================================================================
+
+export interface AgendaResponse {
+  profile_id: string;
+  hoy: import('./crm-docentes-types').CaseTask[];
+  esta_semana: import('./crm-docentes-types').CaseTask[];
+  proximas: import('./crm-docentes-types').CaseTask[];
+  vencidas: import('./crm-docentes-types').CaseTask[];
+  total: number;
+}
+
+export function getMiAgenda(profileId?: string): Promise<AgendaResponse> {
+  const qs = profileId ? `?profile_id=${profileId}` : '';
+  return api.get<AgendaResponse>(`${BASE}/mi-agenda/${qs}`);
+}
+
+export function agendarTarea(caseId: string, taskId: string, citaFechaHora: string) {
+  return api.post(`${BASE}/cases/${caseId}/tasks/${taskId}/agendar/`, {
+    cita_fecha_hora: citaFechaHora,
+  });
+}
+
 export function recuperar(caseId: string): Promise<OnboardingCaseDetail> {
   return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/recuperar/`, {});
 }
