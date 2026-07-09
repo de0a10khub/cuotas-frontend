@@ -32,8 +32,22 @@ export function CardAlumno({
         {c.customer_name || c.customer_email}
       </div>
       <div className="mt-0.5 text-[11px] text-muted-foreground">
-        {c.producto_nombre || '—'} · alta {c.created_at.slice(0, 10)}
+        {c.producto_nombre || (c.ticket_total_cents ? `${Math.round(c.ticket_total_cents/100)}€` : '—')} · alta {c.created_at.slice(0, 10)}
       </div>
+      {(c.docente_nombre || c.coach_nombre) && (
+        <div className="mt-1 flex flex-wrap items-center gap-1 text-[10.5px]">
+          {c.docente_nombre && (
+            <span className="rounded bg-violet-500/10 px-1.5 py-0.5 font-bold text-violet-600">
+              🎓 {c.docente_nombre}
+            </span>
+          )}
+          {!c.docente_nombre && c.coach_nombre && (
+            <span className="rounded bg-cyan-500/10 px-1.5 py-0.5 font-bold text-cyan-600">
+              🎯 {c.coach_nombre}
+            </span>
+          )}
+        </div>
+      )}
       <div className="mt-2 flex items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <EstadoChip estado={c.estado} />

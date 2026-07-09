@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { getDocenteScores, getKpis, listCases } from '@/lib/crm-docentes-api';
+import { getDocenteScores, getKpis, getMe, listCases } from '@/lib/crm-docentes-api';
 import type {
-  DocenteScore, KPIs, OnboardingCaseList,
+  DocenteScore, KPIs, OnboardingCaseList, WhoAmI,
 } from '@/lib/crm-docentes-types';
 import { KpisBar } from '@/components/crm-docentes/kpis-bar';
 import { PipelineKanban } from '@/components/crm-docentes/pipeline-kanban';
@@ -29,6 +29,7 @@ export default function CrmDocentesPage() {
   const [kpis, setKpis] = useState<KPIs | null>(null);
   const [cases, setCases] = useState<OnboardingCaseList[]>([]);
   const [scores, setScores] = useState<DocenteScore[]>([]);
+  const [me, setMe] = useState<WhoAmI | null>(null);
   const [loading, setLoading] = useState(true);
   const [openCaseId, setOpenCaseId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -36,14 +37,16 @@ export default function CrmDocentesPage() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [k, c, s] = await Promise.all([
+      const [k, c, s, m] = await Promise.all([
         getKpis().catch(() => null),
         listCases().catch(() => [] as OnboardingCaseList[]),
         getDocenteScores().then((r) => r.docentes).catch(() => [] as DocenteScore[]),
+        getMe().catch(() => null),
       ]);
       setKpis(k);
       setCases(c);
       setScores(s);
+      setMe(m);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error cargando datos';
       toast.error(msg);
@@ -55,6 +58,8 @@ export default function CrmDocentesPage() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  const isAdmin = me?.crm_role === 'admin';
 
   function onOpenAlumno(id: string) {
     setOpenCaseId(id);
@@ -73,6 +78,14 @@ export default function CrmDocentesPage() {
             <h1 className="text-lg font-extrabold tracking-tight">CRM · Éxito del Alumno</h1>
             <p className="text-[11px] text-cyan-100/70">
               Onboarding · Seguimiento · Retención — conectado al ERP en tiempo real
+              {me && (
+                <> · <b className="text-white">
+                  {me.crm_role === 'admin' ? '👑 Admin'
+                    : me.crm_role === 'coach_onboarding' ? '🎯 Onboarding'
+                    : me.crm_role === 'docente' ? '🎓 Docente'
+                    : '· sin rol'}
+                </b>{me.display_name && me.crm_role !== 'admin' && <> · {me.display_name}</>}</>
+              )}
             </p>
           </div>
         </div>
@@ -103,7 +116,7 @@ export default function CrmDocentesPage() {
       <KpisBar kpis={kpis} loading={loading} />
 
       {/* Vistas */}
-      {tab === 'agenda' && <MiAgenda onOpenAlumno={onOpenAlumno} />}
+      {tab === 'agenda' && <MiAgenda onOpenAlumno={onOpenAlumno} docentes={scores} isAdmin={isAdmin} />}
       {tab === 'pipeline' && <PipelineKanban cases={cases} onOpen={onOpenAlumno} />}
       {tab === 'alumnos' && <TablaAlumnos cases={cases} onOpen={onOpenAlumno} />}
       {tab === 'docentes' && <PanelDocentes scores={scores} />}

@@ -14,6 +14,7 @@ import type {
   NotaChangeBody,
   OnboardingCaseDetail,
   OnboardingCaseList,
+  WhoAmI,
   WorkProof,
   WorkProofCreateBody,
 } from './crm-docentes-types';
@@ -141,4 +142,8 @@ export function getDocenteScores(): Promise<{ docentes: DocenteScore[] }> {
 
 export function getKpis(): Promise<KPIs> {
   return api.get<KPIs>(`${BASE}/kpis/`);
+}
+
+export function getMe(): Promise<WhoAmI> {
+  return api.get<WhoAmI>(`${BASE}/me/`);
 }

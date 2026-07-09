@@ -18,6 +18,7 @@ export function TablaAlumnos({
           <TableRow>
             <TableHead>Alumno</TableHead>
             <TableHead>Producto</TableHead>
+            <TableHead>Coach / Docente</TableHead>
             <TableHead>Fase</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead>Pago</TableHead>
@@ -48,7 +49,22 @@ export function TablaAlumnos({
                   {c.customer_email}
                 </div>
               </TableCell>
-              <TableCell className="text-[13px]">{c.producto_nombre}</TableCell>
+              <TableCell className="text-[13px]">
+                {c.producto_nombre || (c.ticket_total_cents ? `${Math.round(c.ticket_total_cents/100)}€` : '—')}
+              </TableCell>
+              <TableCell className="text-[12px]">
+                {c.docente_nombre ? (
+                  <span className="rounded bg-violet-500/10 px-1.5 py-0.5 font-bold text-violet-600">
+                    🎓 {c.docente_nombre}
+                  </span>
+                ) : c.coach_nombre ? (
+                  <span className="rounded bg-cyan-500/10 px-1.5 py-0.5 font-bold text-cyan-600">
+                    🎯 {c.coach_nombre}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </TableCell>
               <TableCell className="text-[11px] font-bold uppercase text-muted-foreground">
                 {c.fase}
               </TableCell>
@@ -78,7 +94,7 @@ export function TablaAlumnos({
           ))}
           {cases.length === 0 && (
             <TableRow>
-              <TableCell colSpan={9} className="py-6 text-center text-muted-foreground">
+              <TableCell colSpan={10} className="py-6 text-center text-muted-foreground">
                 Sin expedientes que mostrar.
               </TableCell>
             </TableRow>

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { agendarTarea, getMiAgenda } from '@/lib/crm-docentes-api';
 import type { AgendaResponse } from '@/lib/crm-docentes-api';
-import type { CaseTask } from '@/lib/crm-docentes-types';
+import type { CaseTask, DocenteScore } from '@/lib/crm-docentes-types';
 
 function colorClasses(t: CaseTask): string {
   if (t.color_estado === 'rojo') return 'border-l-red-500 bg-red-500/8';
@@ -94,18 +94,28 @@ function Grupo({
 
 export function MiAgenda({
   onOpenAlumno,
+  docentes,
+  isAdmin = false,
 }: {
   onOpenAlumno: (caseId: string) => void;
+  docentes: DocenteScore[];
+  isAdmin?: boolean;
 }) {
   const [data, setData] = useState<AgendaResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [agendarT, setAgendarT] = useState<CaseTask | null>(null);
   const [citaValue, setCitaValue] = useState('');
+  // Admin puede escoger de quién ver la agenda. Si nada seleccionado → cola
+  // propia (misma que antes). Los operarios (coach/docente) verán su cola
+  // aunque no toquen el selector.
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  const opcionesDocentes = (docentes || []).filter(d => !!d.docente_id);
+
+  const refresh = useCallback(async (profileId?: string | null) => {
     setLoading(true);
     try {
-      const d = await getMiAgenda();
+      const d = await getMiAgenda(profileId || undefined);
       setData(d);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Error cargando agenda');
@@ -114,7 +124,7 @@ export function MiAgenda({
     }
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => { refresh(selectedProfileId); }, [refresh, selectedProfileId]);
 
   async function confirmarAgenda() {
     if (!agendarT || !citaValue) return;
@@ -124,37 +134,86 @@ export function MiAgenda({
       toast.success('Cita agendada.');
       setAgendarT(null);
       setCitaValue('');
-      await refresh();
+      await refresh(selectedProfileId);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Error');
     }
   }
 
-  if (loading || !data) {
-    return <div className="text-sm text-muted-foreground">Cargando agenda…</div>;
-  }
-
-  const vacio = data.total === 0;
+  const seleccionado = opcionesDocentes.find(d => d.docente_id === selectedProfileId);
 
   return (
     <div className="mx-auto max-w-[1200px]">
-      <div className="mb-4 text-[13px] text-muted-foreground">
-        📅 <b className="text-foreground">Mi agenda</b> — {data.total} reunión(es) pendientes.
-        {' '}Cada reunión debe estar <b className="text-emerald-600">agendada</b> con
-        fecha-hora pactada. Sin agendar aparece en <b className="text-red-500">rojo</b> desde
-        el primer día.
-      </div>
-
-      {vacio && (
-        <Card className="p-8 text-center text-sm text-muted-foreground">
-          🎉 Sin reuniones pendientes. Buen trabajo.
+      {/* Selector de agenda — solo visible para Admin. Los coach/docente
+          ven directamente su propia cola. */}
+      {isAdmin && (
+        <Card className="mb-4 p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
+              Ver agenda de:
+            </span>
+            <button
+              onClick={() => setSelectedProfileId(null)}
+              className={
+                'rounded-full px-3 py-1 text-[12px] font-bold transition ' +
+                (selectedProfileId === null
+                  ? 'bg-gradient-to-r from-cyan-500 to-violet-500 text-white shadow'
+                  : 'bg-slate-500/10 text-muted-foreground hover:bg-slate-500/20')
+              }
+            >
+              🙋 Yo
+            </button>
+            {opcionesDocentes.map((d) => (
+              <button
+                key={d.docente_id}
+                onClick={() => setSelectedProfileId(d.docente_id)}
+                className={
+                  'rounded-full px-3 py-1 text-[12px] font-bold transition ' +
+                  (selectedProfileId === d.docente_id
+                    ? 'bg-gradient-to-r from-cyan-500 to-violet-500 text-white shadow'
+                    : 'bg-slate-500/10 text-muted-foreground hover:bg-slate-500/20')
+                }
+              >
+                {d.rol === 'coach_onboarding' ? '🎯' : '🎓'} {d.display_name || d.email || 'Docente'}
+              </button>
+            ))}
+          </div>
         </Card>
       )}
 
-      <Grupo titulo="Vencidas" emoji="🔴" tareas={data.vencidas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
-      <Grupo titulo="Hoy" emoji="🟡" tareas={data.hoy} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
-      <Grupo titulo="Esta semana" emoji="📆" tareas={data.esta_semana} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
-      <Grupo titulo="Próximas" emoji="⏭" tareas={data.proximas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
+      {loading || !data ? (
+        <div className="text-sm text-muted-foreground">Cargando agenda…</div>
+      ) : (
+        <>
+          <div className="mb-4 text-[13px] text-muted-foreground">
+            📅{' '}
+            <b className="text-foreground">
+              {selectedProfileId === null
+                ? 'Mi agenda'
+                : `Agenda de ${seleccionado?.display_name || seleccionado?.email || 'seleccionado'}`}
+            </b>{' '}
+            — {data.total} reunión(es) pendientes. Cada reunión debe estar{' '}
+            <b className="text-emerald-600">agendada</b> con fecha-hora pactada. Sin
+            agendar aparece en <b className="text-red-500">rojo</b> desde el primer día.
+          </div>
+
+          {data.total === 0 && (
+            <Card className="p-8 text-center text-sm text-muted-foreground">
+              🎉 Sin reuniones pendientes.
+              {selectedProfileId === null && (
+                <div className="mt-2 text-[12px]">
+                  Si eres Admin, elige un docente arriba para ver su cola.
+                </div>
+              )}
+            </Card>
+          )}
+
+          <Grupo titulo="Vencidas" emoji="🔴" tareas={data.vencidas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
+          <Grupo titulo="Hoy" emoji="🟡" tareas={data.hoy} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
+          <Grupo titulo="Esta semana" emoji="📆" tareas={data.esta_semana} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
+          <Grupo titulo="Próximas" emoji="⏭" tareas={data.proximas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
+        </>
+      )}
 
       {/* Popup agendar */}
       {agendarT && (

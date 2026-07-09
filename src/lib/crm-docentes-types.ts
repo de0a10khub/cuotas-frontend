@@ -118,6 +118,7 @@ export interface OnboardingCaseList {
   customer_email: string;
   customer_name: string;
   producto_nombre: string;
+  ticket_total_cents: number | null;
   fase: Fase;
   estado: Estado;
   pagos_visibilidad: PagosVisibilidad;
@@ -127,7 +128,18 @@ export interface OnboardingCaseList {
   es_urgente_24h: boolean;
   total_llamadas_hechas: number;
   total_pruebas: number;
+  docente_nombre: string;
+  coach_nombre: string;
   created_at: string;
+}
+
+export type CrmRole = 'admin' | 'coach_onboarding' | 'docente' | null;
+
+export interface WhoAmI {
+  crm_role: CrmRole;
+  email: string;
+  profile_id: string | null;
+  display_name: string;
 }
 
 export interface OnboardingCaseDetail extends OnboardingCaseList {
