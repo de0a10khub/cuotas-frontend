@@ -216,9 +216,46 @@ export function ModalFichaAlumno({
         {data && (
           <>
             <div className="text-[12px] text-muted-foreground">
-              {data.customer_email} · {data.producto_nombre} · alta{' '}
+              {data.customer_email} · {data.producto_nombre || (data.ticket_total_cents ? `${Math.round(data.ticket_total_cents/100)}€` : '—')} · alta{' '}
               {data.created_at.slice(0, 10)}
             </div>
+
+            {/* Datos de contacto — el docente debe poder llamar / mandar WhatsApp con 1 click */}
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
+              {data.customer_phone ? (
+                <>
+                  <a
+                    href={`tel:${data.customer_phone.replace(/\s+/g, '')}`}
+                    className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 px-2 py-1 font-bold text-emerald-600 hover:bg-emerald-500/25"
+                  >
+                    📞 {data.customer_phone}
+                  </a>
+                  <a
+                    href={`https://wa.me/${data.customer_phone.replace(/[^\d]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded-md bg-green-500/15 px-2 py-1 font-bold text-green-600 hover:bg-green-500/25"
+                  >
+                    💬 WhatsApp
+                  </a>
+                </>
+              ) : (
+                <span className="rounded-md bg-red-500/15 px-2 py-1 font-bold text-red-500">
+                  ⚠ Sin teléfono en el checkout
+                </span>
+              )}
+              {data.docente_nombre && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 px-2 py-1 font-bold text-violet-600">
+                  🎓 {data.docente_nombre}
+                </span>
+              )}
+              {!data.docente_nombre && data.coach_nombre && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-cyan-500/10 px-2 py-1 font-bold text-cyan-600">
+                  🎯 {data.coach_nombre}
+                </span>
+              )}
+            </div>
+
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <EstadoChip estado={data.estado} />
               <PagoChip visibilidad={data.pagos_visibilidad} />

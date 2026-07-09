@@ -109,6 +109,7 @@ export interface CaseTask {
   case_id?: string;
   customer_name?: string;
   customer_email?: string;
+  customer_phone?: string;
 }
 
 export interface NotaHistorialItem {
@@ -126,6 +127,7 @@ export interface OnboardingCaseList {
   customer: string;
   customer_email: string;
   customer_name: string;
+  customer_phone: string;
   producto_nombre: string;
   ticket_total_cents: number | null;
   fase: Fase;

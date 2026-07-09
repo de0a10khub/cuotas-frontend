@@ -72,6 +72,26 @@ function Grupo({
                   <> · cita {new Date(t.cita_fecha_hora).toLocaleString('es-ES')}</>
                 )}
               </div>
+              {t.customer_phone && (
+                <div className="mt-1 flex flex-wrap gap-1 text-[11px]">
+                  <a
+                    href={`tel:${t.customer_phone.replace(/\s+/g,'')}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-semibold text-emerald-700 hover:bg-emerald-500/20"
+                  >
+                    📞 {t.customer_phone}
+                  </a>
+                  <a
+                    href={`https://wa.me/${t.customer_phone.replace(/[^\d]/g,'')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="rounded bg-green-500/10 px-1.5 py-0.5 font-semibold text-green-700 hover:bg-green-500/20"
+                  >
+                    💬 WhatsApp
+                  </a>
+                </div>
+              )}
             </div>
             <div className="flex shrink-0 gap-2">
               {!t.agendada && (
