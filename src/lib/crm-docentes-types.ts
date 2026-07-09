@@ -83,10 +83,16 @@ export interface Comentario {
 export interface CaseTask {
   id: string;
   tipo: TaskTipo;
+  tipo_display: string;
   vence: string;             // YYYY-MM-DD
   estado: TaskEstado;
   completada_en: string | null;
   created_at: string;
+  esta_vencida: boolean;
+  esta_urgente: boolean;
+  dias_para_vencer: number;
+  color_estado: 'verde' | 'ambar' | 'rojo' | 'gris' | 'ambar_historico';
+  registrada_fuera_de_plazo: boolean;
 }
 
 export interface NotaHistorialItem {
@@ -144,6 +150,8 @@ export interface DocenteScore {
   score: number;
   tier: Tier;
   en_riesgo: boolean;
+  tareas_vencidas: number;
+  tareas_fuera_plazo: number;
   // Solo devuelto por /docentes/scores/ (no por calcular_score directo)
   display_name?: string;
   email?: string;

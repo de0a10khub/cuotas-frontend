@@ -136,7 +136,7 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
                 />
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="mt-4 grid grid-cols-4 gap-2">
                 <div className="rounded-lg border p-2 text-center">
                   <div
                     className="text-[16px] font-extrabold"
@@ -165,6 +165,23 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
                   </div>
                   <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
                     Impagos
+                  </div>
+                </div>
+                <div
+                  className="rounded-lg border p-2 text-center"
+                  style={{
+                    borderColor: (s.tareas_vencidas ?? 0) > 0 ? 'rgb(239 68 68)' : undefined,
+                    background: (s.tareas_vencidas ?? 0) > 0 ? 'rgba(239,68,68,0.08)' : undefined,
+                  }}
+                >
+                  <div
+                    className="text-[16px] font-extrabold"
+                    style={{ color: (s.tareas_vencidas ?? 0) > 0 ? '#ef4444' : undefined }}
+                  >
+                    {s.tareas_vencidas ?? 0}
+                  </div>
+                  <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                    Reuniones vencidas
                   </div>
                 </div>
               </div>

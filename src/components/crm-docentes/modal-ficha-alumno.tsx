@@ -392,6 +392,46 @@ export function ModalFichaAlumno({
                   </div>
                 </div>
 
+                {/* Agenda / Próximas reuniones */}
+                <div className="rounded-xl border bg-muted/30 p-5">
+                  <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    📅 Agenda — reuniones pendientes
+                  </div>
+                  {data.tareas.filter((t) => t.estado === 'pendiente').length === 0 ? (
+                    <div className="rounded border-l-4 border-emerald-500 bg-emerald-500/5 px-3 py-2 text-[12px] text-muted-foreground">
+                      Sin reuniones pendientes.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {data.tareas
+                        .filter((t) => t.estado === 'pendiente')
+                        .sort((a, b) => a.vence.localeCompare(b.vence))
+                        .map((t) => {
+                          const cls = t.color_estado === 'rojo'
+                            ? 'border-red-500 bg-red-500/10 text-red-600 font-bold'
+                            : t.color_estado === 'ambar'
+                              ? 'border-amber-500 bg-amber-500/10 text-amber-600 font-semibold'
+                              : 'border-emerald-500 bg-emerald-500/5';
+                          const label = t.esta_vencida
+                            ? `🔴 VENCIDA hace ${Math.abs(t.dias_para_vencer)}d`
+                            : t.esta_urgente
+                              ? (t.dias_para_vencer === 0 ? '🟡 VENCE HOY' : `🟡 en ${t.dias_para_vencer}d`)
+                              : `en ${t.dias_para_vencer}d`;
+                          return (
+                            <div key={t.id} className={`rounded border-l-4 px-3 py-2 text-[12.5px] ${cls}`}>
+                              <b>{t.tipo_display}</b> · vence {t.vence} · {label}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+                  {data.tareas.some((t) => t.registrada_fuera_de_plazo) && (
+                    <div className="mt-3 rounded border-l-4 border-amber-500 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-700">
+                      ⚠ Este expediente tiene {data.tareas.filter((t) => t.registrada_fuera_de_plazo).length} reunión(es) registradas fuera de plazo.
+                    </div>
+                  )}
+                </div>
+
                 {/* Acciones */}
                 <div className="flex flex-wrap gap-2">
                   {data.fase !== 'perdido' && (
