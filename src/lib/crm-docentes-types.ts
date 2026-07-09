@@ -22,23 +22,32 @@ export type PagosVisibilidad = 'visibles' | 'externos';
 
 export type InteractionTipo =
   | 'llamada_1'
-  | 'primera_reunion'
+  | 'reunion_1'
   | 'control_dia_4'
-  | 'seguimiento'
+  | 'reunion_2'
+  | 'reunion_3'
+  | 'reunion_4'
+  | 'quincenal'
+  | 'micro'
   | 'mensaje' | 'email' | 'correccion'
-  // Legacy
-  | 'llamada_2' | 'llamada_3' | 'llamada_4' | 'quincenal';
+  // Legacy — historial anterior a la migración 0005
+  | 'primera_reunion' | 'seguimiento'
+  | 'llamada_2' | 'llamada_3' | 'llamada_4';
 
 export type InteractionResultado = 'asistio' | 'no_asistio' | 'reagendada' | 'na';
 
 export type TaskTipo =
   | 'llamada_1'
-  | 'primera_reunion'
+  | 'reunion_1'
   | 'control_dia_4'
-  | 'seguimiento'
+  | 'reunion_2'
+  | 'reunion_3'
+  | 'reunion_4'
+  | 'quincenal'
   | 'alerta_24h'
   // Legacy
-  | 'llamada_2' | 'llamada_3' | 'llamada_4' | 'quincenal';
+  | 'primera_reunion' | 'seguimiento'
+  | 'llamada_2' | 'llamada_3' | 'llamada_4';
 
 export type TaskEstado = 'pendiente' | 'hecha' | 'vencida' | 'cancelada';
 
@@ -151,6 +160,10 @@ export interface OnboardingCaseDetail extends OnboardingCaseList {
   comentarios: Comentario[];
   tareas: CaseTask[];
   nota_historial: NotaHistorialItem[];
+  /** Tipo de interacción sugerido según el punto del playbook en el que
+   * está el alumno (backend calcula esto). Preseleccionado en el
+   * desplegable del formulario "Registrar interacción". */
+  next_expected_tipo: InteractionTipo | null;
 }
 
 export interface DocenteScore {

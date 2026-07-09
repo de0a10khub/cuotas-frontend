@@ -52,9 +52,15 @@ export function ModalFichaAlumno({
     try {
       const d = await getCase(caseId);
       setData(d);
-      // Sugerimos el siguiente tipo de llamada (siguiente pendiente)
-      const proximaTarea = d.tareas.find((t) => t.estado === 'pendiente' && t.tipo !== 'alerta_24h');
-      if (proximaTarea) setCallTipo(proximaTarea.tipo as InteractionTipo);
+      // Preselección inteligente: usa el next_expected_tipo del backend
+      // (calculado según el playbook y el historial del alumno). Si no hay
+      // sugerencia, fallback a la próxima tarea pendiente.
+      if (d.next_expected_tipo) {
+        setCallTipo(d.next_expected_tipo);
+      } else {
+        const proximaTarea = d.tareas.find((t) => t.estado === 'pendiente' && t.tipo !== 'alerta_24h');
+        if (proximaTarea) setCallTipo(proximaTarea.tipo as InteractionTipo);
+      }
     } finally {
       setLoading(false);
     }
@@ -70,7 +76,15 @@ export function ModalFichaAlumno({
 
   async function guardarLlamada() {
     if (!data) return;
-    const esLlamada = callTipo.startsWith('llamada_') || callTipo === 'quincenal';
+    const TIPOS_LLAMADA: InteractionTipo[] = [
+      'llamada_1', 'reunion_1', 'control_dia_4',
+      'reunion_2', 'reunion_3', 'reunion_4',
+      'quincenal', 'micro',
+      // Legacy
+      'primera_reunion', 'seguimiento',
+      'llamada_2', 'llamada_3', 'llamada_4',
+    ];
+    const esLlamada = TIPOS_LLAMADA.includes(callTipo);
     if (esLlamada && !callEnlace.trim()) {
       toast.error('El enlace a la grabación es obligatorio. Sin grabación no hay llamada.');
       return;
@@ -261,12 +275,16 @@ export function ModalFichaAlumno({
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="llamada_1">🚀 Onboarding 1 (Lucila)</SelectItem>
-                    <SelectItem value="primera_reunion">🤝 1ª reunión (docente)</SelectItem>
-                    <SelectItem value="control_dia_4">🔍 Control día 4 (Lucila)</SelectItem>
-                    <SelectItem value="seguimiento">🎓 Seguimiento (docente)</SelectItem>
-                    <SelectItem value="mensaje">Mensaje</SelectItem>
-                    <SelectItem value="email">Email</SelectItem>
-                    <SelectItem value="correccion">Corrección</SelectItem>
+                    <SelectItem value="reunion_1">🤝 Reunión 1 — Día 3</SelectItem>
+                    <SelectItem value="control_dia_4">🔍 Control Día 4 (Lucila)</SelectItem>
+                    <SelectItem value="reunion_2">📈 Reunión 2 — Día 10</SelectItem>
+                    <SelectItem value="reunion_3">🔧 Reunión 3 — Día 17</SelectItem>
+                    <SelectItem value="reunion_4">🏆 Reunión 4 — Día 24 (cierre mes 1)</SelectItem>
+                    <SelectItem value="quincenal">🔄 Quincenal (mes 2+)</SelectItem>
+                    <SelectItem value="micro">⚡ Micro-llamada (5-10 min)</SelectItem>
+                    <SelectItem value="mensaje">💬 Mensaje</SelectItem>
+                    <SelectItem value="email">✉️ Email</SelectItem>
+                    <SelectItem value="correccion">✏️ Corrección</SelectItem>
                   </SelectContent>
                 </Select>
 
