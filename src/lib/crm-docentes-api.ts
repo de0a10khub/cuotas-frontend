@@ -99,6 +99,10 @@ export function marcarRiesgo(caseId: string): Promise<OnboardingCaseDetail> {
   return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/marcar-riesgo/`, {});
 }
 
+export function quitarRiesgo(caseId: string): Promise<OnboardingCaseDetail> {
+  return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/quitar-riesgo/`, {});
+}
+
 export function recuperar(caseId: string): Promise<OnboardingCaseDetail> {
   return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/recuperar/`, {});
 }

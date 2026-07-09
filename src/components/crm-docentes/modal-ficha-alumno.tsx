@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import {
   createComment, createInteraction, createProof, getCase, marcarPerdido,
-  marcarRiesgo, recuperar, setNota,
+  marcarRiesgo, quitarRiesgo, recuperar, setNota,
 } from '@/lib/crm-docentes-api';
 import type {
   InteractionResultado, InteractionTipo, OnboardingCaseDetail,
@@ -152,6 +152,18 @@ export function ModalFichaAlumno({
     await marcarRiesgo(data.id);
     await refresh();
     onChanged?.();
+  }
+
+  async function accionQuitarRiesgo() {
+    if (!data) return;
+    try {
+      await quitarRiesgo(data.id);
+      toast.success('Marca EN RIESGO quitada. Estado ACTIVO.');
+      await refresh();
+      onChanged?.();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error');
+    }
   }
 
   async function accionRecuperar() {
@@ -395,7 +407,16 @@ export function ModalFichaAlumno({
                   )}
                   {data.estado === 'activo' && data.fase !== 'perdido' && (
                     <Button size="sm" variant="outline" onClick={accionMarcarRiesgo}>
-                      EN RIESGO
+                      ⚠ Marcar EN RIESGO
+                    </Button>
+                  )}
+                  {data.estado === 'riesgo' && data.fase !== 'perdido' && (
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                      onClick={accionQuitarRiesgo}
+                    >
+                      ✓ Quitar EN RIESGO
                     </Button>
                   )}
                 </div>
