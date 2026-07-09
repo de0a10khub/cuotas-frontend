@@ -28,6 +28,11 @@ export function CardAlumno({
           🔥 URGENTE · +24h sin contactar
         </div>
       )}
+      {c.es_urgente_primer_toque_24h && (
+        <div className="mb-2 text-[11px] font-extrabold text-red-500 crm-urgente-badge">
+          🚨 URGENTE · sin tocar por el docente (24h)
+        </div>
+      )}
       <div className="text-[13px] font-bold leading-tight">
         {c.customer_name || c.customer_email}
       </div>

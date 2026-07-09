@@ -134,9 +134,16 @@ export interface OnboardingCaseList {
   estado: Estado;
   pagos_visibilidad: PagosVisibilidad;
   nota_implicacion: number | null;
+  /** Nota de implicación puesta durante ONBOARDING_1 por Lucila. Queda
+   * en el histórico aunque `nota_implicacion` se resetee al traspaso. */
+  nota_lucila: number | null;
+  /** Nombre del autor de nota_implicacion vigente (vacío si sin valorar). */
+  nota_vigente_autor: string;
   proxima_llamada_vence: string | null;
   es_vencido: boolean;
   es_urgente_24h: boolean;
+  /** 🚨 Docente asignado hace >24h sin registrar primer toque. */
+  es_urgente_primer_toque_24h: boolean;
   total_llamadas_hechas: number;
   total_pruebas: number;
   docente_nombre: string;

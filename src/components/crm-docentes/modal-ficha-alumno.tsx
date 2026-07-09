@@ -262,12 +262,76 @@ export function ModalFichaAlumno({
               <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-violet-400">
                 {data.fase}
               </span>
+              {data.es_urgente_primer_toque_24h && (
+                <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-[10.5px] font-extrabold text-red-500 animate-pulse">
+                  🚨 URGENTE — sin tocar por el docente
+                </span>
+              )}
             </div>
 
-            {/* Nota implicación */}
+            {/* Sección Onboarding — Lucila (bloqueada) */}
+            {data.nota_lucila !== null && (
+              <div className="mt-6 rounded-xl border border-dashed border-cyan-500/40 bg-cyan-500/5 p-4">
+                <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-cyan-600">
+                  🔒 Onboarding — Lucila
+                  <span className="rounded bg-cyan-500/15 px-1.5 py-0.5 text-[9.5px] font-bold normal-case tracking-normal text-cyan-700">
+                    Solo lectura
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-[13px]">
+                  <div>
+                    Nota Lucila:{' '}
+                    <span
+                      className="ml-1 inline-flex h-7 w-7 items-center justify-center rounded-md font-extrabold text-white"
+                      style={{
+                        backgroundColor:
+                          data.nota_lucila >= 7 ? '#22c55e'
+                          : data.nota_lucila >= 5 ? '#f59e0b'
+                          : '#ef4444',
+                      }}
+                    >
+                      {data.nota_lucila}
+                    </span>
+                  </div>
+                  {data.docente_nombre && (
+                    <>
+                      <span className="text-muted-foreground">→</span>
+                      <div>
+                        Docente valora:{' '}
+                        {data.nota_implicacion !== null ? (
+                          <span
+                            className="ml-1 inline-flex h-7 w-7 items-center justify-center rounded-md font-extrabold text-white"
+                            style={{
+                              backgroundColor:
+                                data.nota_implicacion >= 7 ? '#22c55e'
+                                : data.nota_implicacion >= 5 ? '#f59e0b'
+                                : '#ef4444',
+                            }}
+                          >
+                            {data.nota_implicacion}
+                          </span>
+                        ) : (
+                          <span className="ml-1 rounded-md bg-slate-500/15 px-2 py-1 text-[11px] font-bold text-muted-foreground">
+                            SIN VALORAR
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {data.nota_implicacion !== null && data.nota_lucila - data.nota_implicacion >= 3 && (
+                    <span className="rounded-md bg-red-500/15 px-2 py-1 text-[11px] font-bold text-red-500">
+                      ⚠ Bajada ≥3 puntos — alarma de producto
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Nota de implicación del docente */}
             <div className="mt-6">
               <Label className="text-[10.5px] font-bold uppercase text-muted-foreground">
-                Nota de implicación — ¿está poniendo el trabajo?
+                Nota de implicación del {data.docente_nombre ? 'docente' : 'onboarding'}
+                {data.nota_vigente_autor && ` — última por ${data.nota_vigente_autor}`}
               </Label>
               <div className="mt-2 flex flex-wrap gap-2">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
