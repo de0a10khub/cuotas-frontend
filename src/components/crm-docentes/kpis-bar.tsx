@@ -7,6 +7,13 @@ import type { KPIs } from '@/lib/crm-docentes-types';
  * Barra de KPIs superior — 6 métricas globales del CRM.
  * Layout responsive: grid autofit min 170px.
  */
+interface KpiItem {
+  v: number | string;
+  l: string;
+  mal?: boolean;
+  fire?: boolean;
+}
+
 export function KpisBar({ kpis, loading }: { kpis: KPIs | null; loading?: boolean }) {
   if (loading || !kpis) {
     return (
@@ -19,7 +26,8 @@ export function KpisBar({ kpis, loading }: { kpis: KPIs | null; loading?: boolea
   }
 
   const morosidadMal = kpis.morosidad_pct >= 25;
-  const items = [
+  const urgentes = kpis.urgentes_24h ?? kpis.nuevos_sin_primera_llamada;
+  const items: KpiItem[] = [
     { v: kpis.activos, l: 'Alumnos activos' },
     {
       v: `${kpis.morosidad_pct}%`,
@@ -27,9 +35,10 @@ export function KpisBar({ kpis, loading }: { kpis: KPIs | null; loading?: boolea
       mal: morosidadMal,
     },
     {
-      v: kpis.nuevos_sin_primera_llamada,
-      l: 'Nuevos sin 1ª llamada (alerta 24h)',
-      mal: kpis.nuevos_sin_primera_llamada > 0,
+      v: urgentes,
+      l: '🔥 URGENTES sin contactar +24h',
+      mal: urgentes > 0,
+      fire: urgentes > 0,
     },
     {
       v: kpis.llamadas_vencidas,
@@ -47,7 +56,7 @@ export function KpisBar({ kpis, loading }: { kpis: KPIs | null; loading?: boolea
           key={i}
           className={
             'relative overflow-hidden p-4 ' +
-            (it.mal ? 'border-red-500/30 bg-red-500/5' : '')
+            (it.fire ? 'crm-urgente ' : it.mal ? 'border-red-500/30 bg-red-500/5' : '')
           }
         >
           <span

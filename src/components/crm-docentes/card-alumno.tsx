@@ -12,14 +12,22 @@ export function CardAlumno({
   onOpen: (id: string) => void;
 }) {
   const vencido = c.es_vencido && c.fase !== 'perdido';
+  const urgente = c.es_urgente_24h;
   return (
     <Card
       onClick={() => onOpen(c.id)}
       className={
         'cursor-pointer p-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-500/10 ' +
-        (vencido ? 'border-red-500/50 shadow-[0_0_0_1px_rgba(239,68,68,0.35)]' : '')
+        (urgente
+          ? 'crm-urgente'
+          : vencido ? 'border-red-500/50 shadow-[0_0_0_1px_rgba(239,68,68,0.35)]' : '')
       }
     >
+      {urgente && (
+        <div className="mb-2 text-[11px] font-extrabold text-red-500 crm-urgente-badge">
+          🔥 URGENTE · +24h sin contactar
+        </div>
+      )}
       <div className="text-[13px] font-bold leading-tight">
         {c.customer_name || c.customer_email}
       </div>

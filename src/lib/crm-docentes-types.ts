@@ -94,6 +94,7 @@ export interface OnboardingCaseList {
   nota_implicacion: number | null;
   proxima_llamada_vence: string | null;
   es_vencido: boolean;
+  es_urgente_24h: boolean;
   total_llamadas_hechas: number;
   total_pruebas: number;
   created_at: string;
@@ -136,6 +137,7 @@ export interface KPIs {
   activos: number;
   morosidad_pct: number;
   nuevos_sin_primera_llamada: number;
+  urgentes_24h: number;
   llamadas_vencidas: number;
   en_riesgo: number;
   nota_media: number | null;

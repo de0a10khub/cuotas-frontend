@@ -32,10 +32,18 @@ export function TablaAlumnos({
             <TableRow
               key={c.id}
               onClick={() => onOpen(c.id)}
-              className="cursor-pointer"
+              className={
+                'cursor-pointer ' +
+                (c.es_urgente_24h ? 'crm-urgente' : '')
+              }
             >
               <TableCell>
-                <div className="font-semibold">{c.customer_name || '—'}</div>
+                <div className="flex items-center gap-2 font-semibold">
+                  {c.es_urgente_24h && (
+                    <span className="text-red-500 crm-urgente-badge">🔥</span>
+                  )}
+                  <span>{c.customer_name || '—'}</span>
+                </div>
                 <div className="text-[11px] text-muted-foreground">
                   {c.customer_email}
                 </div>
