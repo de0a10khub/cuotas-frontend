@@ -175,6 +175,22 @@ export interface OnboardingCaseDetail extends OnboardingCaseList {
   next_expected_tipo: InteractionTipo | null;
 }
 
+export type Tendencia = 'sube' | 'baja' | 'igual' | 'debut';
+
+export interface DesgloseOnboarding {
+  contacto_24h_pts: number;
+  velocidad_embudo_pts: number;
+  expediente_completo_pts: number;
+  control_dia_4_pts: number;
+  activacion_reunion_1_pts: number;
+  pct_contactados_24h: number;
+  mediana_dias_traspaso: number | null;
+  pct_expediente_completo: number;
+  pct_control_d4_efectivo: number;
+  pct_activacion_r1: number;
+  total_alumnos_ventana: number;
+}
+
 export interface DocenteScore {
   docente_id: string | null;
   total_alumnos: number;
@@ -192,10 +208,19 @@ export interface DocenteScore {
   tier: Tier;
   en_riesgo: boolean;
   tareas_vencidas: number;
-  tareas_fuera_plazo: number;
+  tareas_fuera_plazo?: number;
   tareas_pendientes: number;
   tareas_agendadas: number;
   pct_agendadas: number;
+  // Ranking unico (2026-07-09)
+  nivel: number;
+  posicion: number;
+  total_ranking: number;
+  tendencia: Tendencia;
+  posicion_anterior: number | null;
+  nivel_anterior: number | null;
+  mensaje_vestuario: string;
+  desglose: DesgloseOnboarding | Record<string, unknown>;
   // Solo devuelto por /docentes/scores/ (no por calcular_score directo)
   display_name?: string;
   email?: string;
