@@ -191,7 +191,8 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {scores.map((s) => {
           const color = tierColor(s.tier);
-          const enRiesgo = Boolean(s.en_riesgo);
+          const enArranque = Boolean(s.en_arranque);
+          const enRiesgo = !enArranque && Boolean(s.en_riesgo);
           const nivel = Number(s.nivel ?? s.score ?? 0);
           const posicion = Number(s.posicion ?? 0);
           const tendencia = (s.tendencia ?? 'debut') as Tendencia;
@@ -205,24 +206,38 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
                 'relative overflow-hidden p-4 ' +
                 (enRiesgo
                   ? 'border-red-500/60 shadow-[0_0_24px_rgba(239,68,68,0.15)]'
-                  : '')
+                  : enArranque
+                    ? 'border-slate-500/40 opacity-90'
+                    : '')
               }
             >
-              {/* Cabecera: medalla + tendencia */}
+              {/* Cabecera: medalla o "en arranque" */}
               <div className="absolute right-3 top-3 flex items-center gap-1">
-                <MedallaOPosicion posicion={posicion} />
+                {enArranque ? (
+                  <span className="rounded-full bg-slate-500/20 px-2 py-0.5 text-[11px] font-bold text-slate-500">
+                    fuera del ranking
+                  </span>
+                ) : (
+                  <MedallaOPosicion posicion={posicion} />
+                )}
               </div>
 
               <div className="flex items-center gap-4">
                 <div style={{ color }}>
-                  <ScoreRing score={nivel} color={color} />
+                  {enArranque ? (
+                    <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full border-2 border-dashed border-slate-500/50 text-2xl">
+                      ⏳
+                    </div>
+                  ) : (
+                    <ScoreRing score={nivel} color={color} />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <div className="truncate text-lg font-extrabold">
                       {s.display_name || `Docente ${(s.docente_id || '').slice(0, 8)}`}
                     </div>
-                    <TendenciaChip tendencia={tendencia} delta={delta} />
+                    {!enArranque && <TendenciaChip tendencia={tendencia} delta={delta} />}
                   </div>
                   <div className="mb-2 text-[11px] text-muted-foreground">
                     {esCoach ? '🎯 Coach Onboarding' : '🎓 Docente'} · {totalAlumnos} alumnos
@@ -240,25 +255,37 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
                       🚨 REVISAR: nivel bajo — cartera en peligro
                     </div>
                   )}
+                  {enArranque && (
+                    <div className="mt-2 text-[11.5px] text-slate-500">
+                      Sin actividad propia todavía. Registra tu 1ª reunión y tu 1ª nota para entrar en el ranking.
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Mensaje de vestuario del día */}
               {s.mensaje_vestuario && (
-                <div className="mt-3 rounded-lg border border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-violet-500/10 p-2.5 text-[12.5px] leading-snug">
+                <div className={
+                  'mt-3 rounded-lg border p-2.5 text-[12.5px] leading-snug ' +
+                  (enArranque
+                    ? 'border-slate-500/30 bg-slate-500/10 text-slate-500'
+                    : 'border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-violet-500/10')
+                }>
                   {s.mensaje_vestuario}
                 </div>
               )}
 
-              {/* Desglose */}
-              <div className="mt-4">
-                {esCoach
-                  ? <DesgloseOnboardingBloque d={s.desglose as Partial<DesgloseOnboarding> | undefined} />
-                  : <DesgloseDocente s={s} />}
-              </div>
+              {/* Desglose — ocultar en EN ARRANQUE (no hay datos válidos) */}
+              {!enArranque && (
+                <div className="mt-4">
+                  {esCoach
+                    ? <DesgloseOnboardingBloque d={s.desglose as Partial<DesgloseOnboarding> | undefined} />
+                    : <DesgloseDocente s={s} />}
+                </div>
+              )}
 
-              {/* KPIs numéricos (solo docentes) */}
-              {!esCoach && (
+              {/* KPIs numéricos (solo docentes activos, no EN ARRANQUE) */}
+              {!esCoach && !enArranque && (
                 <div className="mt-4 grid grid-cols-4 gap-2">
                   <div className="rounded-lg border p-2 text-center">
                     <div
@@ -310,8 +337,8 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
                 </div>
               )}
 
-              {/* % agendadas — indicador preventivo (solo docentes) */}
-              {!esCoach && (
+              {/* % agendadas — indicador preventivo (solo docentes activos) */}
+              {!esCoach && !enArranque && (
                 <div className="mt-3 rounded-lg border p-2">
                   <div className="mb-1 flex items-center justify-between text-[10.5px] text-muted-foreground">
                     <span>📅 Agenda: {s.tareas_agendadas ?? 0} / {s.tareas_pendientes ?? 0} agendadas</span>

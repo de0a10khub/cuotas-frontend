@@ -51,7 +51,7 @@ export type TaskTipo =
 
 export type TaskEstado = 'pendiente' | 'hecha' | 'vencida' | 'cancelada';
 
-export type Tier = 'ELITE' | 'PRO' | 'MEDIO' | 'EN_RIESGO' | 'SIN_CARTERA';
+export type Tier = 'ELITE' | 'PRO' | 'MEDIO' | 'EN_RIESGO' | 'SIN_CARTERA' | 'EN_ARRANQUE';
 
 // ============================================================================
 // DTOs de la API
@@ -209,6 +209,7 @@ export interface DocenteScore {
   en_riesgo: boolean;
   tareas_vencidas: number;
   tareas_fuera_plazo?: number;
+  en_arranque?: boolean;
   tareas_pendientes: number;
   tareas_agendadas: number;
   pct_agendadas: number;

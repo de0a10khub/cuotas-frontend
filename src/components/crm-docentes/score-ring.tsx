@@ -70,6 +70,7 @@ export function tierColor(tier: string): string {
   if (tier === 'PRO') return '#22c55e';
   if (tier === 'MEDIO') return '#f59e0b';
   if (tier === 'EN_RIESGO') return '#ef4444';
+  if (tier === 'EN_ARRANQUE') return '#94a3b8';
   return '#94a3b8'; // SIN_CARTERA
 }
 
@@ -78,11 +79,13 @@ export function tierIcon(tier: string): string {
   if (tier === 'PRO') return '🔥';
   if (tier === 'MEDIO') return '⚡';
   if (tier === 'EN_RIESGO') return '🚨';
+  if (tier === 'EN_ARRANQUE') return '⏳';
   return '—';
 }
 
 export function tierLabel(tier: string): string {
   if (tier === 'SIN_CARTERA') return 'SIN CARTERA';
   if (tier === 'EN_RIESGO') return 'EN RIESGO';
+  if (tier === 'EN_ARRANQUE') return 'EN ARRANQUE';
   return tier;
 }
