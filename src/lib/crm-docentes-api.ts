@@ -92,8 +92,16 @@ export function setNota(caseId: string, body: NotaChangeBody): Promise<Onboardin
 // ESTADOS
 // ============================================================================
 
-export function marcarPerdido(caseId: string, motivo: string): Promise<OnboardingCaseDetail> {
-  return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/marcar-perdido/`, { motivo });
+export type MotivoCategoria = 'abandono_alumno' | 'falta_seguimiento' | 'otro';
+
+export function marcarPerdido(
+  caseId: string,
+  motivo: string,
+  motivo_categoria: MotivoCategoria = 'falta_seguimiento',
+): Promise<OnboardingCaseDetail> {
+  return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/marcar-perdido/`, {
+    motivo, motivo_categoria,
+  });
 }
 
 export function marcarRiesgo(caseId: string): Promise<OnboardingCaseDetail> {

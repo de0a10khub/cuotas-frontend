@@ -46,6 +46,11 @@ export function ModalFichaAlumno({
   const [proofUrl, setProofUrl] = useState('');
   const [comentText, setComentText] = useState('');
 
+  // Diálogo Marcar Perdido
+  const [perdidoOpen, setPerdidoOpen] = useState(false);
+  const [perdidoMotivo, setPerdidoMotivo] = useState('');
+  const [perdidoCategoria, setPerdidoCategoria] = useState<'abandono_alumno' | 'falta_seguimiento' | 'otro'>('falta_seguimiento');
+
   async function refresh() {
     if (!caseId) return;
     setLoading(true);
@@ -157,16 +162,29 @@ export function ModalFichaAlumno({
     }
   }
 
-  async function accionMarcarPerdido() {
+  function accionMarcarPerdido() {
+    setPerdidoMotivo('');
+    setPerdidoCategoria('falta_seguimiento');
+    setPerdidoOpen(true);
+  }
+
+  async function confirmarMarcarPerdido() {
     if (!data) return;
-    const motivo = window.prompt('Motivo de la pérdida (obligatorio):');
-    if (!motivo) return;
+    if (!perdidoMotivo.trim()) {
+      toast.error('Escribe el motivo detallado.');
+      return;
+    }
     try {
-      await marcarPerdido(data.id, motivo);
+      await marcarPerdido(data.id, perdidoMotivo.trim(), perdidoCategoria);
+      setPerdidoOpen(false);
       await refresh();
       onChanged?.();
+      toast.success('Marcado PERDIDO.');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Error');
+      // El backend puede rechazar abandono_alumno sin evidencia (400 con
+      // code=abandono_sin_evidencia). Mostramos el mensaje literal.
+      const msg = e instanceof Error ? e.message : 'Error';
+      toast.error(msg);
     }
   }
 
@@ -648,6 +666,97 @@ export function ModalFichaAlumno({
           </>
         )}
       </DialogContent>
+
+      {/* Diálogo Marcar Perdido con motivo enum */}
+      {perdidoOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setPerdidoOpen(false)}
+        >
+          <Card className="w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 text-lg font-bold">Marcar PERDIDO</div>
+            <div className="mb-4 text-[12px] text-muted-foreground">
+              Ojo: la categoría define si esta baja penaliza tu score o no.
+              <b className="text-foreground"> "Abandono del alumno" solo si tienes 3+ intentos de contacto
+              registrados en el CRM.</b> Sin evidencia, el sistema lo rechaza y te obliga a
+              usar "Falta de seguimiento".
+            </div>
+
+            <Label className="text-[10.5px] font-bold uppercase text-muted-foreground">
+              Categoría
+            </Label>
+            <div className="mt-2 flex flex-col gap-2">
+              <label className="flex cursor-pointer items-start gap-2 rounded-lg border p-2 hover:bg-muted/50">
+                <input
+                  type="radio"
+                  name="cat"
+                  value="abandono_alumno"
+                  checked={perdidoCategoria === 'abandono_alumno'}
+                  onChange={() => setPerdidoCategoria('abandono_alumno')}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="text-[13px] font-bold">Abandono del alumno</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    NO penaliza. Solo si ilocalizable tras muchos intentos o baja explícita.
+                  </div>
+                </div>
+              </label>
+              <label className="flex cursor-pointer items-start gap-2 rounded-lg border p-2 hover:bg-muted/50">
+                <input
+                  type="radio"
+                  name="cat"
+                  value="falta_seguimiento"
+                  checked={perdidoCategoria === 'falta_seguimiento'}
+                  onChange={() => setPerdidoCategoria('falta_seguimiento')}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="text-[13px] font-bold">Falta de seguimiento</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    PENALIZA. Default cuando no puedes probar el abandono.
+                  </div>
+                </div>
+              </label>
+              <label className="flex cursor-pointer items-start gap-2 rounded-lg border p-2 hover:bg-muted/50">
+                <input
+                  type="radio"
+                  name="cat"
+                  value="otro"
+                  checked={perdidoCategoria === 'otro'}
+                  onChange={() => setPerdidoCategoria('otro')}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="text-[13px] font-bold">Otro</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    PENALIZA. Casos raros. Descríbelo abajo.
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <Label className="mt-4 block text-[10.5px] font-bold uppercase text-muted-foreground">
+              Motivo detallado (obligatorio)
+            </Label>
+            <Input
+              value={perdidoMotivo}
+              onChange={(e) => setPerdidoMotivo(e.target.value)}
+              placeholder="Ej: 8 intentos de llamada + 5 WhatsApp sin respuesta, número descolgado"
+              className="mt-2"
+            />
+
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setPerdidoOpen(false)}>
+                Cancelar
+              </Button>
+              <Button size="sm" onClick={confirmarMarcarPerdido}>
+                Marcar PERDIDO
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </Dialog>
   );
 }

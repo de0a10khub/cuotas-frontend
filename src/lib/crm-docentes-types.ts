@@ -167,6 +167,7 @@ export interface WhoAmI {
 
 export interface OnboardingCaseDetail extends OnboardingCaseList {
   motivo_baja: string;
+  motivo_categoria: 'abandono_alumno' | 'falta_seguimiento' | 'otro' | '';
   metadata: Record<string, unknown>;
   updated_at: string;
   interacciones: Interaction[];
