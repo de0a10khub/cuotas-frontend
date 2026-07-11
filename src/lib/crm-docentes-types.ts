@@ -29,6 +29,7 @@ export type InteractionTipo =
   | 'reunion_4'
   | 'quincenal'
   | 'micro'
+  | 'sin_respuesta'
   | 'mensaje' | 'email' | 'correccion'
   // Legacy — historial anterior a la migración 0005
   | 'primera_reunion' | 'seguimiento'
@@ -44,6 +45,7 @@ export type TaskTipo =
   | 'reunion_3'
   | 'reunion_4'
   | 'quincenal'
+  | 'reintentar_contacto'
   | 'alerta_24h'
   // Legacy
   | 'primera_reunion' | 'seguimiento'
@@ -144,6 +146,9 @@ export interface OnboardingCaseList {
   es_urgente_24h: boolean;
   /** 🚨 Docente asignado hace >24h sin registrar primer toque. */
   es_urgente_primer_toque_24h: boolean;
+  /** 📨 Contacto enviado sin respuesta (chip visual, sigue penalizando). */
+  esperando_respuesta: boolean;
+  esperando_respuesta_desde: string | null;
   total_llamadas_hechas: number;
   total_pruebas: number;
   docente_nombre: string;

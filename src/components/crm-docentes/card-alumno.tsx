@@ -33,6 +33,15 @@ export function CardAlumno({
           🚨 URGENTE · sin tocar por el docente (24h)
         </div>
       )}
+      {c.esperando_respuesta && (
+        <div className="mb-2 text-[10.5px] font-bold text-amber-600">
+          📨 Esperando respuesta{
+            c.esperando_respuesta_desde
+              ? ` · desde ${new Date(c.esperando_respuesta_desde).toLocaleDateString('es-ES')}`
+              : ''
+          }
+        </div>
+      )}
       <div className="text-[13px] font-bold leading-tight">
         {c.customer_name || c.customer_email}
       </div>

@@ -104,16 +104,24 @@ export function quitarRiesgo(caseId: string): Promise<OnboardingCaseDetail> {
   return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/quitar-riesgo/`, {});
 }
 
+export function sinRespuesta(caseId: string, notas: string = ''): Promise<OnboardingCaseDetail> {
+  return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/sin-respuesta/`, { notas });
+}
+
 // ============================================================================
 // AGENDA
 // ============================================================================
 
 export interface AgendaResponse {
   profile_id: string;
-  hoy: import('./crm-docentes-types').CaseTask[];
-  esta_semana: import('./crm-docentes-types').CaseTask[];
-  proximas: import('./crm-docentes-types').CaseTask[];
   vencidas: import('./crm-docentes-types').CaseTask[];
+  hoy: import('./crm-docentes-types').CaseTask[];
+  manana?: import('./crm-docentes-types').CaseTask[];
+  en_2_3_dias?: import('./crm-docentes-types').CaseTask[];
+  esta_semana: import('./crm-docentes-types').CaseTask[];
+  despues?: import('./crm-docentes-types').CaseTask[];
+  /** Alias legacy de despues. */
+  proximas: import('./crm-docentes-types').CaseTask[];
   total: number;
 }
 

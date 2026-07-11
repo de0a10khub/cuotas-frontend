@@ -74,13 +74,18 @@ function Grupo({
               </div>
               {t.customer_phone && (
                 <div className="mt-1 flex flex-wrap gap-1 text-[11px]">
-                  <a
-                    href={`tel:${t.customer_phone.replace(/\s+/g,'')}`}
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const clean = (t.customer_phone || '').replace(/\s+/g,'');
+                      navigator.clipboard.writeText(clean);
+                      toast.success(`Copiado: ${clean}`);
+                    }}
                     className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-semibold text-emerald-700 hover:bg-emerald-500/20"
+                    title="Click para copiar al portapapeles"
                   >
                     📞 {t.customer_phone}
-                  </a>
+                  </button>
                   <a
                     href={`https://wa.me/${t.customer_phone.replace(/[^\d]/g,'')}`}
                     target="_blank"
@@ -232,8 +237,10 @@ export function MiAgenda({
 
           <Grupo titulo="Vencidas" emoji="🔴" tareas={data.vencidas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
           <Grupo titulo="Hoy" emoji="🟡" tareas={data.hoy} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
+          <Grupo titulo="Mañana" emoji="🟢" tareas={data.manana ?? []} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
+          <Grupo titulo="En 2-3 días" emoji="📅" tareas={data.en_2_3_dias ?? []} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
           <Grupo titulo="Esta semana" emoji="📆" tareas={data.esta_semana} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
-          <Grupo titulo="Próximas" emoji="⏭" tareas={data.proximas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
+          <Grupo titulo="Después" emoji="⏭" tareas={data.despues ?? data.proximas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
         </>
       )}
 

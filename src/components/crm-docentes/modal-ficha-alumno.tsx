@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import {
   createComment, createInteraction, createProof, getCase, marcarPerdido,
-  marcarRiesgo, quitarRiesgo, recuperar, setNota,
+  marcarRiesgo, quitarRiesgo, recuperar, setNota, sinRespuesta,
 } from '@/lib/crm-docentes-api';
 import type {
   InteractionResultado, InteractionTipo, OnboardingCaseDetail,
@@ -224,12 +224,17 @@ export function ModalFichaAlumno({
             <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
               {data.customer_phone ? (
                 <>
-                  <a
-                    href={`tel:${data.customer_phone.replace(/\s+/g, '')}`}
+                  <button
+                    onClick={() => {
+                      const clean = data.customer_phone.replace(/\s+/g, '');
+                      navigator.clipboard.writeText(clean);
+                      toast.success(`Copiado: ${clean}`);
+                    }}
                     className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 px-2 py-1 font-bold text-emerald-600 hover:bg-emerald-500/25"
+                    title="Click para copiar al portapapeles"
                   >
                     📞 {data.customer_phone}
-                  </a>
+                  </button>
                   <a
                     href={`https://wa.me/${data.customer_phone.replace(/[^\d]/g, '')}`}
                     target="_blank"
@@ -265,6 +270,22 @@ export function ModalFichaAlumno({
               {data.es_urgente_primer_toque_24h && (
                 <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-[10.5px] font-extrabold text-red-500 animate-pulse">
                   🚨 URGENTE — sin tocar por el docente
+                </span>
+              )}
+              {data.esperando_respuesta && (
+                <span
+                  className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10.5px] font-bold text-amber-600"
+                  title={
+                    data.esperando_respuesta_desde
+                      ? `Contactado el ${new Date(data.esperando_respuesta_desde).toLocaleString('es-ES')}`
+                      : ''
+                  }
+                >
+                  📨 Esperando respuesta{
+                    data.esperando_respuesta_desde
+                      ? ` · desde ${new Date(data.esperando_respuesta_desde).toLocaleDateString('es-ES')}`
+                      : ''
+                  }
                 </span>
               )}
             </div>
@@ -383,6 +404,7 @@ export function ModalFichaAlumno({
                     <SelectItem value="reunion_4">🏆 Reunión 4 — Día 24 (cierre mes 1)</SelectItem>
                     <SelectItem value="quincenal">🔄 Quincenal (mes 2+)</SelectItem>
                     <SelectItem value="micro">⚡ Micro-llamada (5-10 min)</SelectItem>
+                    <SelectItem value="sin_respuesta">🔕 Sin respuesta (intento registrado)</SelectItem>
                     <SelectItem value="mensaje">💬 Mensaje</SelectItem>
                     <SelectItem value="email">✉️ Email</SelectItem>
                     <SelectItem value="correccion">✏️ Corrección</SelectItem>
@@ -427,8 +449,30 @@ export function ModalFichaAlumno({
                 <div className="mt-1 text-[10px] text-muted-foreground">
                   Si la rellenas, la próxima reunión nace ya en verde (agendada).
                 </div>
-                <div className="mt-3">
+                <div className="mt-3 flex flex-wrap gap-2">
                   <Button onClick={guardarLlamada} size="sm">Guardar (append-only)</Button>
+                  <Button
+                    onClick={async () => {
+                      if (!data) return;
+                      if (!confirm(
+                        'Registrar "sin respuesta"?\n\n' +
+                        'Se creará un intento sin respuesta + una tarea automática de reintento en 24h. ' +
+                        'La tarea CUENTA en tu score — si no la haces, penaliza igual que una reunión vencida.'
+                      )) return;
+                      try {
+                        await sinRespuesta(data.id);
+                        toast.success('Sin respuesta registrada + reintento en 24h agendado');
+                        await refresh();
+                        onChanged?.();
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : 'Error');
+                      }
+                    }}
+                    size="sm"
+                    variant="outline"
+                  >
+                    🔕 Sin respuesta
+                  </Button>
                 </div>
 
                 <div className="mt-4">

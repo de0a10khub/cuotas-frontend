@@ -24,6 +24,15 @@ const TABS: Array<{ key: Tab; label: string }> = [
   { key: 'docentes', label: 'Docentes' },
 ];
 
+/**
+ * Normaliza texto para búsqueda: lowercase, quita espacios y caracteres no
+ * alfanuméricos. Útil para que "654 024 367" matchee con "654024367" o con
+ * "+34 654 024 367".
+ */
+function normalizarBusqueda(s: string): string {
+  return (s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+}
+
 export default function CrmDocentesPage() {
   const [tab, setTab] = useState<Tab>('pipeline');
   const [kpis, setKpis] = useState<KPIs | null>(null);
@@ -33,6 +42,7 @@ export default function CrmDocentesPage() {
   const [loading, setLoading] = useState(true);
   const [openCaseId, setOpenCaseId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [q, setQ] = useState('');
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -60,6 +70,16 @@ export default function CrmDocentesPage() {
   }, [refresh]);
 
   const isAdmin = me?.crm_role === 'admin';
+
+  const casesFiltrados = (() => {
+    const qn = normalizarBusqueda(q);
+    if (!qn) return cases;
+    return cases.filter((c) => {
+      const bag = [c.customer_name, c.customer_email, c.customer_phone, c.docente_nombre, c.coach_nombre]
+        .map(normalizarBusqueda).join('|');
+      return bag.includes(qn);
+    });
+  })();
 
   function onOpenAlumno(id: string) {
     setOpenCaseId(id);
@@ -115,10 +135,36 @@ export default function CrmDocentesPage() {
       {/* KPIs */}
       <KpisBar kpis={kpis} loading={loading} />
 
+      {/* Buscador global (activo en Pipeline y Alumnos) */}
+      {(tab === 'pipeline' || tab === 'alumnos') && (
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="🔍 Buscar por nombre, email, teléfono o docente (ignora espacios)"
+            className="w-full rounded-lg border bg-background px-3 py-2 text-[13px] outline-none focus:border-cyan-500"
+          />
+          {q && (
+            <div className="whitespace-nowrap text-[11px] text-muted-foreground">
+              {casesFiltrados.length} de {cases.length}
+            </div>
+          )}
+          {q && (
+            <button
+              onClick={() => setQ('')}
+              className="rounded bg-slate-500/10 px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-500/20"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Vistas */}
       {tab === 'agenda' && <MiAgenda onOpenAlumno={onOpenAlumno} docentes={scores} isAdmin={isAdmin} />}
-      {tab === 'pipeline' && <PipelineKanban cases={cases} onOpen={onOpenAlumno} />}
-      {tab === 'alumnos' && <TablaAlumnos cases={cases} onOpen={onOpenAlumno} />}
+      {tab === 'pipeline' && <PipelineKanban cases={casesFiltrados} onOpen={onOpenAlumno} />}
+      {tab === 'alumnos' && <TablaAlumnos cases={casesFiltrados} onOpen={onOpenAlumno} />}
       {tab === 'docentes' && <PanelDocentes scores={scores} />}
 
       {/* Modal ficha */}
