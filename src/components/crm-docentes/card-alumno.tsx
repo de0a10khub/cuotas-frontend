@@ -42,6 +42,15 @@ export function CardAlumno({
           }
         </div>
       )}
+      {c.es_antiguo && (
+        <div className="mb-2 rounded-md bg-purple-500/15 px-1.5 py-0.5 text-[10.5px] font-bold text-purple-600">
+          🔁 CLIENTE ANTIGUO{
+            c.primera_compra_stripe
+              ? ` · compró ${new Date(c.primera_compra_stripe).toLocaleDateString('es-ES')}`
+              : ''
+          } · 1 intento de recontacto y cierra
+        </div>
+      )}
       <div className="text-[13px] font-bold leading-tight">
         {c.customer_name || c.customer_email}
       </div>

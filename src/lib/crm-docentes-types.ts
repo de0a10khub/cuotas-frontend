@@ -149,6 +149,10 @@ export interface OnboardingCaseList {
   /** 📨 Contacto enviado sin respuesta (chip visual, sigue penalizando). */
   esperando_respuesta: boolean;
   esperando_respuesta_desde: string | null;
+  /** 🔁 Cliente antiguo (compra pre-checkout en Stripe direct). Aparece
+   * en el CRM para 1 intento de recontacto y auto-cierra al registrar LLAMADA_1. */
+  es_antiguo: boolean;
+  primera_compra_stripe: string | null;
   total_llamadas_hechas: number;
   total_pruebas: number;
   docente_nombre: string;
