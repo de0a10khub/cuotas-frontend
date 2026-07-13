@@ -47,12 +47,11 @@ export const navigation: NavItem[] = [
   { label: 'Board KPIs', href: '/board2', icon: BarChart3, section: 'General' },
   { label: 'Notificaciones', href: '/notificaciones', icon: Bell, section: 'General' },
 
-  { label: 'Cuadro de Mando', href: '/direccion', icon: Crown, section: 'Dirección', restrictedToDireccion: true },
-
   { label: 'Clientes', href: '/clientes', icon: Users, section: 'Gestión' },
   { label: 'Call Full Pay', href: '/full-pay', icon: PhoneCall, section: 'Gestión' },
   { label: 'Mentorías', href: '/mentorias', icon: GraduationCap, section: 'Gestión' },
   { label: 'CRM Docentes', href: '/crm-docentes', icon: IdCard, section: 'Gestión' },
+  { label: 'Cuadro de Mando', href: '/direccion', icon: Crown, section: 'Gestión', restrictedToDireccion: true },
 
   { label: 'Duplicados', href: '/admin/duplicados', icon: MergeIcon, section: 'Admin Datos' },
 
