@@ -8,6 +8,7 @@ import { navigation, groupBySection } from './nav-config';
 import { Wallet } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useNotificationsCount } from '@/lib/use-notifications-count';
+import { getDireccionMe } from '@/lib/direccion-api';
 
 // Sidebar colapsable por hover (mismo feel que la web vieja de Conciliación).
 // Default colapsada a w-16 (solo iconos), expande a w-64 al pasar el raton.
@@ -24,10 +25,27 @@ export function Sidebar() {
     () => new Set(profile?.allowed_paths ?? []),
     [profile?.allowed_paths],
   );
-  const visibleNav = React.useMemo(
-    () => (isAdmin ? navigation : navigation.filter((n) => allowedPaths.has(n.href))),
-    [isAdmin, allowedPaths],
-  );
+  // Fetch acceso al Cuadro de Mando (Carlos, Paula, Flor).
+  const [isDireccion, setIsDireccion] = React.useState(false);
+  React.useEffect(() => {
+    let cancel = false;
+    getDireccionMe()
+      .then((m) => { if (!cancel) setIsDireccion(!!m.is_direccion); })
+      .catch(() => { if (!cancel) setIsDireccion(false); });
+    return () => { cancel = true; };
+  }, []);
+
+  const visibleNav = React.useMemo(() => {
+    return navigation.filter((n) => {
+      // Items restringidos a Dirección: se muestran SOLO si isDireccion=true.
+      // Anula el chequeo de rol/allowedPaths — Paula y Flor no son 'Admin'
+      // formal pero sí pueden ver Cuadro de Mando.
+      if (n.restrictedToDireccion) return isDireccion;
+      // Resto: lógica original (Admin ve todo, otros solo lo permitido).
+      if (isAdmin) return true;
+      return allowedPaths.has(n.href);
+    });
+  }, [isAdmin, allowedPaths, isDireccion]);
 
   const grouped = groupBySection(visibleNav);
   const [collapsed, setCollapsed] = React.useState(true);
