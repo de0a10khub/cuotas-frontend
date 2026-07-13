@@ -26,6 +26,7 @@ import {
   GitMerge as MergeIcon,
   Repeat,
   IdCard,
+  Crown,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -34,6 +35,8 @@ export interface NavItem {
   href: string;
   icon: LucideIcon;
   section?: string;
+  /** true → visible SOLO para los 3 emails de dirección (fetch /direccion/me/). */
+  restrictedToDireccion?: boolean;
 }
 
 export const navigation: NavItem[] = [
@@ -43,6 +46,8 @@ export const navigation: NavItem[] = [
   { label: 'Inicio', href: '/', icon: LayoutDashboard, section: 'General' },
   { label: 'Board KPIs', href: '/board2', icon: BarChart3, section: 'General' },
   { label: 'Notificaciones', href: '/notificaciones', icon: Bell, section: 'General' },
+
+  { label: 'Cuadro de Mando', href: '/direccion', icon: Crown, section: 'Dirección', restrictedToDireccion: true },
 
   { label: 'Clientes', href: '/clientes', icon: Users, section: 'Gestión' },
   { label: 'Call Full Pay', href: '/full-pay', icon: PhoneCall, section: 'Gestión' },
