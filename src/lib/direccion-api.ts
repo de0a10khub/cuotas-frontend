@@ -96,3 +96,48 @@ export function getMorosidadDocentes(): Promise<MorosidadDocentesResponse> {
 export function getKpis(desde: string, hasta: string): Promise<KpisResponse> {
   return api.get<KpisResponse>(`${BASE}/kpis/?desde=${desde}&hasta=${hasta}`);
 }
+
+// === Evolución mes a mes ===
+
+export interface EvolucionMes {
+  n: number;
+  inicio: string;
+  fin: string;
+  estado_general: 'futuro' | 'en_curso' | 'cerrado';
+  morosidad: {
+    estado: 'sin_datos' | 'en_curso' | 'maduro';
+    pct: number | null;
+    evaluables: number;
+    impagos: number;
+  };
+  retencion_pct: number | null;
+  clientes_unicos: number;
+  crecimiento_pct: number | null;
+}
+
+export interface EvolucionResponse {
+  inicio: string;
+  hoy: string;
+  n_meses: number;
+  meses: EvolucionMes[];
+}
+
+export function getEvolucion(inicio: string, nMeses: number): Promise<EvolucionResponse> {
+  return api.get<EvolucionResponse>(`${BASE}/evolucion/?inicio=${inicio}&n_meses=${nMeses}`);
+}
+
+// === Onboarding Lucila ===
+
+export interface OnboardingLucila {
+  display_name: string;
+  nivel_onboarding: number | null;
+  contacto_24h_pct: number | null;
+  dias_hasta_docente_mediana: number | null;
+  asisten_reunion_1_pct: number | null;
+  total_alumnos_ventana?: number;
+  nota?: string;
+}
+
+export function getOnboardingLucila(): Promise<OnboardingLucila> {
+  return api.get<OnboardingLucila>(`${BASE}/onboarding-lucila/`);
+}
