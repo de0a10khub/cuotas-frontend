@@ -82,6 +82,19 @@ export interface WorkProof {
   created_at: string;
 }
 
+export type CapturaTipo = 'contacto_agendar' | 'intento_no_asistio' | 'prueba';
+
+export interface Captura {
+  id: string;
+  tipo: CapturaTipo;
+  url: string;
+  content_type: string;
+  almacenamiento: 'supabase' | 'db' | 'pendiente';
+  subida_por: string | null;
+  subida_por_nombre: string;
+  created_at: string;
+}
+
 export interface Comentario {
   id: string;
   texto: string;
@@ -103,7 +116,10 @@ export interface CaseTask {
   esta_urgente: boolean;
   dias_para_vencer: number;
   color_estado: 'verde' | 'ambar' | 'rojo' | 'gris' | 'ambar_historico';
+  pendiente_llamada: boolean;
+  en_gestion_contacto: boolean;
   registrada_fuera_de_plazo: boolean;
+  contacto_probado_en: string | null;
   agendada: boolean;
   cita_fecha_hora: string | null;
   agendada_en: string | null;
@@ -178,6 +194,7 @@ export interface OnboardingCaseDetail extends OnboardingCaseList {
   pruebas: WorkProof[];
   comentarios: Comentario[];
   tareas: CaseTask[];
+  capturas: Captura[];
   nota_historial: NotaHistorialItem[];
   /** Tipo de interacción sugerido según el punto del playbook en el que
    * está el alumno (backend calcula esto). Preseleccionado en el

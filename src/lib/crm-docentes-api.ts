@@ -4,8 +4,9 @@
  * Usa el `api` client base (src/lib/api.ts) que maneja JWT + refresh.
  */
 
-import { api } from './api';
+import { api, getAccessToken } from './api';
 import type {
+  Captura,
   ComentarioCreateBody,
   DocenteScore,
   Interaction,
@@ -20,6 +21,43 @@ import type {
 } from './crm-docentes-types';
 
 const BASE = '/api/v1/crm-docentes';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
+/**
+ * Sube una captura (imagen) directa vía multipart/form-data.
+ * tipo: 'contacto_agendar' | 'intento_no_asistio' | 'prueba'
+ */
+export async function subirCaptura(
+  caseId: string,
+  file: File,
+  tipo: string,
+  taskId?: string,
+): Promise<Captura> {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('tipo', tipo);
+  if (taskId) fd.append('task_id', taskId);
+
+  const token = getAccessToken();
+  const res = await fetch(`${API_URL}${BASE}/cases/${caseId}/capturas/`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: fd, // sin Content-Type: el navegador pone el boundary
+  });
+  const body = await res.text();
+  const data = body ? JSON.parse(body) : null;
+  if (!res.ok) {
+    const msg = (data && (data.detail || data.captura_id || JSON.stringify(data))) || 'Error al subir';
+    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+  }
+  return data as Captura;
+}
+
+/** Devuelve el data_url de una captura almacenada en BD (fallback). */
+export function getCapturaData(capturaId: string): Promise<{ content_type: string; data_url?: string; url?: string }> {
+  return api.get(`${BASE}/capturas/${capturaId}/`);
+}
 
 // ============================================================================
 // LIST / DETAIL

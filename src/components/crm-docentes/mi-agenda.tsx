@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { agendarTarea, getMiAgenda } from '@/lib/crm-docentes-api';
+import { agendarTarea, getMiAgenda, subirCaptura } from '@/lib/crm-docentes-api';
 import type { AgendaResponse } from '@/lib/crm-docentes-api';
 import type { CaseTask, DocenteScore } from '@/lib/crm-docentes-types';
 
@@ -22,12 +22,14 @@ function Grupo({
   tareas,
   onAgendar,
   onOpenAlumno,
+  onContacto,
 }: {
   titulo: string;
   emoji: string;
   tareas: CaseTask[];
   onAgendar: (t: CaseTask) => void;
   onOpenAlumno: (caseId: string) => void;
+  onContacto: (t: CaseTask, file: File) => void;
 }) {
   if (tareas.length === 0) return null;
   return (
@@ -56,6 +58,14 @@ function Grupo({
                 {t.agendada ? (
                   <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600">
                     AGENDADA
+                  </span>
+                ) : t.pendiente_llamada ? (
+                  <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-500">
+                    🚨 PENDIENTE DE LLAMADA
+                  </span>
+                ) : t.en_gestion_contacto ? (
+                  <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-600">
+                    📸 CONTACTADO · A AGENDAR
                   </span>
                 ) : (
                   <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-500">
@@ -98,16 +108,34 @@ function Grupo({
                 </div>
               )}
             </div>
-            <div className="flex shrink-0 gap-2">
-              {!t.agendada && (
-                <Button size="sm" variant="outline" onClick={() => onAgendar(t)}>
-                  📅 Agendar
-                </Button>
-              )}
-              {t.case_id && (
-                <Button size="sm" onClick={() => onOpenAlumno(t.case_id!)}>
-                  Ficha
-                </Button>
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <div className="flex gap-2">
+                {!t.agendada && (
+                  <Button size="sm" variant="outline" onClick={() => onAgendar(t)}>
+                    📅 Agendar
+                  </Button>
+                )}
+                {t.case_id && (
+                  <Button size="sm" onClick={() => onOpenAlumno(t.case_id!)}>
+                    Ficha
+                  </Button>
+                )}
+              </div>
+              {/* CAMBIO 1: subir captura de contacto → estado ámbar "a agendar" */}
+              {!t.agendada && !t.en_gestion_contacto && !t.pendiente_llamada && (
+                <label className="cursor-pointer rounded-md bg-amber-500/15 px-2 py-1 text-[10.5px] font-bold text-amber-700 hover:bg-amber-500/25">
+                  📸 Subir captura de contacto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) onContacto(t, f);
+                      e.currentTarget.value = '';
+                    }}
+                  />
+                </label>
               )}
             </div>
           </Card>
@@ -162,6 +190,17 @@ export function MiAgenda({
       await refresh(selectedProfileId);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Error');
+    }
+  }
+
+  async function subirContacto(t: CaseTask, file: File) {
+    if (!t.case_id) return;
+    try {
+      await subirCaptura(t.case_id, file, 'contacto_agendar', t.id);
+      toast.success('Captura de contacto subida. Tienes 48h para agendar la cita.');
+      await refresh(selectedProfileId);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error al subir');
     }
   }
 
@@ -235,12 +274,12 @@ export function MiAgenda({
             </Card>
           )}
 
-          <Grupo titulo="Vencidas" emoji="🔴" tareas={data.vencidas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
-          <Grupo titulo="Hoy" emoji="🟡" tareas={data.hoy} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
-          <Grupo titulo="Mañana" emoji="🟢" tareas={data.manana ?? []} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
-          <Grupo titulo="En 2-3 días" emoji="📅" tareas={data.en_2_3_dias ?? []} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
-          <Grupo titulo="Esta semana" emoji="📆" tareas={data.esta_semana} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
-          <Grupo titulo="Después" emoji="⏭" tareas={data.despues ?? data.proximas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} />
+          <Grupo titulo="Vencidas" emoji="🔴" tareas={data.vencidas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} onContacto={subirContacto} />
+          <Grupo titulo="Hoy" emoji="🟡" tareas={data.hoy} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} onContacto={subirContacto} />
+          <Grupo titulo="Mañana" emoji="🟢" tareas={data.manana ?? []} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} onContacto={subirContacto} />
+          <Grupo titulo="En 2-3 días" emoji="📅" tareas={data.en_2_3_dias ?? []} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} onContacto={subirContacto} />
+          <Grupo titulo="Esta semana" emoji="📆" tareas={data.esta_semana} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} onContacto={subirContacto} />
+          <Grupo titulo="Después" emoji="⏭" tareas={data.despues ?? data.proximas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} onContacto={subirContacto} />
         </>
       )}
 

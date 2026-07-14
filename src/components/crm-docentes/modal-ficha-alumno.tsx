@@ -9,9 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
-  createComment, createInteraction, createProof, getCase, marcarPerdido,
+  createComment, createInteraction, createProof, getCapturaData, getCase, marcarPerdido,
   marcarRiesgo, quitarRiesgo, recuperar, setNota, sinRespuesta,
+  subirCaptura,
 } from '@/lib/crm-docentes-api';
+import type { Captura } from '@/lib/crm-docentes-types';
 import type {
   InteractionResultado, InteractionTipo, OnboardingCaseDetail,
 } from '@/lib/crm-docentes-types';
@@ -46,6 +48,10 @@ export function ModalFichaAlumno({
   const [proofDesc, setProofDesc] = useState('');
   const [proofUrl, setProofUrl] = useState('');
   const [comentText, setComentText] = useState('');
+
+  // Captura del intento (para "no asistió") y de contacto (para agendar)
+  const [capturaFile, setCapturaFile] = useState<File | null>(null);
+  const [subiendo, setSubiendo] = useState(false);
 
   // Diálogo Marcar Perdido
   const [perdidoOpen, setPerdidoOpen] = useState(false);
@@ -91,33 +97,55 @@ export function ModalFichaAlumno({
       'llamada_2', 'llamada_3', 'llamada_4',
     ];
     const esLlamada = TIPOS_LLAMADA.includes(callTipo);
-    if (esLlamada && !callEnlace.trim()) {
+    const esNoAsistio = callResultado === 'no_asistio';
+
+    // CAMBIO 2: "no asistió" NO exige enlace, pero SÍ captura del intento.
+    if (esNoAsistio) {
+      if (!capturaFile) {
+        toast.error('Para "no asistió" sube una captura del intento de contacto (WhatsApp / llamada / mensaje).');
+        return;
+      }
+    } else if (esLlamada && callResultado === 'asistio' && !callEnlace.trim()) {
       toast.error('El enlace a la grabación es obligatorio. Sin grabación no hay llamada.');
       return;
     }
+
     try {
+      setSubiendo(true);
+      let metadata: Record<string, unknown> | undefined;
+
+      // Si es no-asistió, subimos primero la captura del intento y pasamos su id.
+      if (esNoAsistio && capturaFile) {
+        const cap = await subirCaptura(data.id, capturaFile, 'intento_no_asistio');
+        metadata = { captura_id: cap.id };
+      }
+
       await createInteraction(data.id, {
         tipo: callTipo,
         resultado: callResultado,
-        enlace_grabacion: callEnlace.trim(),
+        enlace_grabacion: esNoAsistio ? '' : callEnlace.trim(),
         notas: callNotas.trim(),
+        ...(metadata ? { metadata } : {}),
         ...(siguienteCita
           ? { siguiente_cita_fecha_hora: new Date(siguienteCita).toISOString() }
           : {}),
       });
       toast.success(
-        siguienteCita
-          ? 'Llamada registrada + siguiente cita agendada 🎯'
-          : 'Llamada registrada.'
+        esNoAsistio
+          ? (siguienteCita ? 'No asistió registrado + reagendado 🔁' : 'No asistió registrado. Vuelve al flujo de agendar.')
+          : (siguienteCita ? 'Llamada registrada + siguiente cita agendada 🎯' : 'Llamada registrada.')
       );
       setCallEnlace('');
       setCallNotas('');
       setSiguienteCita('');
+      setCapturaFile(null);
       await refresh();
       onChanged?.();
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error al guardar';
       toast.error(msg);
+    } finally {
+      setSubiendo(false);
     }
   }
 
@@ -439,25 +467,47 @@ export function ModalFichaAlumno({
                   </SelectContent>
                 </Select>
 
-                <Label className="mt-2 text-[10.5px] font-bold uppercase text-muted-foreground">
-                  Enlace grabación (obligatorio en llamadas)
-                </Label>
-                <Input
-                  placeholder="https://zoom.us/rec/..."
-                  value={callEnlace}
-                  onChange={(e) => setCallEnlace(e.target.value)}
-                />
-
                 <Label className="mt-2 text-[10.5px] font-bold uppercase text-muted-foreground">Resultado</Label>
                 <Select value={callResultado} onValueChange={(v) => setCallResultado(v as InteractionResultado)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="asistio">Asistió</SelectItem>
-                    <SelectItem value="no_asistio">No asistió</SelectItem>
-                    <SelectItem value="reagendada">Reagendada</SelectItem>
+                    <SelectItem value="asistio">✅ Asistió</SelectItem>
+                    <SelectItem value="no_asistio">❌ No asistió (sube captura del intento)</SelectItem>
+                    <SelectItem value="reagendada">🔁 Reagendada</SelectItem>
                     <SelectItem value="na">N/A</SelectItem>
                   </SelectContent>
                 </Select>
+
+                {callResultado === 'no_asistio' ? (
+                  <div className="mt-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-2.5">
+                    <Label className="text-[10.5px] font-bold uppercase text-amber-600">
+                      📸 Captura del intento de contacto (OBLIGATORIA)
+                    </Label>
+                    <div className="mb-1 text-[10.5px] text-muted-foreground">
+                      WhatsApp, llamada o mensaje. No hace falta enlace de Meet — el alumno no se conectó.
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setCapturaFile(e.target.files?.[0] ?? null)}
+                      className="block w-full text-[12px] text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-amber-500/20 file:px-3 file:py-1.5 file:text-[12px] file:font-bold file:text-amber-700"
+                    />
+                    {capturaFile && (
+                      <div className="mt-1 text-[11px] text-emerald-600">✓ {capturaFile.name}</div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <Label className="mt-2 text-[10.5px] font-bold uppercase text-muted-foreground">
+                      Enlace grabación (obligatorio si asistió)
+                    </Label>
+                    <Input
+                      placeholder="https://zoom.us/rec/..."
+                      value={callEnlace}
+                      onChange={(e) => setCallEnlace(e.target.value)}
+                    />
+                  </>
+                )}
 
                 <Label className="mt-2 text-[10.5px] font-bold uppercase text-muted-foreground">Notas</Label>
                 <Input
@@ -478,7 +528,9 @@ export function ModalFichaAlumno({
                   Si la rellenas, la próxima reunión nace ya en verde (agendada).
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button onClick={guardarLlamada} size="sm">Guardar (append-only)</Button>
+                  <Button onClick={guardarLlamada} size="sm" disabled={subiendo}>
+                    {subiendo ? 'Subiendo…' : callResultado === 'no_asistio' ? 'Registrar no asistió' : 'Guardar (append-only)'}
+                  </Button>
                   <Button
                     onClick={async () => {
                       if (!data) return;
@@ -533,6 +585,19 @@ export function ModalFichaAlumno({
 
               {/* Pruebas + comentarios */}
               <div className="space-y-4">
+                {/* Capturas subidas */}
+                {data.capturas && data.capturas.length > 0 && (
+                  <div className="rounded-xl border bg-muted/30 p-5">
+                    <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      📸 Capturas ({data.capturas.length})
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {data.capturas.map((c) => (
+                        <CapturaThumb key={c.id} captura={c} />
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {/* Pruebas */}
                 <div className="rounded-xl border bg-muted/30 p-5">
                   <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -768,5 +833,56 @@ export function ModalFichaAlumno({
         </div>
       )}
     </Dialog>
+  );
+}
+
+
+/** Miniatura de captura. Carga la imagen (supabase url o data_url de BD). */
+function CapturaThumb({ captura }: { captura: Captura }) {
+  const [src, setSrc] = useState<string | null>(null);
+  const [err, setErr] = useState(false);
+
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      try {
+        if (captura.almacenamiento === 'supabase' && captura.url) {
+          if (!cancel) setSrc(captura.url);
+          return;
+        }
+        const r = await getCapturaData(captura.id);
+        if (!cancel) setSrc(r.data_url || r.url || null);
+      } catch {
+        if (!cancel) setErr(true);
+      }
+    })();
+    return () => { cancel = true; };
+  }, [captura.id, captura.almacenamiento, captura.url]);
+
+  const label =
+    captura.tipo === 'contacto_agendar' ? '📸 Contacto'
+    : captura.tipo === 'intento_no_asistio' ? '❌ Intento'
+    : '📎 Prueba';
+
+  return (
+    <a
+      href={src || '#'}
+      target="_blank"
+      rel="noreferrer"
+      className="group relative block h-20 w-20 overflow-hidden rounded-lg border bg-slate-500/10"
+      title={`${label} · ${captura.subida_por_nombre} · ${new Date(captura.created_at).toLocaleString('es-ES')}`}
+    >
+      {err ? (
+        <div className="flex h-full items-center justify-center text-[10px] text-red-400">error</div>
+      ) : src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt={label} className="h-full w-full object-cover" />
+      ) : (
+        <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">…</div>
+      )}
+      <span className="absolute bottom-0 left-0 right-0 bg-black/60 px-1 py-0.5 text-[8px] font-bold text-white">
+        {label}
+      </span>
+    </a>
   );
 }
