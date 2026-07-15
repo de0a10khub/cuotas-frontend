@@ -5,98 +5,41 @@ import { CardAlumno } from './card-alumno';
 
 // Columnas del tablero, en orden EXACTO del playbook (izq → der).
 // `key` casa con columna_pipeline del backend (+ riesgo/perdido transversales).
-type Col = {
-  key: string;
-  title: string;
-  sub: string;
-  icon: string;
-  // clases estáticas (Tailwind no admite interpolación dinámica de color)
-  badge: string;
-  top: string;
-};
+type Variant = 'normal' | 'riesgo' | 'perdido';
+type Col = { key: string; title: string; sub: string; icon: string; variant: Variant };
 
 const COLUMNAS: Col[] = [
-  {
-    key: 'onboarding_1',
-    title: 'ONBOARDING 1',
-    sub: 'Llamada 1 · Lucila · día 1-2',
-    icon: '🚀',
-    badge: 'bg-cyan-500',
-    top: 'border-t-cyan-500',
-  },
-  {
-    key: 'docente_reunion_1',
-    title: 'DOCENTE · Reunión 1',
-    sub: 'Arranque con docente · día 3',
-    icon: '🤝',
-    badge: 'bg-violet-500',
-    top: 'border-t-violet-500',
-  },
-  {
-    key: 'onboarding_2_control',
-    title: 'ONBOARDING 2 · Control D4',
-    sub: 'Lucila verifica · día 4',
-    icon: '🔍',
-    badge: 'bg-cyan-600',
-    top: 'border-t-cyan-600',
-  },
-  {
-    key: 'reunion_2',
-    title: 'Reunión 2',
-    sub: 'día 10',
-    icon: '📈',
-    badge: 'bg-blue-500',
-    top: 'border-t-blue-500',
-  },
-  {
-    key: 'reunion_3',
-    title: 'Reunión 3',
-    sub: 'día 17',
-    icon: '🔧',
-    badge: 'bg-indigo-500',
-    top: 'border-t-indigo-500',
-  },
-  {
-    key: 'reunion_4',
-    title: 'Reunión 4',
-    sub: 'Cierre mes 1 · día 24',
-    icon: '🏆',
-    badge: 'bg-emerald-500',
-    top: 'border-t-emerald-500',
-  },
-  {
-    key: 'quincenal_1',
-    title: 'Quincenal 1',
-    sub: 'Mes 2 · ~día 38',
-    icon: '🔄',
-    badge: 'bg-teal-500',
-    top: 'border-t-teal-500',
-  },
-  {
-    key: 'quincenal_2plus',
-    title: 'Quincenal 2 y sig.',
-    sub: 'Recurrente · cada 14 días',
-    icon: '🔁',
-    badge: 'bg-teal-600',
-    top: 'border-t-teal-600',
-  },
-  {
-    key: 'riesgo',
-    title: 'EN RIESGO',
-    sub: 'Transversal · recuperar ya',
-    icon: '⚠️',
-    badge: 'bg-red-500',
-    top: 'border-t-red-500',
-  },
-  {
-    key: 'perdido',
-    title: 'PERDIDO',
-    sub: 'Baja registrada',
-    icon: '❌',
-    badge: 'bg-zinc-500',
-    top: 'border-t-zinc-500',
-  },
+  { key: 'onboarding_1', title: 'Onboarding 1', sub: 'Llamada 1 · Lucila · día 1-2', icon: '🚀', variant: 'normal' },
+  { key: 'docente_reunion_1', title: 'Docente · Reunión 1', sub: 'Arranque con docente · día 3', icon: '🤝', variant: 'normal' },
+  { key: 'onboarding_2_control', title: 'Onboarding 2 · Control D4', sub: 'Lucila verifica · día 4', icon: '🔍', variant: 'normal' },
+  { key: 'reunion_2', title: 'Reunión 2', sub: 'día 10', icon: '📈', variant: 'normal' },
+  { key: 'reunion_3', title: 'Reunión 3', sub: 'día 17', icon: '🔧', variant: 'normal' },
+  { key: 'reunion_4', title: 'Reunión 4', sub: 'Cierre mes 1 · día 24', icon: '🏆', variant: 'normal' },
+  { key: 'quincenal_1', title: 'Quincenal 1', sub: 'Mes 2 · ~día 38', icon: '🔄', variant: 'normal' },
+  { key: 'quincenal_2plus', title: 'Quincenal 2 y sig.', sub: 'Recurrente · cada 14 días', icon: '🔁', variant: 'normal' },
+  { key: 'riesgo', title: 'En riesgo', sub: 'Transversal · recuperar ya', icon: '⚠️', variant: 'riesgo' },
+  { key: 'perdido', title: 'Perdido', sub: 'Baja registrada', icon: '❌', variant: 'perdido' },
 ];
+
+// Estilos por variante — misma familia visual que el resto del CRM
+// (degradado cyan→violet; rojo→ámbar para riesgo; zinc para perdido).
+const VARIANT_STYLES: Record<Variant, { strip: string; header: string; badge: string }> = {
+  normal: {
+    strip: 'bg-gradient-to-r from-cyan-500 to-violet-500',
+    header: 'bg-gradient-to-r from-cyan-500/10 to-violet-500/10',
+    badge: 'bg-gradient-to-r from-cyan-500 to-violet-500',
+  },
+  riesgo: {
+    strip: 'bg-gradient-to-r from-red-500 to-amber-500',
+    header: 'bg-gradient-to-r from-red-500/10 to-amber-500/10',
+    badge: 'bg-gradient-to-r from-red-500 to-amber-500',
+  },
+  perdido: {
+    strip: 'bg-gradient-to-r from-zinc-500 to-zinc-600',
+    header: 'bg-gradient-to-r from-zinc-500/10 to-zinc-600/10',
+    badge: 'bg-zinc-600',
+  },
+};
 
 // Fallback si el backend aún no manda columna_pipeline (ventana de deploy).
 const MAP_LEGACY_FASE: Record<string, ColumnaPipeline> = {
@@ -141,24 +84,25 @@ export function PipelineKanban({
       <div className="flex min-w-max gap-3 px-1">
         {COLUMNAS.map((col) => {
           const items = grupos[col.key] ?? [];
+          const st = VARIANT_STYLES[col.variant];
           return (
             <div
               key={col.key}
-              className={
-                'flex w-[280px] shrink-0 flex-col rounded-xl border border-t-4 bg-card ' +
-                col.top
-              }
+              className="flex w-[268px] shrink-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10"
             >
-              {/* Cabecera fija */}
-              <div className="sticky top-0 z-10 rounded-t-xl border-b bg-card/95 px-3 py-2.5 backdrop-blur">
+              {/* Tira superior degradada (familia visual del CRM) */}
+              <div className={'h-[3px] w-full ' + st.strip} />
+
+              {/* Cabecera: título + subtítulo + contador redondo */}
+              <div className={'border-b border-foreground/10 px-3 py-2.5 ' + st.header}>
                 <div className="flex items-center justify-between gap-2">
-                  <div className="text-[11.5px] font-bold uppercase tracking-wide leading-tight">
+                  <div className="text-[11.5px] font-bold uppercase leading-tight tracking-wide">
                     {col.icon} {col.title}
                   </div>
                   <span
                     className={
-                      'shrink-0 rounded-md px-2 py-0.5 text-[11px] font-bold text-white ' +
-                      col.badge
+                      'flex h-6 min-w-[24px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold text-white shadow-sm ' +
+                      st.badge
                     }
                   >
                     {items.length}
@@ -169,8 +113,8 @@ export function PipelineKanban({
                 </div>
               </div>
 
-              {/* Cuerpo: tarjetas con scroll vertical propio */}
-              <div className="flex max-h-[calc(100vh-260px)] min-h-[80px] flex-col gap-2 overflow-y-auto p-2">
+              {/* Cuerpo: tarjetas con scroll vertical suave e independiente */}
+              <div className="flex max-h-[calc(100vh-250px)] min-h-[84px] flex-col gap-2 overflow-y-auto scroll-smooth p-2 [scrollbar-width:thin]">
                 {items.length === 0 ? (
                   <div className="py-6 text-center text-[11.5px] text-muted-foreground/50">
                     vacío

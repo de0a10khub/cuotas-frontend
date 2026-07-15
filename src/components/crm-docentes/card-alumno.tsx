@@ -2,6 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import type { ColumnaPipeline, OnboardingCaseList } from '@/lib/crm-docentes-types';
+import { cleanCustomerName } from '@/lib/utils';
 import { EstadoChip, NotaChip, PagoChip } from './estado-chips';
 
 // Progreso de reuniones por columna: cuántos círculos van "hechos" (done)
@@ -22,7 +23,7 @@ function ProgresoReuniones({ col }: { col?: ColumnaPipeline }) {
   const p = (col && PROGRESO_REUNIONES[col]) || { done: 0, current: -1 };
   return (
     <div
-      className="mt-2 flex items-center gap-1"
+      className="flex items-center gap-1"
       title="Progreso: Reunión 1 → 2 → 3 → 4 → Quincenal"
     >
       {CIRCULO_LABELS.map((lab, i) => {
@@ -48,6 +49,13 @@ function ProgresoReuniones({ col }: { col?: ColumnaPipeline }) {
   );
 }
 
+function precioLabel(c: OnboardingCaseList): string {
+  if (c.producto_nombre) return c.producto_nombre;
+  if (c.ticket_total_cents)
+    return `${Math.round(c.ticket_total_cents / 100).toLocaleString('es-ES')} €`;
+  return '—';
+}
+
 export function CardAlumno({
   c,
   onOpen,
@@ -56,86 +64,86 @@ export function CardAlumno({
   onOpen: (id: string) => void;
 }) {
   const vencido = c.es_vencido && c.fase !== 'perdido';
-  const urgente = c.es_urgente_24h;
+  const urgente = c.es_urgente_24h || c.es_urgente_primer_toque_24h;
+  const nombre = cleanCustomerName(c.customer_name) || c.customer_email;
+
+  // Flags compactos en una sola línea (solo los que aplican) para no
+  // romper la uniformidad de altura de las tarjetas.
+  const flags: { t: string; cls: string }[] = [];
+  if (c.es_urgente_24h) flags.push({ t: '🔥 +24h', cls: 'text-red-500' });
+  if (c.es_urgente_primer_toque_24h)
+    flags.push({ t: '🚨 sin tocar', cls: 'text-red-500' });
+  if (c.esperando_respuesta) flags.push({ t: '📨 esperando', cls: 'text-amber-500' });
+  if (c.es_reactivacion || c.es_antiguo)
+    flags.push({ t: '🔁 reactivación', cls: 'text-purple-500' });
+
   return (
     <Card
       onClick={() => onOpen(c.id)}
       className={
-        'cursor-pointer p-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-500/10 ' +
-        (urgente
-          ? 'crm-urgente'
-          : vencido ? 'border-red-500/50 shadow-[0_0_0_1px_rgba(239,68,68,0.35)]' : '')
+        'cursor-pointer gap-0 overflow-hidden p-0 transition-all hover:-translate-y-0.5 hover:ring-cyan-500/40 ' +
+        (urgente ? 'ring-red-500/50' : vencido ? 'ring-red-500/40' : '')
       }
     >
-      {urgente && (
-        <div className="mb-2 text-[11px] font-extrabold text-red-500 crm-urgente-badge">
-          🔥 URGENTE · +24h sin contactar
+      {/* Tira superior de estado — familia visual del CRM (cyan→violet;
+          rojo→ámbar si urgente/vencida). */}
+      <div
+        className={
+          'h-[3px] w-full ' +
+          (urgente
+            ? 'bg-gradient-to-r from-red-500 to-amber-500'
+            : vencido
+              ? 'bg-red-500/70'
+              : 'bg-gradient-to-r from-cyan-500 to-violet-500 opacity-60')
+        }
+      />
+
+      <div className="flex flex-col gap-1.5 p-2.5">
+        {flags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9.5px] font-bold leading-none">
+            {flags.map((f) => (
+              <span key={f.t} className={f.cls}>
+                {f.t}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="line-clamp-2 text-[12.5px] font-bold leading-tight">
+          {nombre}
         </div>
-      )}
-      {c.es_urgente_primer_toque_24h && (
-        <div className="mb-2 text-[11px] font-extrabold text-red-500 crm-urgente-badge">
-          🚨 URGENTE · sin tocar por el docente (24h)
+
+        <div className="truncate text-[10.5px] text-muted-foreground">
+          {precioLabel(c)} · alta {c.created_at.slice(0, 10)}
         </div>
-      )}
-      {c.esperando_respuesta && (
-        <div className="mb-2 text-[10.5px] font-bold text-amber-600">
-          📨 Esperando respuesta{
-            c.esperando_respuesta_desde
-              ? ` · desde ${new Date(c.esperando_respuesta_desde).toLocaleDateString('es-ES')}`
-              : ''
-          }
-        </div>
-      )}
-      {(c.es_reactivacion || c.es_antiguo) && (
-        <div className="mb-2 rounded-md bg-purple-500/15 px-1.5 py-0.5 text-[10.5px] font-bold text-purple-600">
-          🔁 EN REACTIVACIÓN{
-            c.primera_compra_stripe
-              ? ` · cliente desde ${new Date(c.primera_compra_stripe).toLocaleDateString('es-ES')}`
-              : ''
-          } · recuperar y poner al día
-        </div>
-      )}
-      <div className="text-[13px] font-bold leading-tight">
-        {c.customer_name || c.customer_email}
-      </div>
-      <div className="mt-0.5 text-[11px] text-muted-foreground">
-        {c.producto_nombre || (c.ticket_total_cents ? `${Math.round(c.ticket_total_cents/100)}€` : '—')} · alta {c.created_at.slice(0, 10)}
-      </div>
-      {(c.docente_nombre || c.coach_nombre) && (
-        <div className="mt-1 flex flex-wrap items-center gap-1 text-[10.5px]">
-          {c.docente_nombre && (
-            <span className="rounded bg-violet-500/10 px-1.5 py-0.5 font-bold text-violet-600">
+
+        {/* Asignado: docente o coach (siempre presente, estructura uniforme) */}
+        <div className="flex items-center gap-1 text-[10px]">
+          {c.docente_nombre ? (
+            <span className="max-w-full truncate rounded bg-violet-500/12 px-1.5 py-0.5 font-bold text-violet-500">
               🎓 {c.docente_nombre}
             </span>
-          )}
-          {!c.docente_nombre && c.coach_nombre && (
-            <span className="rounded bg-cyan-500/10 px-1.5 py-0.5 font-bold text-cyan-600">
+          ) : c.coach_nombre ? (
+            <span className="max-w-full truncate rounded bg-cyan-500/12 px-1.5 py-0.5 font-bold text-cyan-500">
               🎯 {c.coach_nombre}
+            </span>
+          ) : (
+            <span className="rounded bg-muted px-1.5 py-0.5 font-medium text-muted-foreground/70">
+              sin asignar
             </span>
           )}
         </div>
-      )}
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <EstadoChip estado={c.estado} />
-          <PagoChip visibilidad={c.pagos_visibilidad} />
+
+        <ProgresoReuniones col={c.columna_pipeline} />
+
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex flex-wrap items-center gap-1">
+            <EstadoChip estado={c.estado} />
+            <PagoChip visibilidad={c.pagos_visibilidad} />
+          </div>
+          <NotaChip nota={c.nota_implicacion} />
         </div>
-        <NotaChip nota={c.nota_implicacion} />
       </div>
-      {c.fase !== 'perdido' && <ProgresoReuniones col={c.columna_pipeline} />}
-      {c.proxima_llamada_vence && c.fase !== 'perdido' && (
-        <div
-          className={
-            'mt-2 text-[11px] ' +
-            (vencido
-              ? 'font-bold text-red-500'
-              : 'text-muted-foreground')
-          }
-        >
-          📞 Próxima: {c.proxima_llamada_vence}
-          {vencido ? ' · VENCIDA' : ''}
-        </div>
-      )}
     </Card>
   );
 }
