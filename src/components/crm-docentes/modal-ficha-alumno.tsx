@@ -99,13 +99,10 @@ export function ModalFichaAlumno({
     const esLlamada = TIPOS_LLAMADA.includes(callTipo);
     const esNoAsistio = callResultado === 'no_asistio';
 
-    // CAMBIO 2: "no asistió" NO exige enlace, pero SÍ captura del intento.
-    if (esNoAsistio) {
-      if (!capturaFile) {
-        toast.error('Para "no asistió" sube una captura del intento de contacto (WhatsApp / llamada / mensaje).');
-        return;
-      }
-    } else if (esLlamada && callResultado === 'asistio' && !callEnlace.trim()) {
+    // "No asistió" NO exige enlace NI captura (Paula 2026-07-15: la captura
+    // obligatoria colapsa; la supervisión la hace la directora). La captura
+    // queda OPCIONAL. Solo "asistió" en una llamada exige enlace de grabación.
+    if (!esNoAsistio && esLlamada && callResultado === 'asistio' && !callEnlace.trim()) {
       toast.error('El enlace a la grabación es obligatorio. Sin grabación no hay llamada.');
       return;
     }
@@ -481,10 +478,11 @@ export function ModalFichaAlumno({
                 {callResultado === 'no_asistio' ? (
                   <div className="mt-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-2.5">
                     <Label className="text-[10.5px] font-bold uppercase text-amber-600">
-                      📸 Captura del intento de contacto (OBLIGATORIA)
+                      📸 Captura del intento (OPCIONAL)
                     </Label>
                     <div className="mb-1 text-[10.5px] text-muted-foreground">
-                      WhatsApp, llamada o mensaje. No hace falta enlace de Meet — el alumno no se conectó.
+                      No hace falta enlace de Meet ni captura obligatoria — el alumno no se conectó.
+                      Puedes adjuntar la captura si quieres, pero no es necesaria.
                     </div>
                     <input
                       type="file"

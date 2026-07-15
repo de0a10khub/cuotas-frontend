@@ -182,6 +182,11 @@ export function agendarTarea(caseId: string, taskId: string, citaFechaHora: stri
   });
 }
 
+/** Marca una tarea como 'contactado' con 1 click, sin captura (opcional). */
+export function marcarContactado(caseId: string, taskId: string) {
+  return api.post(`${BASE}/cases/${caseId}/tasks/${taskId}/contactado/`, {});
+}
+
 export function recuperar(caseId: string): Promise<OnboardingCaseDetail> {
   return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/recuperar/`, {});
 }
