@@ -20,6 +20,20 @@ export type Fase =
 export type Estado = 'activo' | 'riesgo' | 'perdido';
 export type PagosVisibilidad = 'visibles' | 'externos';
 
+/** Columna del tablero (kanban) según la reunión concreta que le toca
+ * AHORA al alumno. La calcula el backend (services/next_step.columna_pipeline).
+ * Los transversales riesgo/perdido los aplica el frontend por `estado`/`fase`. */
+export type ColumnaPipeline =
+  | 'onboarding_1'
+  | 'docente_reunion_1'
+  | 'onboarding_2_control'
+  | 'reunion_2'
+  | 'reunion_3'
+  | 'reunion_4'
+  | 'quincenal_1'
+  | 'quincenal_2plus'
+  | 'perdido';
+
 export type InteractionTipo =
   | 'llamada_1'
   | 'reunion_1'
@@ -151,6 +165,8 @@ export interface OnboardingCaseList {
   fase: Fase;
   estado: Estado;
   pagos_visibilidad: PagosVisibilidad;
+  /** Columna del tablero por reunión pendiente (backend). */
+  columna_pipeline: ColumnaPipeline;
   nota_implicacion: number | null;
   /** Nota de implicación puesta durante ONBOARDING_1 por Lucila. Queda
    * en el histórico aunque `nota_implicacion` se resetee al traspaso. */

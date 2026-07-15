@@ -1,8 +1,52 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import type { OnboardingCaseList } from '@/lib/crm-docentes-types';
+import type { ColumnaPipeline, OnboardingCaseList } from '@/lib/crm-docentes-types';
 import { EstadoChip, NotaChip, PagoChip } from './estado-chips';
+
+// Progreso de reuniones por columna: cuántos círculos van "hechos" (done)
+// y cuál es el que toca AHORA (current). Círculos = [R1, R2, R3, R4, Q].
+const PROGRESO_REUNIONES: Record<string, { done: number; current: number }> = {
+  onboarding_1: { done: 0, current: 0 },
+  docente_reunion_1: { done: 0, current: 0 },
+  onboarding_2_control: { done: 1, current: 1 },
+  reunion_2: { done: 1, current: 1 },
+  reunion_3: { done: 2, current: 2 },
+  reunion_4: { done: 3, current: 3 },
+  quincenal_1: { done: 4, current: 4 },
+  quincenal_2plus: { done: 5, current: 4 },
+};
+const CIRCULO_LABELS = ['1', '2', '3', '4', 'Q'];
+
+function ProgresoReuniones({ col }: { col?: ColumnaPipeline }) {
+  const p = (col && PROGRESO_REUNIONES[col]) || { done: 0, current: -1 };
+  return (
+    <div
+      className="mt-2 flex items-center gap-1"
+      title="Progreso: Reunión 1 → 2 → 3 → 4 → Quincenal"
+    >
+      {CIRCULO_LABELS.map((lab, i) => {
+        const done = i < p.done;
+        const current = i === p.current;
+        return (
+          <span
+            key={lab}
+            className={
+              'flex h-[15px] w-[15px] items-center justify-center rounded-full text-[8.5px] font-bold leading-none ' +
+              (done
+                ? 'bg-emerald-500 text-white'
+                : current
+                  ? 'bg-violet-500 text-white ring-1 ring-violet-300'
+                  : 'bg-muted text-muted-foreground/40')
+            }
+          >
+            {lab}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
 
 export function CardAlumno({
   c,
@@ -78,6 +122,7 @@ export function CardAlumno({
         </div>
         <NotaChip nota={c.nota_implicacion} />
       </div>
+      {c.fase !== 'perdido' && <ProgresoReuniones col={c.columna_pipeline} />}
       {c.proxima_llamada_vence && c.fase !== 'perdido' && (
         <div
           className={
