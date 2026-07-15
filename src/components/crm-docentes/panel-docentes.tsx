@@ -357,6 +357,30 @@ export function PanelDocentes({ scores }: { scores: DocenteScore[] }) {
                   </div>
                 </div>
               )}
+
+              {/* Cartera de reactivación (clientes antiguos a recuperar) */}
+              {!esCoach && (s.cartera_reactivacion ?? 0) > 0 && (
+                <div className="mt-3 rounded-lg border border-purple-500/30 bg-purple-500/5 p-2">
+                  <div className="mb-1 flex items-center justify-between text-[10.5px]">
+                    <span className="font-bold text-purple-500">🔁 Reactivación (clientes antiguos)</span>
+                    <b style={{ color: (s.pct_activacion_cartera ?? 0) >= 50 ? '#22c55e' : '#f59e0b' }}>
+                      {s.reactivados_al_dia ?? 0}/{s.cartera_reactivacion ?? 0} al día · {s.pct_activacion_cartera ?? 0}%
+                    </b>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-500/15">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${Math.max(s.pct_activacion_cartera ?? 0, 2)}%`,
+                        backgroundColor: (s.pct_activacion_cartera ?? 0) >= 50 ? '#a855f7' : '#f59e0b',
+                      }}
+                    />
+                  </div>
+                  <div className="mt-1 text-[9.5px] text-muted-foreground">
+                    No cuenta en la nota. Objetivo: recuperarlos y ponerlos al día.
+                  </div>
+                </div>
+              )}
             </Card>
           );
         })}

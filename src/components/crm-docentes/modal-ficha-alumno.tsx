@@ -335,13 +335,13 @@ export function ModalFichaAlumno({
                   }
                 </span>
               )}
-              {data.es_antiguo && (
+              {(data.es_reactivacion || data.es_antiguo) && (
                 <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10.5px] font-extrabold text-purple-600">
-                  🔁 CLIENTE ANTIGUO{
+                  🔁 EN REACTIVACIÓN{
                     data.primera_compra_stripe
-                      ? ` · compró ${new Date(data.primera_compra_stripe).toLocaleDateString('es-ES')}`
+                      ? ` · cliente desde ${new Date(data.primera_compra_stripe).toLocaleDateString('es-ES')}`
                       : ''
-                  } — 1 intento de recontacto y cierra automático (sin penalizar)
+                  } — recuperar y poner al día · NO cuenta en nota, cuenta como cartera activada
                 </span>
               )}
             </div>

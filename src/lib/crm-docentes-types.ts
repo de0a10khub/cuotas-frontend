@@ -165,9 +165,11 @@ export interface OnboardingCaseList {
   /** 📨 Contacto enviado sin respuesta (chip visual, sigue penalizando). */
   esperando_respuesta: boolean;
   esperando_respuesta_desde: string | null;
-  /** 🔁 Cliente antiguo (compra pre-checkout en Stripe direct). Aparece
-   * en el CRM para 1 intento de recontacto y auto-cierra al registrar LLAMADA_1. */
+  /** 🔁 Cliente antiguo (compra pre-checkout en Stripe direct). */
   es_antiguo: boolean;
+  /** 🔁 Caso de reactivación: antiguo asignado directo a docente para
+   * recuperarlo. No cuenta en nota; cuenta como cartera activada. */
+  es_reactivacion: boolean;
   primera_compra_stripe: string | null;
   total_llamadas_hechas: number;
   total_pruebas: number;
@@ -237,6 +239,9 @@ export interface DocenteScore {
   tareas_vencidas: number;
   tareas_fuera_plazo?: number;
   en_arranque?: boolean;
+  cartera_reactivacion?: number;
+  reactivados_al_dia?: number;
+  pct_activacion_cartera?: number;
   tareas_pendientes: number;
   tareas_agendadas: number;
   pct_agendadas: number;
