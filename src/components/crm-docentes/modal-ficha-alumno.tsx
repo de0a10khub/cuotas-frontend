@@ -469,7 +469,7 @@ export function ModalFichaAlumno({
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="asistio">✅ Asistió</SelectItem>
-                    <SelectItem value="no_asistio">❌ No asistió (sube captura del intento)</SelectItem>
+                    <SelectItem value="no_asistio">❌ No asistió</SelectItem>
                     <SelectItem value="reagendada">🔁 Reagendada</SelectItem>
                     <SelectItem value="na">N/A</SelectItem>
                   </SelectContent>
