@@ -447,8 +447,12 @@ export function ModalFichaAlumno({
                 </div>
                 <Label className="text-[10.5px] font-bold uppercase text-muted-foreground">Tipo</Label>
                 <Select value={callTipo} onValueChange={(v) => setCallTipo(v as InteractionTipo)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  {/* w-auto: el desplegable se dimensiona a su contenido en vez de
+                      quedar clavado al ancho del trigger (w-(--anchor-width)), que
+                      recortaba los nombres largos. min-w = ancho del trigger y tope
+                      para que nunca se salga de pantalla en móvil. */}
+                  <SelectContent className="w-auto min-w-(--anchor-width) max-w-[92vw]">
                     <SelectItem value="llamada_1">🚀 Onboarding 1 (Lucila)</SelectItem>
                     <SelectItem value="reunion_1">🤝 Reunión 1 — Día 3</SelectItem>
                     <SelectItem value="control_dia_4">🔍 Control Día 4 (Lucila)</SelectItem>
@@ -466,8 +470,8 @@ export function ModalFichaAlumno({
 
                 <Label className="mt-2 text-[10.5px] font-bold uppercase text-muted-foreground">Resultado</Label>
                 <Select value={callResultado} onValueChange={(v) => setCallResultado(v as InteractionResultado)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent className="w-auto min-w-(--anchor-width) max-w-[92vw]">
                     <SelectItem value="asistio">✅ Asistió</SelectItem>
                     <SelectItem value="no_asistio">❌ No asistió</SelectItem>
                     <SelectItem value="reagendada">🔁 Reagendada</SelectItem>
