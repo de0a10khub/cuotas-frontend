@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { agendarTarea, getMiAgenda, marcarContactado } from '@/lib/crm-docentes-api';
+import { agendarTarea, getMiAgenda, marcarContactado, marcarNoAsistio } from '@/lib/crm-docentes-api';
 import type { AgendaResponse } from '@/lib/crm-docentes-api';
 import type { CaseTask, DocenteScore } from '@/lib/crm-docentes-types';
 
@@ -16,6 +16,15 @@ function colorClasses(t: CaseTask): string {
   return 'border-l-slate-500 bg-slate-500/5';
 }
 
+/** ISO → valor de <input type="datetime-local"> en hora local (YYYY-MM-DDTHH:mm). */
+function toLocalInput(iso?: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function Grupo({
   titulo,
   emoji,
@@ -23,6 +32,7 @@ function Grupo({
   onAgendar,
   onOpenAlumno,
   onContactado,
+  onNoAsistio,
 }: {
   titulo: string;
   emoji: string;
@@ -30,6 +40,7 @@ function Grupo({
   onAgendar: (t: CaseTask) => void;
   onOpenAlumno: (caseId: string) => void;
   onContactado: (t: CaseTask) => void;
+  onNoAsistio: (t: CaseTask) => void;
 }) {
   if (tareas.length === 0) return null;
   return (
@@ -65,7 +76,7 @@ function Grupo({
                   </span>
                 ) : t.en_gestion_contacto ? (
                   <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-600">
-                    📸 CONTACTADO · A AGENDAR
+                    🟡 EN GESTIÓN · A AGENDAR
                   </span>
                 ) : (
                   <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-500">
@@ -120,15 +131,26 @@ function Grupo({
                   </Button>
                 )}
               </div>
-              {/* Marcar contactado (1 click, sin captura). Solo si aún no agendada. */}
-              {!t.agendada && !t.en_gestion_contacto && !t.pendiente_llamada && (
+              <div className="flex items-center gap-2">
+                {/* No asistió (1 click, sin nota): vuelve al flujo de reagendar
+                    → ámbar 48h → rojo. Siempre disponible en la tarea. */}
                 <button
-                  onClick={() => onContactado(t)}
-                  className="rounded-md bg-amber-500/15 px-2 py-1 text-[10.5px] font-bold text-amber-700 hover:bg-amber-500/25"
+                  onClick={() => onNoAsistio(t)}
+                  className="rounded-md bg-red-500/12 px-2 py-1 text-[10.5px] font-bold text-red-600 hover:bg-red-500/22"
+                  title="El alumno no se presentó — vuelve al flujo de reagendar (48h)"
                 >
-                  ✅ Marcar contactado
+                  ❌ No asistió
                 </button>
-              )}
+                {/* Marcar contactado (1 click, sin captura). Solo si aún no agendada. */}
+                {!t.agendada && !t.en_gestion_contacto && !t.pendiente_llamada && (
+                  <button
+                    onClick={() => onContactado(t)}
+                    className="rounded-md bg-amber-500/15 px-2 py-1 text-[10.5px] font-bold text-amber-700 hover:bg-amber-500/25"
+                  >
+                    ✅ Contactado
+                  </button>
+                )}
+              </div>
             </div>
           </Card>
         ))}
@@ -190,6 +212,24 @@ export function MiAgenda({
     try {
       await marcarContactado(t.case_id, t.id);
       toast.success('Marcado como contactado. Tienes 48h para agendar la cita.');
+      await refresh(selectedProfileId);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error');
+    }
+  }
+
+  // Abre el popup de agendar/reagendar pre-rellenando la cita actual (si la
+  // hay) para que la fecha/hora se pueda EDITAR en cualquier momento.
+  function openAgendar(t: CaseTask) {
+    setAgendarT(t);
+    setCitaValue(toLocalInput(t.cita_fecha_hora));
+  }
+
+  async function marcarNoAsistioTarea(t: CaseTask) {
+    if (!t.case_id) return;
+    try {
+      await marcarNoAsistio(t.case_id, t.id);
+      toast.success('Marcado "No asistió". Vuelve a reagendar: 48h antes de pasar a rojo.');
       await refresh(selectedProfileId);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Error');
@@ -266,12 +306,12 @@ export function MiAgenda({
             </Card>
           )}
 
-          <Grupo titulo="Vencidas" emoji="🔴" tareas={data.vencidas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} onContactado={marcarContactadoTarea} />
-          <Grupo titulo="Hoy" emoji="🟡" tareas={data.hoy} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} onContactado={marcarContactadoTarea} />
-          <Grupo titulo="Mañana" emoji="🟢" tareas={data.manana ?? []} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} onContactado={marcarContactadoTarea} />
-          <Grupo titulo="En 2-3 días" emoji="📅" tareas={data.en_2_3_dias ?? []} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} onContactado={marcarContactadoTarea} />
-          <Grupo titulo="Esta semana" emoji="📆" tareas={data.esta_semana} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} onContactado={marcarContactadoTarea} />
-          <Grupo titulo="Después" emoji="⏭" tareas={data.despues ?? data.proximas} onAgendar={setAgendarT} onOpenAlumno={onOpenAlumno} onContactado={marcarContactadoTarea} />
+          <Grupo titulo="Vencidas" emoji="🔴" tareas={data.vencidas} onAgendar={openAgendar} onOpenAlumno={onOpenAlumno} onContactado={marcarContactadoTarea} onNoAsistio={marcarNoAsistioTarea} />
+          <Grupo titulo="Hoy" emoji="🟡" tareas={data.hoy} onAgendar={openAgendar} onOpenAlumno={onOpenAlumno} onContactado={marcarContactadoTarea} onNoAsistio={marcarNoAsistioTarea} />
+          <Grupo titulo="Mañana" emoji="🟢" tareas={data.manana ?? []} onAgendar={openAgendar} onOpenAlumno={onOpenAlumno} onContactado={marcarContactadoTarea} onNoAsistio={marcarNoAsistioTarea} />
+          <Grupo titulo="En 2-3 días" emoji="📅" tareas={data.en_2_3_dias ?? []} onAgendar={openAgendar} onOpenAlumno={onOpenAlumno} onContactado={marcarContactadoTarea} onNoAsistio={marcarNoAsistioTarea} />
+          <Grupo titulo="Esta semana" emoji="📆" tareas={data.esta_semana} onAgendar={openAgendar} onOpenAlumno={onOpenAlumno} onContactado={marcarContactadoTarea} onNoAsistio={marcarNoAsistioTarea} />
+          <Grupo titulo="Después" emoji="⏭" tareas={data.despues ?? data.proximas} onAgendar={openAgendar} onOpenAlumno={onOpenAlumno} onContactado={marcarContactadoTarea} onNoAsistio={marcarNoAsistioTarea} />
         </>
       )}
 
@@ -282,10 +322,18 @@ export function MiAgenda({
           onClick={() => setAgendarT(null)}
         >
           <Card className="w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3 text-lg font-bold">Agendar reunión</div>
-            <div className="mb-3 text-sm text-muted-foreground">
+            <div className="mb-3 text-lg font-bold">
+              {agendarT.agendada ? '🔁 Reagendar reunión' : '📅 Agendar reunión'}
+            </div>
+            <div className="mb-1 text-sm text-muted-foreground">
               {agendarT.customer_name || agendarT.customer_email} · {agendarT.tipo_display}
             </div>
+            {agendarT.agendada && (
+              <div className="mb-3 rounded-md bg-emerald-500/10 px-2 py-1.5 text-[11.5px] text-emerald-700">
+                Puedes cambiar la fecha las veces que haga falta. No penaliza ni
+                marca la cita como perdida — solo queda registrado el cambio.
+              </div>
+            )}
             <label className="text-[11px] font-bold uppercase text-muted-foreground">
               Fecha y hora pactada con el alumno
             </label>

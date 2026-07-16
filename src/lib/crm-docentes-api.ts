@@ -7,6 +7,7 @@
 import { api, getAccessToken } from './api';
 import type {
   Captura,
+  CaseTask,
   ComentarioCreateBody,
   DocenteScore,
   Interaction,
@@ -185,6 +186,14 @@ export function agendarTarea(caseId: string, taskId: string, citaFechaHora: stri
 /** Marca una tarea como 'contactado' con 1 click, sin captura (opcional). */
 export function marcarContactado(caseId: string, taskId: string) {
   return api.post(`${BASE}/cases/${caseId}/tasks/${taskId}/contactado/`, {});
+}
+
+/**
+ * Marca "No asistió" con 1 click (sin nota ni enlace). El alumno vuelve al
+ * flujo de reagendar: ámbar 'en gestión' 48h → rojo 'Pendiente de llamada'.
+ */
+export function marcarNoAsistio(caseId: string, taskId: string): Promise<CaseTask> {
+  return api.post<CaseTask>(`${BASE}/cases/${caseId}/tasks/${taskId}/no-asistio/`, {});
 }
 
 export function recuperar(caseId: string): Promise<OnboardingCaseDetail> {
