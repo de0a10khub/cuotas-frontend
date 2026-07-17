@@ -24,6 +24,7 @@ export type PagosVisibilidad = 'visibles' | 'externos';
  * AHORA al alumno. La calcula el backend (services/next_step.columna_pipeline).
  * Los transversales riesgo/perdido los aplica el frontend por `estado`/`fase`. */
 export type ColumnaPipeline =
+  | 'reactivacion'
   | 'onboarding_1'
   | 'docente_reunion_1'
   | 'onboarding_2_control'
@@ -167,6 +168,10 @@ export interface OnboardingCaseList {
   pagos_visibilidad: PagosVisibilidad;
   /** Columna del tablero por reunión pendiente (backend). */
   columna_pipeline: ColumnaPipeline;
+  /** Reuniones ya asistidas (0..4) si es reactivación; null si no lo es.
+   * Hace falta porque todas las reactivaciones comparten columna, así que
+   * la posición en el tablero ya no indica su avance. */
+  reactivacion_etapa: number | null;
   nota_implicacion: number | null;
   /** Nota de implicación puesta durante ONBOARDING_1 por Lucila. Queda
    * en el histórico aunque `nota_implicacion` se resetee al traspaso. */
@@ -203,6 +208,32 @@ export interface WhoAmI {
   display_name: string;
 }
 
+/** Historia real de un alumno reactivado, reconstruida del rastro de Stripe
+ * de su compra ORIGINAL (no de la orden de refinanciación, cuyo producto es
+ * siempre prod_2k y engaña). Cualquier campo puede venir a null si el rastro
+ * no permite deducirlo — se omite antes que enseñarlo mal. */
+export interface ReactivacionContext {
+  /** Primer pago en Stripe = cuándo entró de verdad en la academia. */
+  primera_compra: string | null;
+  meses_en_academia: number | null;
+  /** Producto REAL ('2K' | '3K' | '4.5K' | '1K'). El de la ficha miente. */
+  producto_real: string | null;
+  plan_pagos: number | null;
+  cuota_cents: number | null;
+  total_plan_cents: number | null;
+  pagado_cents: number | null;
+  pagos_ok: number | null;
+  recibos_devueltos: number | null;
+  ultimo_pago_ok: string | null;
+  /** Deuda que refinanció = el importe que sale en la tarjeta. NO es el
+   * precio del producto. */
+  refinanciado_cents: number | null;
+  refinanciado_en: string | null;
+  es_refinanciacion: boolean;
+  /** product_id de la orden — siempre prod_2k. Solo para avisar. */
+  producto_orden_no_fiable: string | null;
+}
+
 export interface OnboardingCaseDetail extends OnboardingCaseList {
   motivo_baja: string;
   motivo_categoria: 'abandono_alumno' | 'falta_seguimiento' | 'otro' | '';
@@ -218,6 +249,8 @@ export interface OnboardingCaseDetail extends OnboardingCaseList {
    * está el alumno (backend calcula esto). Preseleccionado en el
    * desplegable del formulario "Registrar interacción". */
   next_expected_tipo: InteractionTipo | null;
+  /** null si no es reactivación. */
+  reactivacion_context: ReactivacionContext | null;
 }
 
 export type Tendencia = 'sube' | 'baja' | 'igual' | 'debut';

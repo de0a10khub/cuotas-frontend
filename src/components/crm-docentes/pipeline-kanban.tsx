@@ -5,10 +5,14 @@ import { CardAlumno } from './card-alumno';
 
 // Columnas del tablero, en orden EXACTO del playbook (izq → der).
 // `key` casa con columna_pipeline del backend (+ riesgo/perdido transversales).
-type Variant = 'normal' | 'riesgo' | 'perdido';
+type Variant = 'normal' | 'reactivacion' | 'riesgo' | 'perdido';
 type Col = { key: string; title: string; sub: string; icon: string; variant: Variant };
 
 const COLUMNAS: Col[] = [
+  // Reactivaciones: proceso APARTE (Carlos 2026-07-17). No pasan por
+  // onboarding y solo tienen 4 reuniones, sin quincenal. Va la primera
+  // para que se lea como un carril propio, no como una etapa del pipeline.
+  { key: 'reactivacion', title: 'Reactivaciones', sub: 'Proceso aparte · 4 reuniones', icon: '🔄', variant: 'reactivacion' },
   { key: 'onboarding_1', title: 'Onboarding 1', sub: 'Llamada 1 · Lucila · día 1-2', icon: '🚀', variant: 'normal' },
   { key: 'docente_reunion_1', title: 'Docente · Reunión 1', sub: 'Arranque con docente · día 3', icon: '🤝', variant: 'normal' },
   { key: 'onboarding_2_control', title: 'Onboarding 2 · Control D4', sub: 'Lucila verifica · día 4', icon: '🔍', variant: 'normal' },
@@ -28,6 +32,13 @@ const VARIANT_STYLES: Record<Variant, { strip: string; header: string; badge: st
     strip: 'bg-gradient-to-r from-cyan-500 to-violet-500',
     header: 'bg-gradient-to-r from-cyan-500/10 to-violet-500/10',
     badge: 'bg-gradient-to-r from-cyan-500 to-violet-500',
+  },
+  // Verde→cyan: carril propio, distinguible de un vistazo del cyan→violet
+  // del pipeline normal, sin caer en el rojo→ámbar de riesgo.
+  reactivacion: {
+    strip: 'bg-gradient-to-r from-emerald-500 to-cyan-500',
+    header: 'bg-gradient-to-r from-emerald-500/10 to-cyan-500/10',
+    badge: 'bg-gradient-to-r from-emerald-500 to-cyan-500',
   },
   riesgo: {
     strip: 'bg-gradient-to-r from-red-500 to-amber-500',
@@ -53,8 +64,13 @@ const MAP_LEGACY_FASE: Record<string, ColumnaPipeline> = {
 };
 
 function columnaDe(c: OnboardingCaseList): string {
-  // Transversales primero: perdido y en-riesgo mandan sobre la etapa.
+  // Transversales primero: perdido manda sobre cualquier etapa.
   if (c.fase === 'perdido') return 'perdido';
+  // Reactivación: carril propio y exclusivo (Carlos 2026-07-17). NO cae en
+  // EN RIESGO, que es del pipeline de alumnos nuevos — un reactivado no
+  // cuenta en la morosidad normal del docente. Su urgencia sigue viéndose
+  // en el color de la propia tarjeta, no se pierde.
+  if (c.es_reactivacion) return 'reactivacion';
   if (c.estado === 'riesgo') return 'riesgo';
   // Acceso defensivo: durante la ventana de deploy el backend viejo puede
   // no mandar columna_pipeline todavía → fallback por fase.

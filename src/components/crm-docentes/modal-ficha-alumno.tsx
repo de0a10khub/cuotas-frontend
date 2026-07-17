@@ -17,6 +17,7 @@ import type { Captura } from '@/lib/crm-docentes-types';
 import type {
   InteractionResultado, InteractionTipo, OnboardingCaseDetail,
 } from '@/lib/crm-docentes-types';
+import { BloqueReactivacion } from './bloque-reactivacion';
 import { EstadoChip, NotaChip, PagoChip } from './estado-chips';
 
 /**
@@ -259,8 +260,15 @@ export function ModalFichaAlumno({
 
         {data && (
           <>
+            {/* En reactivación el importe es deuda refinanciada y "alta" es
+                la fecha de la ficha, no la de entrada en la academia: se
+                etiqueta aquí y el detalle va en BloqueReactivacion. */}
             <div className="text-[12px] text-muted-foreground">
-              {data.customer_email} · {data.producto_nombre || (data.ticket_total_cents ? `${Math.round(data.ticket_total_cents/100)}€` : '—')} · alta{' '}
+              {data.customer_email} ·{' '}
+              {data.producto_nombre || (data.ticket_total_cents ? `${Math.round(data.ticket_total_cents/100)}€` : '—')}
+              {data.es_reactivacion || data.es_antiguo
+                ? ' (deuda refinanciada) · ficha creada '
+                : ' · alta '}
               {data.created_at.slice(0, 10)}
             </div>
 
@@ -333,15 +341,17 @@ export function ModalFichaAlumno({
                 </span>
               )}
               {(data.es_reactivacion || data.es_antiguo) && (
-                <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10.5px] font-extrabold text-purple-600">
-                  🔁 EN REACTIVACIÓN{
-                    data.primera_compra_stripe
-                      ? ` · cliente desde ${new Date(data.primera_compra_stripe).toLocaleDateString('es-ES')}`
-                      : ''
-                  } — recuperar y poner al día · NO cuenta en nota, cuenta como cartera activada
+                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10.5px] font-extrabold text-emerald-600">
+                  🔄 EN REACTIVACIÓN — NO cuenta en nota, cuenta como cartera activada
                 </span>
               )}
             </div>
+
+            {/* La historia real del alumno: sin esto el docente no sabe a
+                quién está llamando (era la queja de Paula). */}
+            {data.reactivacion_context && (
+              <BloqueReactivacion ctx={data.reactivacion_context} />
+            )}
 
             {/* Sección Onboarding — Lucila (bloqueada) */}
             {data.nota_lucila !== null && (

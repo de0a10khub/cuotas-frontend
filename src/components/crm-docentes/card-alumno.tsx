@@ -18,14 +18,35 @@ const PROGRESO_REUNIONES: Record<string, { done: number; current: number }> = {
 };
 const CIRCULO_LABELS = ['1', '2', '3', '4', 'Q'];
 
-function ProgresoReuniones({ col }: { col?: ColumnaPipeline }) {
-  const p = (col && PROGRESO_REUNIONES[col]) || { done: 0, current: -1 };
+/**
+ * Círculos de avance. Dos modos:
+ *  - normal: [1,2,3,4,Q], posición deducida de la columna del tablero.
+ *  - reactivación: [1,2,3,4] SIN quincenal (su proceso son 4 reuniones y
+ *    ahí termina). La columna no sirve para deducir el avance porque todas
+ *    las reactivaciones comparten columna → viene del backend en `etapa`.
+ */
+function ProgresoReuniones({
+  col,
+  etapa,
+}: {
+  col?: ColumnaPipeline;
+  etapa?: number | null;
+}) {
+  const esReactivacion = etapa !== null && etapa !== undefined;
+  const labels = esReactivacion ? CIRCULO_LABELS.slice(0, 4) : CIRCULO_LABELS;
+  const p = esReactivacion
+    ? { done: etapa, current: etapa < 4 ? etapa : -1 }
+    : (col && PROGRESO_REUNIONES[col]) || { done: 0, current: -1 };
   return (
     <div
       className="flex items-center gap-1.5"
-      title="Reunión 1 → 2 → 3 → 4 → Quincenal"
+      title={
+        esReactivacion
+          ? 'Reactivación: Reunión 1 → 2 → 3 → 4 (sin quincenal)'
+          : 'Reunión 1 → 2 → 3 → 4 → Quincenal'
+      }
     >
-      {CIRCULO_LABELS.map((lab, i) => {
+      {labels.map((lab, i) => {
         const done = i < p.done;
         const current = i === p.current;
         return (
@@ -72,6 +93,7 @@ export function CardAlumno({
   const vencido = c.es_vencido && c.fase !== 'perdido';
   const urgente = c.es_urgente_24h || c.es_urgente_primer_toque_24h;
   const nombre = cleanCustomerName(c.customer_name) || c.customer_email;
+  const esReactivacion = c.es_reactivacion || c.es_antiguo;
 
   return (
     <div
@@ -85,8 +107,18 @@ export function CardAlumno({
             : 'border-foreground/12')
       }
     >
+      {/* Badge de reactivación: destacado, no un aviso más. Es lo primero
+          que el docente tiene que saber — cambia toda la conversación. */}
+      {esReactivacion && (
+        <div className="mb-1.5">
+          <span className="inline-flex items-center rounded bg-gradient-to-r from-emerald-500 to-cyan-500 px-1.5 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wide text-white shadow-sm">
+            🔄 Reactivación
+          </span>
+        </div>
+      )}
+
       {/* Avisos (una línea, solo si aplican) */}
-      {(urgente || c.esperando_respuesta || c.es_reactivacion || c.es_antiguo) && (
+      {(urgente || c.esperando_respuesta) && (
         <div className="mb-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-bold leading-tight">
           {c.es_urgente_24h && <span className="text-red-500">🔥 +24h sin contactar</span>}
           {c.es_urgente_primer_toque_24h && (
@@ -95,18 +127,27 @@ export function CardAlumno({
           {c.esperando_respuesta && (
             <span className="text-amber-500">📨 esperando respuesta</span>
           )}
-          {(c.es_reactivacion || c.es_antiguo) && (
-            <span className="text-purple-500">🔁 reactivación</span>
-          )}
         </div>
       )}
 
       {/* Nombre (deduplicado, una sola vez) */}
       <div className="text-[13px] font-bold leading-tight">{nombre}</div>
 
-      {/* Producto / precio · fecha de alta */}
+      {/* Producto / precio · fecha de alta.
+          En reactivación el importe NO es el precio del producto: es la
+          deuda refinanciada, y la fecha de alta es la de la ficha, no la de
+          entrada en la academia. Se etiquetan para no engañar al docente;
+          el detalle real está en la ficha. */}
       <div className="mt-1 text-[11px] text-muted-foreground">
-        {precioLabel(c)} · alta {c.created_at.slice(0, 10)}
+        {esReactivacion ? (
+          <>
+            {precioLabel(c)} <span className="opacity-70">deuda refinanciada</span>
+          </>
+        ) : (
+          <>
+            {precioLabel(c)} · alta {c.created_at.slice(0, 10)}
+          </>
+        )}
       </div>
 
       {/* Docente o coach asignado (siempre presente) */}
@@ -128,7 +169,7 @@ export function CardAlumno({
 
       {/* Círculos de llamadas ①②③④→Q con su color */}
       <div className="mt-2.5">
-        <ProgresoReuniones col={c.columna_pipeline} />
+        <ProgresoReuniones col={c.columna_pipeline} etapa={c.reactivacion_etapa} />
       </div>
 
       {/* Estado + pago + nota */}
