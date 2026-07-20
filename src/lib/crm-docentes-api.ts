@@ -172,6 +172,8 @@ export interface AgendaResponse {
   total: number;
 }
 
+/** profileId puede ser un id concreto, o 'all' (solo admin) para ver las
+ *  colas de todos los docentes/coaches juntas. */
 export function getMiAgenda(profileId?: string): Promise<AgendaResponse> {
   const qs = profileId ? `?profile_id=${profileId}` : '';
   return api.get<AgendaResponse>(`${BASE}/mi-agenda/${qs}`);

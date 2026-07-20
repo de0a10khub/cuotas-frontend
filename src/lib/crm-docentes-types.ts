@@ -143,6 +143,10 @@ export interface CaseTask {
   customer_name?: string;
   customer_email?: string;
   customer_phone?: string;
+  // Docente/coach responsable (para filtrar "Mi agenda" por docente).
+  responsable_id?: string | null;
+  responsable_nombre?: string;
+  es_reactivacion?: boolean;
 }
 
 export interface NotaHistorialItem {
