@@ -18,9 +18,15 @@ function normalizarBusqueda(s: string | null | undefined): string {
   return (s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
 }
 
-// ── Columnas por ESTADO (color), no por fecha. Cada una junta las reuniones
-// de ese estado de TODOS los docentes; dentro se ordena por fecha. ──────────
-type EstadoCol = 'urgente' | 'gestion' | 'agendada' | 'proxima';
+// ── Columnas por SITUACIÓN de la reunión, no por fecha ni por antigüedad.
+// Cada una junta las de TODOS los docentes; dentro se ordena por fecha.
+//
+// Rediseño Carlos 2026-07-21: tres columnas y una sola pregunta para
+// decidirlas — ¿tiene cita puesta? ¿se ha contactado ya? El tiempo
+// transcurrido NO mueve a nadie de columna; se muestra como dato en la
+// tarjeta. Antes había una cuarta ("Próximas") que duplicaba alumnos ya
+// presentes en las otras. ───────────────────────────────────────────────
+type EstadoCol = 'pendiente' | 'gestion' | 'agendada';
 
 const COLUMNAS: {
   key: EstadoCol;
@@ -32,58 +38,82 @@ const COLUMNAS: {
   badge: string;
 }[] = [
   {
-    key: 'urgente', title: 'Vencidas / Urgentes', sub: 'Arden hoy · agéndalas ya',
+    key: 'pendiente', title: 'Pendientes', sub: 'Sin contactar ni agendar',
     emoji: '🔴',
     strip: 'bg-gradient-to-r from-red-500 to-amber-500',
     header: 'bg-gradient-to-r from-red-500/10 to-amber-500/10',
     badge: 'bg-gradient-to-r from-red-500 to-amber-500',
   },
   {
-    key: 'gestion', title: 'En gestión', sub: 'Contactado · 48h para agendar',
+    key: 'gestion', title: 'En gestión', sub: 'Contactado · agendando',
     emoji: '🟡',
     strip: 'bg-gradient-to-r from-amber-400 to-yellow-500',
     header: 'bg-gradient-to-r from-amber-400/10 to-yellow-500/10',
     badge: 'bg-gradient-to-r from-amber-400 to-yellow-500',
   },
   {
-    key: 'agendada', title: 'Agendadas al día', sub: 'Con cita futura · controlado',
+    key: 'agendada', title: 'Agendadas', sub: 'Con cita puesta',
     emoji: '🟢',
     strip: 'bg-gradient-to-r from-emerald-500 to-cyan-500',
     header: 'bg-gradient-to-r from-emerald-500/10 to-cyan-500/10',
     badge: 'bg-gradient-to-r from-emerald-500 to-cyan-500',
   },
-  {
-    key: 'proxima', title: 'Próximas', sub: 'Aún no urgentes · agéndalas pronto',
-    emoji: '⚪',
-    strip: 'bg-gradient-to-r from-slate-400 to-slate-500',
-    header: 'bg-gradient-to-r from-slate-400/10 to-slate-500/10',
-    badge: 'bg-gradient-to-r from-slate-400 to-slate-500',
-  },
 ];
 
 /**
- * A qué columna de estado va una tarea. Mapea el `color_estado` del backend
- * (no lo recalcula) a los 4 cajones operativos, separando el rojo que ARDE
- * (vencida / cita pasada / 48h sin agendar) del rojo que aún es futuro.
+ * A qué columna va una tarea. Depende SOLO de dónde está la reunión, nunca
+ * de cuánto lleva ahí:
+ *
+ *   ¿tiene cita puesta?  → Agendadas   (aunque la cita ya se celebrara y
+ *                                       aunque el plazo lleve semanas pasado)
+ *   ¿se ha contactado?   → En gestión  (sin caducidad: tardar en agendar no
+ *                                       lo devuelve a Pendientes)
+ *   ni una cosa ni otra  → Pendientes
+ *
+ * No se lee `color_estado` para agrupar: el color es presentación (lo usa
+ * `colorBorde`), la columna es situación. Así no se pueden desincronizar.
  */
 function columnaDe(t: CaseTask): EstadoCol {
-  if (t.color_estado === 'ambar' || t.color_estado === 'ambar_historico') return 'gestion';
-  if (t.color_estado === 'verde') return 'agendada';
-  if (t.color_estado === 'rojo') {
-    const citaPasada =
-      t.agendada && t.cita_fecha_hora && new Date(t.cita_fecha_hora).getTime() < Date.now();
-    const arde = t.esta_vencida || t.pendiente_llamada || t.dias_para_vencer < 0 || citaPasada;
-    return arde ? 'urgente' : 'proxima';
-  }
-  return 'proxima'; // gris / cancelada / resto
+  if (t.agendada) return 'agendada';
+  if (t.contacto_probado_en) return 'gestion';
+  return 'pendiente';
 }
 
-/** Fecha efectiva para ordenar dentro de la columna: la cita si está agendada,
- *  si no la fecha de vencimiento. */
+/** Reunión ya celebrada que nadie ha cerrado: va arriba de "Agendadas". */
+function sinRegistrar(t: CaseTask): boolean {
+  if (t.cita_pasada_sin_registrar !== undefined) return t.cita_pasada_sin_registrar;
+  // Fallback si el backend aún no manda el campo (deploy escalonado).
+  return Boolean(
+    t.agendada && t.cita_fecha_hora && new Date(t.cita_fecha_hora).getTime() < Date.now(),
+  );
+}
+
+/**
+ * Orden dentro de la columna. En "Agendadas" las reuniones sin registrar van
+ * primero y por antigüedad (la más vieja arriba), que son las que hay que
+ * cerrar; después las citas futuras por proximidad.
+ */
 function fechaOrden(t: CaseTask): number {
   const iso = t.agendada && t.cita_fecha_hora ? t.cita_fecha_hora : t.vence;
   const ms = new Date(iso).getTime();
   return Number.isNaN(ms) ? 0 : ms;
+}
+
+function ordenarColumna(tareas: CaseTask[]): CaseTask[] {
+  return [...tareas].sort((a, b) => {
+    const aSin = sinRegistrar(a);
+    const bSin = sinRegistrar(b);
+    if (aSin !== bSin) return aSin ? -1 : 1;
+    return fechaOrden(a) - fechaOrden(b);
+  });
+}
+
+/** "hace 3 días" / "en 5 días" — dato de referencia, nunca disparador. */
+function diasTexto(dias: number): string {
+  if (dias === 0) return 'hoy';
+  if (dias === 1) return 'mañana';
+  if (dias === -1) return 'ayer';
+  return dias < 0 ? `hace ${Math.abs(dias)} días` : `en ${dias} días`;
 }
 
 const TIPO_OPCIONES: { value: TaskTipo | ''; label: string }[] = [
@@ -100,10 +130,9 @@ const TIPO_OPCIONES: { value: TaskTipo | ''; label: string }[] = [
 
 const ESTADO_OPCIONES: { value: EstadoCol | ''; label: string }[] = [
   { value: '', label: 'Todos los estados' },
-  { value: 'urgente', label: '🔴 Vencidas / Urgentes' },
+  { value: 'pendiente', label: '🔴 Pendientes' },
   { value: 'gestion', label: '🟡 En gestión' },
-  { value: 'agendada', label: '🟢 Agendadas al día' },
-  { value: 'proxima', label: '⚪ Próximas' },
+  { value: 'agendada', label: '🟢 Agendadas' },
 ];
 
 function colorBorde(t: CaseTask): string {
@@ -153,15 +182,21 @@ function TaskCard({
               🔄 React.
             </span>
           )}
-          {t.agendada ? (
+          {sinRegistrar(t) ? (
+            <span
+              className={`rounded px-1.5 py-0.5 text-[9.5px] font-bold ${
+                t.registro_vencido
+                  ? 'bg-red-500/15 text-red-500'
+                  : 'bg-amber-500/15 text-amber-600'
+              }`}
+            >
+              ⚠️ SIN REGISTRAR
+            </span>
+          ) : t.agendada ? (
             <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9.5px] font-bold text-emerald-600">
               AGENDADA
             </span>
-          ) : t.pendiente_llamada ? (
-            <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[9.5px] font-bold text-red-500">
-              🚨 PENDIENTE
-            </span>
-          ) : t.en_gestion_contacto ? (
+          ) : t.contacto_probado_en ? (
             <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[9.5px] font-bold text-amber-600">
               🟡 EN GESTIÓN
             </span>
@@ -172,14 +207,32 @@ function TaskCard({
           )}
         </div>
 
+        {/* Aviso de reunión celebrada y sin cerrar. A las 48h pasa a rojo y
+            penaliza en el score: estar agendada no la cierra. */}
+        {sinRegistrar(t) && t.cita_fecha_hora && (
+          <div
+            className={`mt-1 rounded px-2 py-1 text-[10.5px] font-semibold ${
+              t.registro_vencido
+                ? 'bg-red-500/10 text-red-600'
+                : 'bg-amber-500/10 text-amber-700'
+            }`}
+          >
+            La cita fue el {new Date(t.cita_fecha_hora).toLocaleString('es-ES')}
+            {' — '}
+            {t.registro_vencido
+              ? 'lleva más de 48h sin registrar y está penalizando.'
+              : 'márcala antes de 48h.'}
+          </div>
+        )}
+
+        {/* Datos de referencia. Los días NO cambian color ni columna: solo
+            informan al docente de cuánto lleva abierta la reunión. */}
         <div className="mt-0.5 text-[11px] text-muted-foreground">
-          {t.tipo_display} · vence {t.vence}
-          {t.dias_para_vencer >= 0
-            ? ` · en ${t.dias_para_vencer}d`
-            : ` · vencida hace ${Math.abs(t.dias_para_vencer)}d`}
+          {t.tipo_display}
           {t.agendada && t.cita_fecha_hora && (
             <> · cita {new Date(t.cita_fecha_hora).toLocaleString('es-ES')}</>
           )}
+          <> · objetivo {t.vence} ({diasTexto(t.dias_para_vencer)})</>
         </div>
 
         {/* Responsable — solo en la vista de "Todos" para saber de quién es */}
@@ -219,10 +272,20 @@ function TaskCard({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-foreground/8 pt-2">
+        {/* Reunión ya celebrada: lo primero es cerrarla, no reagendarla. */}
+        {sinRegistrar(t) && t.case_id && (
+          <Button
+            size="sm"
+            onClick={() => onOpenAlumno(t.case_id!)}
+            title="Registrar la reunión (necesita el enlace de la grabación)"
+          >
+            ✅ Se hizo
+          </Button>
+        )}
         <Button size="sm" variant="outline" onClick={() => onAgendar(t)}>
           {t.agendada ? '🔁 Reagendar' : '📅 Agendar'}
         </Button>
-        {t.case_id && (
+        {t.case_id && !sinRegistrar(t) && (
           <Button size="sm" onClick={() => onOpenAlumno(t.case_id!)}>
             Ficha
           </Button>
@@ -234,7 +297,7 @@ function TaskCard({
         >
           ❌ No asistió
         </button>
-        {!t.agendada && !t.en_gestion_contacto && !t.pendiente_llamada && (
+        {!t.agendada && !t.contacto_probado_en && (
           <button
             onClick={() => onContactado(t)}
             className="rounded-md bg-amber-500/15 px-2 py-1 text-[10.5px] font-bold text-amber-700 hover:bg-amber-500/25"
@@ -362,17 +425,28 @@ export function MiAgenda({
     });
   }, [todasTareas, q, filtroEstado, filtroTipo]);
 
-  // Reparto por columnas de estado, ordenado por fecha dentro de cada una.
+  // Reparto por columnas. Dentro de cada una: primero las reuniones sin
+  // registrar (más antigua arriba), luego el resto por fecha.
   const porColumna = useMemo(() => {
     const grupos: Record<EstadoCol, CaseTask[]> = {
-      urgente: [], gestion: [], agendada: [], proxima: [],
+      pendiente: [], gestion: [], agendada: [],
     };
     for (const t of tareasFiltradas) grupos[columnaDe(t)].push(t);
     for (const k of Object.keys(grupos) as EstadoCol[]) {
-      grupos[k].sort((a, b) => fechaOrden(a) - fechaOrden(b));
+      grupos[k] = ordenarColumna(grupos[k]);
     }
     return grupos;
   }, [tareasFiltradas]);
+
+  // Reuniones celebradas y sin cerrar — el contador que no deja esconderlas.
+  const sinRegistrarTotal = useMemo(
+    () => tareasFiltradas.filter(sinRegistrar).length,
+    [tareasFiltradas],
+  );
+  const sinRegistrarVencidas = useMemo(
+    () => tareasFiltradas.filter((t) => sinRegistrar(t) && t.registro_vencido).length,
+    [tareasFiltradas],
+  );
 
   const seleccionado = opcionesDocentes.find((d) => d.docente_id === selectedProfileId);
   const hayFiltros = q !== '' || filtroEstado !== '' || filtroTipo !== '';
@@ -484,9 +558,23 @@ export function MiAgenda({
                   : `Agenda de ${seleccionado?.display_name || seleccionado?.email || 'seleccionado'}`}
             </b>{' '}
             — {tareasFiltradas.length}
-            {hayFiltros ? ` de ${todasTareas.length}` : ''} reunión(es). Columnas por
-            estado, ordenadas por fecha (lo más urgente arriba).
+            {hayFiltros ? ` de ${todasTareas.length}` : ''} reunión(es). Tres columnas
+            según tenga cita puesta o no; los días son solo referencia.
           </div>
+
+          {/* Las reuniones celebradas y sin cerrar no se esconden en verde. */}
+          {sinRegistrarTotal > 0 && (
+            <div className="mb-3 rounded-lg bg-amber-500/10 px-3 py-2 text-[12.5px] font-semibold text-amber-800 ring-1 ring-amber-500/25">
+              ⚠️ {sinRegistrarTotal} reunión(es) ya celebradas sin registrar
+              {sinRegistrarVencidas > 0 && (
+                <span className="text-red-600">
+                  {' '}· {sinRegistrarVencidas} llevan más de 48h y ya penalizan
+                </span>
+              )}
+              . Están arriba de <b>Agendadas</b>: márcalas <b>Se hizo</b> o{' '}
+              <b>No asistió</b>.
+            </div>
+          )}
 
           {todasTareas.length === 0 ? (
             <Card className="p-8 text-center text-sm text-muted-foreground">
