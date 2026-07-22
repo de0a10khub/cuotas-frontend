@@ -130,7 +130,7 @@ export interface CaseTask {
   esta_vencida: boolean;
   esta_urgente: boolean;
   dias_para_vencer: number;
-  color_estado: 'verde' | 'ambar' | 'rojo' | 'gris' | 'ambar_historico';
+  color_estado: 'verde' | 'ambar' | 'rojo' | 'nuevo' | 'gris' | 'ambar_historico';
   pendiente_llamada: boolean;
   en_gestion_contacto: boolean;
   registrada_fuera_de_plazo: boolean;
@@ -153,6 +153,12 @@ export interface CaseTask {
   registro_vencido?: boolean;
   /** Horas desde que pasó la cita sin registrar. 0 si no aplica. */
   horas_sin_registrar?: number;
+  /** El alumno ya ha sido tocado (cita, contacto o cualquier interacción). */
+  case_atendido?: boolean;
+  /** Días desde que el alumno entró (created_at del expediente). */
+  dias_desde_alta?: number;
+  /** Fecha de alta del alumno — se muestra como GUÍA, no como alarma. */
+  alta?: string;
 }
 
 export interface NotaHistorialItem {

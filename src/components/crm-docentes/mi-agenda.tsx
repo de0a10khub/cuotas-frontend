@@ -38,11 +38,14 @@ const COLUMNAS: {
   badge: string;
 }[] = [
   {
-    key: 'pendiente', title: 'Pendientes', sub: 'Sin contactar ni agendar',
-    emoji: '🔴',
-    strip: 'bg-gradient-to-r from-red-500 to-amber-500',
-    header: 'bg-gradient-to-r from-red-500/10 to-amber-500/10',
-    badge: 'bg-gradient-to-r from-red-500 to-amber-500',
+    // Cola normal de alumnos por atender: color NEUTRO (azul), no alarma.
+    // Los recién entrados son normales; solo los que llevan >3 días sin que
+    // nadie los toque salen con acento rojo dentro (color_estado='rojo').
+    key: 'pendiente', title: 'Por atender', sub: 'Aún sin contactar · agéndalas',
+    emoji: '🔵',
+    strip: 'bg-gradient-to-r from-sky-500 to-blue-500',
+    header: 'bg-gradient-to-r from-sky-500/10 to-blue-500/10',
+    badge: 'bg-gradient-to-r from-sky-500 to-blue-500',
   },
   {
     key: 'gestion', title: 'En gestión', sub: 'Contactado · agendando',
@@ -64,18 +67,19 @@ const COLUMNAS: {
  * A qué columna va una tarea. Depende SOLO de dónde está la reunión, nunca
  * de cuánto lleva ahí:
  *
- *   ¿tiene cita puesta?  → Agendadas   (aunque la cita ya se celebrara y
- *                                       aunque el plazo lleve semanas pasado)
- *   ¿se ha contactado?   → En gestión  (sin caducidad: tardar en agendar no
- *                                       lo devuelve a Pendientes)
- *   ni una cosa ni otra  → Pendientes
+ *   ¿tiene cita puesta?      → Agendadas
+ *   ¿ya se ha tocado?        → En gestión  (contacto probado O cualquier
+ *                                           interacción — refinado 2026-07-22:
+ *                                           antes solo miraba el botón y 36
+ *                                           alumnos ya atendidos caían aquí)
+ *   ni tocado ni agendado    → Por atender
  *
  * No se lee `color_estado` para agrupar: el color es presentación (lo usa
  * `colorBorde`), la columna es situación. Así no se pueden desincronizar.
  */
 function columnaDe(t: CaseTask): EstadoCol {
   if (t.agendada) return 'agendada';
-  if (t.contacto_probado_en) return 'gestion';
+  if (t.contacto_probado_en || t.case_atendido) return 'gestion';
   return 'pendiente';
 }
 
@@ -130,16 +134,20 @@ const TIPO_OPCIONES: { value: TaskTipo | ''; label: string }[] = [
 
 const ESTADO_OPCIONES: { value: EstadoCol | ''; label: string }[] = [
   { value: '', label: 'Todos los estados' },
-  { value: 'pendiente', label: '🔴 Pendientes' },
+  { value: 'pendiente', label: '🔵 Por atender' },
   { value: 'gestion', label: '🟡 En gestión' },
   { value: 'agendada', label: '🟢 Agendadas' },
 ];
 
 function colorBorde(t: CaseTask): string {
+  // El rojo ya solo lo pone el backend cuando es REAL (sin atender >3 días
+  // o reunión sin registrar >48h). El recién entrado sin tocar es 'nuevo'
+  // → azul neutro, sin alarma.
   if (t.color_estado === 'rojo') return 'border-l-red-500 bg-red-500/8';
   if (t.color_estado === 'ambar' || t.color_estado === 'ambar_historico')
     return 'border-l-amber-500 bg-amber-500/8';
   if (t.color_estado === 'verde') return 'border-l-emerald-500 bg-emerald-500/5';
+  if (t.color_estado === 'nuevo') return 'border-l-sky-500 bg-sky-500/5';
   return 'border-l-slate-500 bg-slate-500/5';
 }
 
@@ -196,13 +204,17 @@ function TaskCard({
             <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9.5px] font-bold text-emerald-600">
               AGENDADA
             </span>
-          ) : t.contacto_probado_en ? (
+          ) : t.contacto_probado_en || t.case_atendido ? (
             <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[9.5px] font-bold text-amber-600">
               🟡 EN GESTIÓN
             </span>
-          ) : (
+          ) : t.color_estado === 'rojo' ? (
             <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[9.5px] font-bold text-red-500">
-              SIN AGENDAR
+              🔴 SIN ATENDER
+            </span>
+          ) : (
+            <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-[9.5px] font-bold text-sky-600">
+              🔵 NUEVO
             </span>
           )}
         </div>
@@ -225,14 +237,21 @@ function TaskCard({
           </div>
         )}
 
-        {/* Datos de referencia. Los días NO cambian color ni columna: solo
-            informan al docente de cuánto lleva abierta la reunión. */}
+        {/* Datos de referencia. La fecha de ALTA es una GUÍA, no una alarma:
+            lo ideal es agendar pronto, pero cuadrar la cita un par de días
+            más tarde (por disponibilidad del alumno) es atención normal. */}
         <div className="mt-0.5 text-[11px] text-muted-foreground">
           {t.tipo_display}
           {t.agendada && t.cita_fecha_hora && (
             <> · cita {new Date(t.cita_fecha_hora).toLocaleString('es-ES')}</>
           )}
-          <> · objetivo {t.vence} ({diasTexto(t.dias_para_vencer)})</>
+          {t.alta && (
+            <> · entró {new Date(t.alta).toLocaleDateString('es-ES')}
+              {typeof t.dias_desde_alta === 'number' && ` (${diasTexto(-t.dias_desde_alta)})`}</>
+          )}
+          {!t.agendada && (
+            <span className="text-muted-foreground/70"> · ideal agendar antes del {t.vence}</span>
+          )}
         </div>
 
         {/* Responsable — solo en la vista de "Todos" para saber de quién es */}
@@ -558,8 +577,8 @@ export function MiAgenda({
                   : `Agenda de ${seleccionado?.display_name || seleccionado?.email || 'seleccionado'}`}
             </b>{' '}
             — {tareasFiltradas.length}
-            {hayFiltros ? ` de ${todasTareas.length}` : ''} reunión(es). Tres columnas
-            según tenga cita puesta o no; los días son solo referencia.
+            {hayFiltros ? ` de ${todasTareas.length}` : ''} reunión(es). El rojo
+            solo marca lo que de verdad está sin atender; la fecha de alta es una guía.
           </div>
 
           {/* Las reuniones celebradas y sin cerrar no se esconden en verde. */}
