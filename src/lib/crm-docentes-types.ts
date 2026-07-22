@@ -147,6 +147,12 @@ export interface CaseTask {
   responsable_id?: string | null;
   responsable_nombre?: string;
   es_reactivacion?: boolean;
+  /** La cita ya pasó y nadie registró si se hizo. Sale arriba de "Agendadas". */
+  cita_pasada_sin_registrar?: boolean;
+  /** Pasaron >=48h desde la cita sin registrarla: rojo y penaliza el score. */
+  registro_vencido?: boolean;
+  /** Horas desde que pasó la cita sin registrar. 0 si no aplica. */
+  horas_sin_registrar?: number;
 }
 
 export interface NotaHistorialItem {
