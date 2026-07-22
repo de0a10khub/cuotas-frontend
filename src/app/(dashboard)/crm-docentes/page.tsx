@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { getDocenteScores, getKpis, getMe, listCases } from '@/lib/crm-docentes-api';
+import { buscarAlumno, getDocenteScores, getKpis, getMe, listCases } from '@/lib/crm-docentes-api';
 import type {
-  DocenteScore, KPIs, OnboardingCaseList, WhoAmI,
+  AlumnoLocalizado, DocenteScore, KPIs, OnboardingCaseList, WhoAmI,
 } from '@/lib/crm-docentes-types';
 import { KpisBar } from '@/components/crm-docentes/kpis-bar';
 import { PipelineKanban } from '@/components/crm-docentes/pipeline-kanban';
@@ -43,6 +43,25 @@ export default function CrmDocentesPage() {
   const [openCaseId, setOpenCaseId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [q, setQ] = useState('');
+  // Localizador global: busca en TODAS las carteras (para encontrar a un
+  // alumno que está con otro docente, p.ej. cuando el PWA lo asigna distinto).
+  const [locResults, setLocResults] = useState<AlumnoLocalizado[] | null>(null);
+  const [locTotal, setLocTotal] = useState(0);
+  const [locLoading, setLocLoading] = useState(false);
+
+  async function buscarEnTodas() {
+    if (!q.trim()) return;
+    setLocLoading(true);
+    try {
+      const r = await buscarAlumno(q.trim());
+      setLocResults(r.resultados);
+      setLocTotal(r.total);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error buscando');
+    } finally {
+      setLocLoading(false);
+    }
+  }
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -141,7 +160,8 @@ export default function CrmDocentesPage() {
           <input
             type="text"
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => { setQ(e.target.value); setLocResults(null); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') buscarEnTodas(); }}
             placeholder="🔍 Buscar por nombre, email, teléfono o docente (ignora espacios)"
             className="w-full rounded-lg border bg-background px-3 py-2 text-[13px] outline-none focus:border-cyan-500"
           />
@@ -152,11 +172,58 @@ export default function CrmDocentesPage() {
           )}
           {q && (
             <button
-              onClick={() => setQ('')}
+              onClick={buscarEnTodas}
+              disabled={locLoading}
+              className="whitespace-nowrap rounded bg-cyan-500/12 px-2.5 py-1.5 text-[11.5px] font-bold text-cyan-600 hover:bg-cyan-500/22"
+              title="Busca este alumno en la cartera de TODOS los docentes"
+            >
+              {locLoading ? '…' : '🌐 Buscar en todas las carteras'}
+            </button>
+          )}
+          {q && (
+            <button
+              onClick={() => { setQ(''); setLocResults(null); }}
               className="rounded bg-slate-500/10 px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-500/20"
             >
               Limpiar
             </button>
+          )}
+        </div>
+      )}
+
+      {/* Resultados del localizador global (todas las carteras) */}
+      {(tab === 'pipeline' || tab === 'alumnos') && locResults !== null && (
+        <div className="rounded-lg border border-cyan-500/25 bg-cyan-500/[0.05] p-3">
+          <div className="mb-2 text-[12px] font-bold text-cyan-700">
+            🌐 En todas las carteras — {locTotal} resultado(s)
+            {locTotal > locResults.length && ` (mostrando ${locResults.length})`}
+          </div>
+          {locResults.length === 0 ? (
+            <div className="text-[12px] text-muted-foreground">
+              Ningún alumno coincide en todo el CRM.
+            </div>
+          ) : (
+            <div className="grid gap-1.5 sm:grid-cols-2">
+              {locResults.map((r) => (
+                <button
+                  key={r.case_id}
+                  onClick={() => onOpenAlumno(r.case_id)}
+                  className="flex flex-col items-start rounded-md border bg-background px-2.5 py-1.5 text-left hover:border-cyan-500"
+                >
+                  <span className="text-[13px] font-semibold">{r.customer_name}</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {r.customer_phone || 'sin teléfono'} · {r.customer_email}
+                  </span>
+                  <span className="mt-0.5 text-[11px] font-bold text-violet-500">
+                    {r.docente_nombre
+                      ? `🎓 ${r.docente_nombre}`
+                      : r.coach_nombre
+                        ? `🎯 ${r.coach_nombre}`
+                        : '— sin asignar —'}
+                  </span>
+                </button>
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -173,6 +240,7 @@ export default function CrmDocentesPage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         onChanged={refresh}
+        isAdmin={isAdmin}
       />
     </div>
   );

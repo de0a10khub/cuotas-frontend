@@ -9,9 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
-  createComment, createInteraction, createProof, getCapturaData, getCase, marcarPerdido,
-  marcarRiesgo, quitarRiesgo, recuperar, setNota, sinRespuesta,
-  subirCaptura,
+  createComment, createInteraction, createProof, editarDatosAlumno, getCapturaData,
+  getCase, getDocenteScores, marcarPerdido, marcarRiesgo, quitarRiesgo, reasignarAlumno,
+  recuperar, setNota, sinRespuesta, subirCaptura,
 } from '@/lib/crm-docentes-api';
 import type { Captura } from '@/lib/crm-docentes-types';
 import type {
@@ -31,14 +31,24 @@ export function ModalFichaAlumno({
   open,
   onOpenChange,
   onChanged,
+  isAdmin = false,
 }: {
   caseId: string | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onChanged?: () => void;
+  /** Solo los admin (Carlos/Paula) pueden corregir datos y mover de docente. */
+  isAdmin?: boolean;
 }) {
   const [data, setData] = useState<OnboardingCaseDetail | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // --- Edición admin: corregir nombre/teléfono y mover de docente ---
+  const [editando, setEditando] = useState(false);
+  const [editNombre, setEditNombre] = useState('');
+  const [editTel, setEditTel] = useState('');
+  const [guardandoDatos, setGuardandoDatos] = useState(false);
+  const [docentesOpc, setDocentesOpc] = useState<{ id: string; name: string; rol: string }[]>([]);
 
   const [callTipo, setCallTipo] = useState<InteractionTipo>('llamada_1');
   const [callEnlace, setCallEnlace] = useState('');
@@ -65,6 +75,8 @@ export function ModalFichaAlumno({
     try {
       const d = await getCase(caseId);
       setData(d);
+      setEditNombre(d.customer_name || '');
+      setEditTel(d.customer_phone || '');
       // Preselección inteligente: usa el next_expected_tipo del backend
       // (calculado según el playbook y el historial del alumno). Si no hay
       // sugerencia, fallback a la próxima tarea pendiente.
@@ -84,6 +96,66 @@ export function ModalFichaAlumno({
     else setData(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, caseId]);
+
+  // Carga la lista de docentes/coach solo si es admin (para el desplegable
+  // de "mover"). Se pide una vez al abrir la edición.
+  async function abrirEdicion() {
+    setEditando(true);
+    if (docentesOpc.length === 0) {
+      try {
+        const r = await getDocenteScores();
+        setDocentesOpc(
+          r.docentes
+            .filter((d) => d.docente_id)
+            .map((d) => ({
+              id: d.docente_id as string,
+              name: d.display_name || d.email || 'docente',
+              rol: d.rol || 'docente',
+            })),
+        );
+      } catch {
+        /* si falla, el desplegable queda vacío; nombre/teléfono siguen editables */
+      }
+    }
+  }
+
+  async function guardarDatos() {
+    if (!caseId || !data) return;
+    setGuardandoDatos(true);
+    try {
+      const patch: { customer_name?: string; customer_phone?: string } = {};
+      if (editNombre.trim() !== (data.customer_name || '')) patch.customer_name = editNombre.trim();
+      if (editTel.trim() !== (data.customer_phone || '')) patch.customer_phone = editTel.trim();
+      if (!patch.customer_name && !patch.customer_phone) {
+        setEditando(false);
+        return;
+      }
+      await editarDatosAlumno(caseId, patch);
+      toast.success('Datos corregidos');
+      setEditando(false);
+      await refresh();
+      onChanged?.();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'No se pudo guardar');
+    } finally {
+      setGuardandoDatos(false);
+    }
+  }
+
+  async function moverA(rol: 'docente' | 'coach', profileId: string | null) {
+    if (!caseId) return;
+    setGuardandoDatos(true);
+    try {
+      await reasignarAlumno(caseId, rol, profileId);
+      toast.success(rol === 'docente' ? 'Docente reasignado' : 'Coach reasignado');
+      await refresh();
+      onChanged?.();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'No se pudo reasignar');
+    } finally {
+      setGuardandoDatos(false);
+    }
+  }
 
   if (!open || !caseId) return null;
 
@@ -311,7 +383,90 @@ export function ModalFichaAlumno({
                   🎯 {data.coach_nombre}
                 </span>
               )}
+              {isAdmin && !editando && (
+                <button
+                  onClick={abrirEdicion}
+                  className="inline-flex items-center gap-1 rounded-md bg-violet-500/12 px-2 py-1 text-[11px] font-bold text-violet-500 hover:bg-violet-500/22"
+                  title="Corregir nombre/teléfono o mover de docente (admin)"
+                >
+                  ✏️ Corregir / mover
+                </button>
+              )}
             </div>
+
+            {/* Panel de edición — solo admin (Carlos/Paula). Corrige la
+                identidad del alumno (nombre mal escrito, teléfono con el que
+                no se le puede llamar) y lo mueve de docente/coach para cuadrar
+                con la asignación del PWA. */}
+            {isAdmin && editando && (
+              <div className="mt-3 rounded-lg border border-violet-500/25 bg-violet-500/[0.06] p-3">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div>
+                    <Label className="text-[11px] text-muted-foreground">Nombre</Label>
+                    <Input
+                      value={editNombre}
+                      onChange={(e) => setEditNombre(e.target.value)}
+                      placeholder="Nombre y apellidos"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[11px] text-muted-foreground">Teléfono</Label>
+                    <Input
+                      value={editTel}
+                      onChange={(e) => setEditTel(e.target.value)}
+                      placeholder="+34 600 00 00 00"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <Button size="sm" onClick={guardarDatos} disabled={guardandoDatos}>
+                    {guardandoDatos ? 'Guardando…' : '💾 Guardar'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setEditando(false);
+                      setEditNombre(data.customer_name || '');
+                      setEditTel(data.customer_phone || '');
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+
+                {/* Mover de docente/coach */}
+                <div className="mt-3 border-t border-violet-500/15 pt-2">
+                  <Label className="text-[11px] text-muted-foreground">
+                    Mover a docente (cuadra con el PWA)
+                  </Label>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <Select
+                      value={data.docente_id || 'none'}
+                      onValueChange={(v) => moverA('docente', v === 'none' ? null : v)}
+                    >
+                      <SelectTrigger className="h-8 w-[220px] text-[12.5px]">
+                        <SelectValue placeholder="Sin docente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— Sin docente —</SelectItem>
+                        {docentesOpc
+                          .filter((d) => d.rol !== 'coach_onboarding')
+                          .map((d) => (
+                            <SelectItem key={d.id} value={d.id}>
+                              🎓 {d.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    {guardandoDatos && (
+                      <span className="text-[11px] text-muted-foreground">…</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <EstadoChip estado={data.estado} />

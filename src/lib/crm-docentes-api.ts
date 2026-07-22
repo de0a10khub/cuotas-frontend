@@ -6,6 +6,7 @@
 
 import { api, getAccessToken } from './api';
 import type {
+  BuscarAlumnoResponse,
   Captura,
   CaseTask,
   ComentarioCreateBody,
@@ -200,6 +201,36 @@ export function marcarNoAsistio(caseId: string, taskId: string): Promise<CaseTas
 
 export function recuperar(caseId: string): Promise<OnboardingCaseDetail> {
   return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/recuperar/`, {});
+}
+
+// ============================================================================
+// ADMIN: corregir datos del alumno / mover de docente (solo admin)
+// ============================================================================
+
+export function editarDatosAlumno(
+  caseId: string,
+  datos: { customer_name?: string; customer_phone?: string },
+): Promise<OnboardingCaseDetail> {
+  return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/editar-datos/`, datos);
+}
+
+export function reasignarAlumno(
+  caseId: string,
+  rol: 'docente' | 'coach',
+  profileId: string | null,
+): Promise<OnboardingCaseDetail> {
+  return api.post<OnboardingCaseDetail>(`${BASE}/cases/${caseId}/reasignar/`, {
+    rol,
+    profile_id: profileId,
+  });
+}
+
+// ============================================================================
+// Localizador de alumnos — busca en TODAS las carteras (cualquier docente)
+// ============================================================================
+
+export function buscarAlumno(q: string): Promise<BuscarAlumnoResponse> {
+  return api.get<BuscarAlumnoResponse>(`${BASE}/buscar/?q=${encodeURIComponent(q)}`);
 }
 
 // ============================================================================

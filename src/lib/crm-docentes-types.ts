@@ -204,9 +204,32 @@ export interface OnboardingCaseList {
   primera_compra_stripe: string | null;
   total_llamadas_hechas: number;
   total_pruebas: number;
+  docente_id: string | null;
+  coach_id: string | null;
   docente_nombre: string;
   coach_nombre: string;
   created_at: string;
+}
+
+/** Un resultado del localizador global de alumnos (GET /buscar/). */
+export interface AlumnoLocalizado {
+  case_id: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  fase: string;
+  estado: string;
+  es_reactivacion: boolean;
+  docente_id: string | null;
+  docente_nombre: string;
+  coach_nombre: string;
+}
+
+export interface BuscarAlumnoResponse {
+  q: string;
+  resultados: AlumnoLocalizado[];
+  total: number;
+  truncado?: boolean;
 }
 
 export type CrmRole = 'admin' | 'coach_onboarding' | 'docente' | null;
