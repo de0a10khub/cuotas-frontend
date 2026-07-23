@@ -112,6 +112,40 @@ function ordenarColumna(tareas: CaseTask[]): CaseTask[] {
   });
 }
 
+// Follow-ups "blandos": tareas secundarias que NO deben ganar a una reunión
+// real como tarjeta representativa del alumno.
+const SOFT_FOLLOWUP = new Set(['reintentar_contacto', 'micro', 'sin_respuesta', 'alerta_24h']);
+
+/** Cuánto merece una tarea ser LA tarjeta del alumno (mayor = más). */
+function prioridadTarea(t: CaseTask): number {
+  if (t.agendada) return 3;                  // la cita puesta manda
+  if (!SOFT_FOLLOWUP.has(t.tipo)) return 2;  // reunión real > follow-up blando
+  return 1;
+}
+
+/**
+ * UNA sola tarjeta por alumno (Carlos 2026-07-23: "una única tarjeta por
+ * alumno, en un único estado"). Un alumno con varias tareas pendientes
+ * (p.ej. Reunión 1 + Reintentar contacto) salía dos veces. Nos quedamos con
+ * la tarea más representativa: cita puesta > reunión real > follow-up; a
+ * igualdad, la más urgente por fecha.
+ */
+function unaPorAlumno(tareas: CaseTask[]): CaseTask[] {
+  const mejor = new Map<string, CaseTask>();
+  const sinCase: CaseTask[] = [];
+  for (const t of tareas) {
+    if (!t.case_id) { sinCase.push(t); continue; }
+    const prev = mejor.get(t.case_id);
+    if (!prev) { mejor.set(t.case_id, t); continue; }
+    const pa = prioridadTarea(t);
+    const pp = prioridadTarea(prev);
+    if (pa > pp || (pa === pp && fechaOrden(t) < fechaOrden(prev))) {
+      mejor.set(t.case_id, t);
+    }
+  }
+  return [...mejor.values(), ...sinCase];
+}
+
 /** "hace 3 días" / "en 5 días" — dato de referencia, nunca disparador. */
 function diasTexto(dias: number): string {
   if (dias === 0) return 'hoy';
@@ -424,7 +458,8 @@ export function MiAgenda({
         if (!vistas.has(t.id)) { vistas.add(t.id); out.push(t); }
       }
     }
-    return out;
+    // Una sola tarjeta por alumno, aunque tenga varias tareas pendientes.
+    return unaPorAlumno(out);
   }, [data]);
 
   const verTodos = selectedProfileId === 'all';
