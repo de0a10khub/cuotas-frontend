@@ -436,10 +436,12 @@ export function ModalFichaAlumno({
                   </Button>
                 </div>
 
-                {/* Mover de docente/coach */}
+                {/* Mover de docente — los 4 responsables (Lucila incluida).
+                    Solo cambia el docente; historial, notas y etapa del
+                    pipeline se mantienen (Carlos 2026-07-23). */}
                 <div className="mt-3 border-t border-violet-500/15 pt-2">
                   <Label className="text-[11px] text-muted-foreground">
-                    Mover a docente (cuadra con el PWA)
+                    Mover a otro docente (mantiene etapa e historial)
                   </Label>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <Select
@@ -451,13 +453,11 @@ export function ModalFichaAlumno({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">— Sin docente —</SelectItem>
-                        {docentesOpc
-                          .filter((d) => d.rol !== 'coach_onboarding')
-                          .map((d) => (
-                            <SelectItem key={d.id} value={d.id}>
-                              🎓 {d.name}
-                            </SelectItem>
-                          ))}
+                        {docentesOpc.map((d) => (
+                          <SelectItem key={d.id} value={d.id}>
+                            {d.rol === 'coach_onboarding' ? '🎯' : '🎓'} {d.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     {guardandoDatos && (

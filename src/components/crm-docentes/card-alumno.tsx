@@ -86,9 +86,16 @@ function precioLabel(c: OnboardingCaseList): string {
 export function CardAlumno({
   c,
   onOpen,
+  isAdmin = false,
+  docentes = [],
+  onReasignar,
 }: {
   c: OnboardingCaseList;
   onOpen: (id: string) => void;
+  /** Directora/Admin: selector para mover el alumno de docente sin abrir la ficha. */
+  isAdmin?: boolean;
+  docentes?: { id: string; name: string; rol: string }[];
+  onReasignar?: (caseId: string, profileId: string | null) => void;
 }) {
   const vencido = c.es_vencido && c.fase !== 'perdido';
   const urgente = c.es_urgente_24h || c.es_urgente_primer_toque_24h;
@@ -180,6 +187,36 @@ export function CardAlumno({
         </div>
         <NotaChip nota={c.nota_implicacion} />
       </div>
+
+      {/* Directora/Admin: mover de docente sin abrir la ficha. stopPropagation
+          para que interactuar con el selector NO abra la ficha. El alumno
+          mantiene etapa e historial; solo cambia el docente responsable. */}
+      {isAdmin && onReasignar && docentes.length > 0 && (
+        <div
+          className="mt-2 border-t border-foreground/8 pt-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <label className="text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+            Mover a docente
+          </label>
+          <select
+            value={c.docente_id || 'none'}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              const v = e.target.value;
+              onReasignar(c.id, v === 'none' ? null : v);
+            }}
+            className="mt-0.5 w-full rounded-md border border-foreground/15 bg-background px-1.5 py-1 text-[11px] font-medium outline-none focus:border-violet-500"
+          >
+            <option value="none">— sin docente —</option>
+            {docentes.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.rol === 'coach_onboarding' ? '🎯' : '🎓'} {d.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 }

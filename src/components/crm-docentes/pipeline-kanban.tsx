@@ -82,9 +82,16 @@ function columnaDe(c: OnboardingCaseList): string {
 export function PipelineKanban({
   cases,
   onOpen,
+  isAdmin = false,
+  docentes = [],
+  onReasignar,
 }: {
   cases: OnboardingCaseList[];
   onOpen: (id: string) => void;
+  /** Directora/Admin: puede reasignar el alumno de docente desde la tarjeta. */
+  isAdmin?: boolean;
+  docentes?: { id: string; name: string; rol: string }[];
+  onReasignar?: (caseId: string, profileId: string | null) => void;
 }) {
   const grupos: Record<string, OnboardingCaseList[]> = {};
   for (const col of COLUMNAS) grupos[col.key] = [];
@@ -136,7 +143,16 @@ export function PipelineKanban({
                     vacío
                   </div>
                 ) : (
-                  items.map((c) => <CardAlumno key={c.id} c={c} onOpen={onOpen} />)
+                  items.map((c) => (
+                    <CardAlumno
+                      key={c.id}
+                      c={c}
+                      onOpen={onOpen}
+                      isAdmin={isAdmin}
+                      docentes={docentes}
+                      onReasignar={onReasignar}
+                    />
+                  ))
                 )}
               </div>
             </div>

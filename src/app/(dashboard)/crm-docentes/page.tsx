@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { buscarAlumno, getDocenteScores, getKpis, getMe, listCases } from '@/lib/crm-docentes-api';
+import { buscarAlumno, getDocenteScores, getKpis, getMe, listCases, reasignarAlumno } from '@/lib/crm-docentes-api';
 import type {
   AlumnoLocalizado, DocenteScore, KPIs, OnboardingCaseList, WhoAmI,
 } from '@/lib/crm-docentes-types';
@@ -89,6 +89,25 @@ export default function CrmDocentesPage() {
   }, [refresh]);
 
   const isAdmin = me?.crm_role === 'admin';
+
+  // Los 4 responsables para el selector de reasignación (admin/Directora).
+  const docentesLista = scores
+    .filter((d) => d.docente_id)
+    .map((d) => ({
+      id: d.docente_id as string,
+      name: d.display_name || d.email || 'docente',
+      rol: d.rol || 'docente',
+    }));
+
+  async function reasignarDocenteDesdePipeline(caseId: string, profileId: string | null) {
+    try {
+      await reasignarAlumno(caseId, 'docente', profileId);
+      toast.success('Alumno reasignado');
+      await refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'No se pudo reasignar');
+    }
+  }
 
   const casesFiltrados = (() => {
     const qn = normalizarBusqueda(q);
@@ -230,7 +249,15 @@ export default function CrmDocentesPage() {
 
       {/* Vistas */}
       {tab === 'agenda' && <MiAgenda onOpenAlumno={onOpenAlumno} docentes={scores} isAdmin={isAdmin} />}
-      {tab === 'pipeline' && <PipelineKanban cases={casesFiltrados} onOpen={onOpenAlumno} />}
+      {tab === 'pipeline' && (
+        <PipelineKanban
+          cases={casesFiltrados}
+          onOpen={onOpenAlumno}
+          isAdmin={isAdmin}
+          docentes={docentesLista}
+          onReasignar={reasignarDocenteDesdePipeline}
+        />
+      )}
       {tab === 'alumnos' && <TablaAlumnos cases={casesFiltrados} onOpen={onOpenAlumno} />}
       {tab === 'docentes' && <PanelDocentes scores={scores} />}
 
